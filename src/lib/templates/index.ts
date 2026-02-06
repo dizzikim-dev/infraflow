@@ -1,0 +1,17 @@
+export {
+  getAllTemplates,
+  getTemplatesByCategory,
+  getCustomTemplates,
+  saveTemplate,
+  deleteTemplate,
+  updateTemplate,
+  getTemplateById,
+  searchTemplates,
+  exportTemplate,
+  importTemplate,
+  generateShareLink,
+  parseShareLink,
+  builtInTemplates,
+  type Template,
+  type TemplateCategory,
+} from './templateManager';

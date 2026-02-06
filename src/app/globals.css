@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0a0b;
+  --foreground: #fafafa;
+  --grid-color: rgba(255, 255, 255, 0.03);
+  --grid-size: 40px;
 }
 
 @theme inline {
@@ -12,15 +14,210 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  overflow: hidden;
+}
+
+/* Canvas Grid Background */
+.react-flow {
+  background-color: var(--background) !important;
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px),
+    radial-gradient(ellipse at center, rgba(59, 130, 246, 0.03) 0%, transparent 70%);
+  background-size:
+    var(--grid-size) var(--grid-size),
+    var(--grid-size) var(--grid-size),
+    100% 100%;
+  background-position: center center;
+}
+
+/* Dot Grid Alternative (uncomment to use)
+.react-flow {
+  background-color: var(--background) !important;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+*/
+
+/* React Flow Node Styles */
+.react-flow__node {
+  cursor: grab;
+}
+
+.react-flow__node:active {
+  cursor: grabbing;
+}
+
+.react-flow__node.selected > div {
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 0 30px rgba(59, 130, 246, 0.3);
+}
+
+/* React Flow Edge Styles */
+.react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 3;
+}
+
+/* React Flow Controls - Glassmorphism */
+.react-flow__controls {
+  background: rgba(24, 24, 27, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(63, 63, 70, 0.5);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(63, 63, 70, 0.3);
+  color: #a1a1aa;
+  padding: 8px;
+  width: 32px;
+  height: 32px;
+  transition: all 0.2s ease;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none;
+}
+
+.react-flow__controls-button:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: #60a5fa;
+}
+
+.react-flow__controls-button svg {
+  fill: currentColor;
+}
+
+/* React Flow Minimap - Glassmorphism */
+.react-flow__minimap {
+  background: rgba(24, 24, 27, 0.8) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(63, 63, 70, 0.5) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.react-flow__minimap-mask {
+  fill: rgba(59, 130, 246, 0.1);
+}
+
+.react-flow__minimap-node {
+  fill: rgba(59, 130, 246, 0.5);
+  stroke: none;
+}
+
+/* Hide attribution */
+.react-flow__attribution {
+  display: none;
+}
+
+/* Panel Background for selection */
+.react-flow__panel {
+  margin: 12px;
+}
+
+/* Handle Styles */
+.react-flow__handle {
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  border: 2px solid #52525b !important;
+  background: #27272a !important;
+  transition: all 0.15s ease;
+}
+
+.react-flow__handle:hover {
+  background: #3b82f6 !important;
+  border-color: #60a5fa !important;
+  transform: scale(1.2);
+}
+
+.react-flow__handle-connecting {
+  background: #22c55e !important;
+  border-color: #4ade80 !important;
+}
+
+/* Connection Line */
+.react-flow__connection-line {
+  stroke: #60a5fa;
+  stroke-width: 2;
+  stroke-dasharray: 5 5;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(82, 82, 91, 0.5);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(113, 113, 122, 0.7);
+}
+
+/* Selection Box */
+.react-flow__selection {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px dashed rgba(59, 130, 246, 0.5);
+}
+
+/* Smooth animations for all elements */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus styles */
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}
+
+/* Glass effect utility class */
+.glass {
+  background: rgba(24, 24, 27, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(63, 63, 70, 0.5);
+}
+
+/* Glow effect utility class */
+.glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.glow-green {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+}
+
+.glow-red {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.glow-purple {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.glow-amber {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
 }
