@@ -132,6 +132,12 @@ export function FlowCanvas({
     }
   }, [setNodes, setEdges, getStateHash]);
 
+  // Sync nodes/edges when initialNodes/initialEdges change from parent
+  useEffect(() => {
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+  }, [initialNodes, initialEdges, setNodes, setEdges]);
+
   // Initialize history with initial state
   useEffect(() => {
     if (historyRef.current.length === 0 && (initialNodes.length > 0 || initialEdges.length > 0)) {
