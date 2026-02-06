@@ -185,80 +185,60 @@ export const BaseNode = memo(function BaseNode({
         type="target"
         position={Position.Left}
         id="left"
+        isConnectable={true}
         className={`
-          !w-3 !h-3 !bg-zinc-700
-          !border-2 !border-zinc-500
+          !w-4 !h-4 !bg-zinc-600
+          !border-2 !border-zinc-400
           hover:!bg-blue-500 hover:!border-blue-400
+          !cursor-crosshair
           transition-colors
-          !-left-1.5
         `}
+        style={{ left: -8 }}
       />
       {/* Right - Source */}
       <Handle
         type="source"
         position={Position.Right}
         id="right"
+        isConnectable={true}
         className={`
-          !w-3 !h-3 !bg-zinc-700
-          !border-2 !border-zinc-500
+          !w-4 !h-4 !bg-zinc-600
+          !border-2 !border-zinc-400
           hover:!bg-blue-500 hover:!border-blue-400
+          !cursor-crosshair
           transition-colors
-          !-right-1.5
         `}
+        style={{ right: -8 }}
       />
-      {/* Top - Both source and target */}
+      {/* Top - Target */}
       <Handle
         type="target"
         position={Position.Top}
-        id="top-target"
+        id="top"
+        isConnectable={true}
         className={`
-          !w-3 !h-3 !bg-zinc-700
-          !border-2 !border-zinc-500
+          !w-4 !h-4 !bg-zinc-600
+          !border-2 !border-zinc-400
           hover:!bg-blue-500 hover:!border-blue-400
+          !cursor-crosshair
           transition-colors
-          !-top-1.5
-          opacity-0 group-hover:opacity-100
         `}
+        style={{ top: -8 }}
       />
-      <Handle
-        type="source"
-        position={Position.Top}
-        id="top-source"
-        className={`
-          !w-3 !h-3 !bg-zinc-700
-          !border-2 !border-zinc-500
-          hover:!bg-blue-500 hover:!border-blue-400
-          transition-colors
-          !-top-1.5 !left-[60%]
-          opacity-0 group-hover:opacity-100
-        `}
-      />
-      {/* Bottom - Both source and target */}
-      <Handle
-        type="target"
-        position={Position.Bottom}
-        id="bottom-target"
-        className={`
-          !w-3 !h-3 !bg-zinc-700
-          !border-2 !border-zinc-500
-          hover:!bg-blue-500 hover:!border-blue-400
-          transition-colors
-          !-bottom-1.5
-          opacity-0 group-hover:opacity-100
-        `}
-      />
+      {/* Bottom - Source */}
       <Handle
         type="source"
         position={Position.Bottom}
-        id="bottom-source"
+        id="bottom"
+        isConnectable={true}
         className={`
-          !w-3 !h-3 !bg-zinc-700
-          !border-2 !border-zinc-500
+          !w-4 !h-4 !bg-zinc-600
+          !border-2 !border-zinc-400
           hover:!bg-blue-500 hover:!border-blue-400
+          !cursor-crosshair
           transition-colors
-          !-bottom-1.5 !left-[60%]
-          opacity-0 group-hover:opacity-100
         `}
+        style={{ bottom: -8 }}
       />
     </motion.div>
   );

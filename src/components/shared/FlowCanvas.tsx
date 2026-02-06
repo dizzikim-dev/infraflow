@@ -183,7 +183,12 @@ export function FlowCanvas({
 
   const onConnect = useCallback(
     (params: Connection) => {
-      setEdges((eds) => addEdge({ ...params, type: 'animated' }, eds));
+      console.log('onConnect called:', params);
+      setEdges((eds) => {
+        const newEdges = addEdge({ ...params, type: 'animated' }, eds);
+        console.log('New edges:', newEdges);
+        return newEdges;
+      });
     },
     [setEdges]
   );
