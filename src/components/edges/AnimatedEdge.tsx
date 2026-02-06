@@ -151,42 +151,47 @@ export const AnimatedEdge = memo(function AnimatedEdge({
         markerEnd={`url(#arrow-${id})`}
       />
 
-      {/* Animated Particles */}
+      {/* Animated Particles - using SVG animateMotion for path-following */}
       {edgeData?.animated !== false && flowType !== 'blocked' && (
         <>
-          {/* Main particle */}
-          <motion.circle
+          {/* Main particle with glow */}
+          <circle
             r={style.particleSize}
             fill="white"
             filter={`url(#${filterId})`}
-            initial={{ offsetDistance: '0%' }}
-            animate={{ offsetDistance: '100%' }}
-            transition={{
-              duration: style.speed,
-              repeat: Infinity,
-              ease: 'linear',
-            }}
-            style={{
-              offsetPath: `path("${edgePath}")`,
-            }}
-          />
+          >
+            <animateMotion
+              dur={`${style.speed}s`}
+              repeatCount="indefinite"
+              path={edgePath}
+            />
+          </circle>
           {/* Trailing particle */}
-          <motion.circle
+          <circle
             r={style.particleSize * 0.6}
             fill={style.color}
             opacity={0.5}
-            initial={{ offsetDistance: '0%' }}
-            animate={{ offsetDistance: '100%' }}
-            transition={{
-              duration: style.speed,
-              repeat: Infinity,
-              ease: 'linear',
-              delay: 0.1,
-            }}
-            style={{
-              offsetPath: `path("${edgePath}")`,
-            }}
-          />
+          >
+            <animateMotion
+              dur={`${style.speed}s`}
+              repeatCount="indefinite"
+              path={edgePath}
+              begin={`${style.speed * 0.1}s`}
+            />
+          </circle>
+          {/* Second trailing particle for smoother effect */}
+          <circle
+            r={style.particleSize * 0.4}
+            fill={style.color}
+            opacity={0.3}
+          >
+            <animateMotion
+              dur={`${style.speed}s`}
+              repeatCount="indefinite"
+              path={edgePath}
+              begin={`${style.speed * 0.2}s`}
+            />
+          </circle>
         </>
       )}
 
