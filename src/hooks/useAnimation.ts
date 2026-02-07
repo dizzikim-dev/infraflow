@@ -6,8 +6,8 @@ import {
   AnimationState,
   AnimationEvent,
   FlowParticle,
-  getAnimationEngine,
 } from '@/lib/animation/animationEngine';
+import { useAnimationEngine } from '@/contexts/AnimationContext';
 import { AnimationSequence } from '@/types';
 
 export interface UseAnimationReturn {
@@ -30,6 +30,8 @@ export interface UseAnimationReturn {
 }
 
 export function useAnimation(): UseAnimationReturn {
+  // Get engine from context (dependency injection)
+  const contextEngine = useAnimationEngine();
   const engineRef = useRef<AnimationEngine | null>(null);
   const [state, setState] = useState<AnimationState>({
     isPlaying: false,
@@ -41,20 +43,35 @@ export function useAnimation(): UseAnimationReturn {
   });
   const [particles, setParticles] = useState<FlowParticle[]>([]);
 
-  // Initialize engine
+  // Update ref when context engine changes
   useEffect(() => {
-    engineRef.current = getAnimationEngine();
-    const engine = engineRef.current;
+    engineRef.current = contextEngine;
+  }, [contextEngine]);
+
+  // Subscribe to engine events
+  useEffect(() => {
+    const engine = contextEngine;
+    if (!engine) {
+      console.warn('Animation engine not available from context');
+      return;
+    }
 
     const handleEvent = (event: AnimationEvent) => {
-      setState(engine.getState());
+      // Re-check engine existence in event handler
+      if (!engineRef.current) return;
 
-      if (event.type === 'particle-update' && event.particles) {
-        setParticles([...event.particles]);
-      }
+      try {
+        setState(engineRef.current.getState());
 
-      if (event.type === 'stop') {
-        setParticles([]);
+        if (event.type === 'particle-update' && event.particles) {
+          setParticles([...event.particles]);
+        }
+
+        if (event.type === 'stop') {
+          setParticles([]);
+        }
+      } catch (error) {
+        console.error('Error handling animation event:', error);
       }
     };
 
@@ -63,7 +80,7 @@ export function useAnimation(): UseAnimationReturn {
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [contextEngine]);
 
   const play = useCallback(() => {
     engineRef.current?.play();
@@ -99,9 +116,19 @@ export function useAnimation(): UseAnimationReturn {
   }, []);
 
   const loadSequence = useCallback((sequence: AnimationSequence) => {
-    engineRef.current?.loadSequence(sequence);
-    setState(engineRef.current?.getState() || state);
-  }, [state]);
+    const engine = engineRef.current;
+    if (!engine) {
+      console.warn('Cannot load sequence: Animation engine not initialized');
+      return;
+    }
+
+    try {
+      engine.loadSequence(sequence);
+      setState(engine.getState());
+    } catch (error) {
+      console.error('Failed to load animation sequence:', error);
+    }
+  }, []);
 
   return {
     isPlaying: state.isPlaying,

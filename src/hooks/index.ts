@@ -9,3 +9,40 @@ export {
   useModalManager,
   type ModalType,
 } from './useModalManager';
+export {
+  useNodeEditing,
+  NodeEditingProvider,
+  useNodeEditingContext,
+  type EditableField,
+} from './useNodeEditing';
+export { useInfrastructureData, useInfraComponent } from './useInfrastructureData';
+export {
+  useContextMenu,
+  type ContextMenuType,
+  type ContextMenuState,
+} from './useContextMenu';
+export {
+  useComparisonMode,
+  type ComparisonMode,
+  type PanelState,
+  type DiffResult,
+} from './useComparisonMode';
+
+// Specialized hooks (extracted from useInfraState for modularity)
+export { useNodes, type UseNodesReturn, type ComponentData } from './useNodes';
+export { useEdges, type UseEdgesReturn } from './useEdges';
+export { usePromptParser, type UsePromptParserReturn } from './usePromptParser';
+export { useInfraSelection, type UseInfraSelectionReturn } from './useInfraSelection';
+export { useAnimationScenario, type UseAnimationScenarioReturn } from './useAnimationScenario';
+export {
+  useHistory,
+  type HistoryState,
+  type UseHistoryOptions,
+  type UseHistoryReturn,
+} from './useHistory';
+export {
+  useErrorHandler,
+  type ErrorState,
+  type ErrorHandlerOptions,
+  type UseErrorHandlerReturn,
+} from './useErrorHandler';
