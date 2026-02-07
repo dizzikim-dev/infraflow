@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { InfraNodeType } from '@/types';
-import { infrastructureDB, InfraComponent, PolicyRecommendation } from '@/lib/data';
+import { InfraComponent, PolicyRecommendation } from '@/lib/data';
+import { useInfraComponent } from '@/hooks/useInfrastructureData';
 
 interface NodeDetailPanelProps {
   nodeId: string;
@@ -57,8 +58,8 @@ export function NodeDetailPanel({
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [expandedPolicy, setExpandedPolicy] = useState<number | null>(null);
 
-  // Get infrastructure info from DB
-  const infraInfo: InfraComponent | undefined = infrastructureDB[nodeType];
+  // Get infrastructure info from DB (with SWR caching and static fallback)
+  const { component: infraInfo, isLoading } = useInfraComponent(nodeType);
   const colors = categoryColors[infraInfo?.category || 'external'];
 
   const tabs: { id: TabType; label: string; icon: string }[] = [

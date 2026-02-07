@@ -36,12 +36,21 @@ const SparklesIcon = () => (
   </svg>
 );
 
+const CompareIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="2" y="3" width="8" height="18" rx="1" />
+    <rect x="14" y="3" width="8" height="18" rx="1" />
+    <path d="M10 12h4" />
+  </svg>
+);
+
 export interface HeaderProps {
   hasNodes: boolean;
   lastResult: ParseResultInfo | null;
   onAnimateClick: () => void;
   onTemplatesClick: () => void;
   onExportClick: () => void;
+  onCompareClick?: () => void;
 }
 
 export const Header = memo(function Header({
@@ -50,6 +59,7 @@ export const Header = memo(function Header({
   onAnimateClick,
   onTemplatesClick,
   onExportClick,
+  onCompareClick,
 }: HeaderProps) {
   return (
     <header className="absolute top-0 left-0 right-0 z-10">
@@ -121,6 +131,25 @@ export const Header = memo(function Header({
               <PlayIcon />
               <span className="hidden sm:inline">Animate</span>
             </button>
+
+            {/* Compare Button */}
+            {onCompareClick && (
+              <button
+                onClick={onCompareClick}
+                disabled={!hasNodes}
+                className={`
+                  flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium
+                  transition-all duration-200
+                  ${hasNodes
+                    ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20'
+                    : 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed border border-transparent'
+                  }
+                `}
+              >
+                <CompareIcon />
+                <span className="hidden sm:inline">Compare</span>
+              </button>
+            )}
 
             {/* Templates Button */}
             <button

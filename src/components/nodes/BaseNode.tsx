@@ -1,16 +1,24 @@
 'use client';
 
-import { memo, ReactNode } from 'react';
-import { Handle, Position } from '@xyflow/react';
+import { memo, ReactNode, useCallback } from 'react';
+import { Handle, Position, useNodeId } from '@xyflow/react';
 import { motion } from 'framer-motion';
 import { InfraNodeData, NodeCategory } from '@/types';
 import { getColorsForNode, nodeIcons } from '@/lib/design';
+import { EditableLabel } from './EditableLabel';
 
 interface BaseNodeProps {
   data: InfraNodeData;
   icon: ReactNode;
   color: string;
   selected?: boolean;
+  // Editing props
+  isEditingLabel?: boolean;
+  isEditingDescription?: boolean;
+  onStartEditLabel?: () => void;
+  onStartEditDescription?: () => void;
+  onCommitEdit?: (field: 'label' | 'description', value: string) => void;
+  onCancelEdit?: () => void;
 }
 
 // 카테고리별 스타일 정의
@@ -93,9 +101,27 @@ export const BaseNode = memo(function BaseNode({
   data,
   icon,
   selected,
+  isEditingLabel = false,
+  isEditingDescription = false,
+  onStartEditLabel,
+  onStartEditDescription,
+  onCommitEdit,
+  onCancelEdit,
 }: BaseNodeProps) {
   const styles = categoryStyles[data.category] || categoryStyles.external;
   const nodeType = data.nodeType || 'user';
+
+  const handleLabelCommit = useCallback((value: string) => {
+    onCommitEdit?.('label', value);
+  }, [onCommitEdit]);
+
+  const handleDescriptionCommit = useCallback((value: string) => {
+    onCommitEdit?.('description', value);
+  }, [onCommitEdit]);
+
+  const handleCancelEdit = useCallback(() => {
+    onCancelEdit?.();
+  }, [onCancelEdit]);
 
   return (
     <motion.div
@@ -144,12 +170,37 @@ export const BaseNode = memo(function BaseNode({
 
             {/* Text Content */}
             <div className="flex-1 min-w-0">
-              <div className="text-white font-semibold text-sm leading-tight truncate">
-                {data.label}
+              <div className="text-white font-semibold text-sm leading-tight">
+                {onStartEditLabel ? (
+                  <EditableLabel
+                    value={data.label}
+                    isEditing={isEditingLabel}
+                    onStartEdit={onStartEditLabel}
+                    onCommit={handleLabelCommit}
+                    onCancel={handleCancelEdit}
+                    className="text-white font-semibold text-sm"
+                    maxLength={30}
+                  />
+                ) : (
+                  <span className="truncate block">{data.label}</span>
+                )}
               </div>
-              {data.description && (
-                <div className="text-zinc-400 text-xs mt-0.5 truncate">
-                  {data.description}
+              {(data.description || onStartEditDescription) && (
+                <div className="text-zinc-400 text-xs mt-0.5">
+                  {onStartEditDescription ? (
+                    <EditableLabel
+                      value={data.description || ''}
+                      isEditing={isEditingDescription}
+                      onStartEdit={onStartEditDescription}
+                      onCommit={handleDescriptionCommit}
+                      onCancel={handleCancelEdit}
+                      className="text-zinc-400 text-xs"
+                      placeholder="설명 추가..."
+                      maxLength={50}
+                    />
+                  ) : (
+                    <span className="truncate block">{data.description}</span>
+                  )}
                 </div>
               )}
               <div className="text-zinc-500 text-[10px] mt-1 font-mono uppercase tracking-wide">

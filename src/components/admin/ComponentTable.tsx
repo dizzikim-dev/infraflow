@@ -1,0 +1,332 @@
+'use client';
+
+/**
+ * 컴포넌트 테이블
+ *
+ * 인프라 컴포넌트 목록을 테이블 형태로 표시
+ */
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+interface Policy {
+  id: string;
+  name: string;
+  nameKo: string;
+  priority: string;
+}
+
+interface Component {
+  id: string;
+  componentId: string;
+  name: string;
+  nameKo: string;
+  category: string;
+  tier: string;
+  isActive: boolean;
+  policies: Policy[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+interface ComponentTableProps {
+  components: Component[];
+  pagination: Pagination;
+  onPageChange: (page: number) => void;
+  onDelete: (id: string) => Promise<void>;
+}
+
+const categoryLabels: Record<string, string> = {
+  security: '보안',
+  network: '네트워크',
+  compute: '컴퓨팅',
+  cloud: '클라우드',
+  storage: '스토리지',
+  auth: '인증',
+  external: '외부',
+};
+
+const tierLabels: Record<string, string> = {
+  external: '외부',
+  dmz: 'DMZ',
+  internal: '내부',
+  data: '데이터',
+};
+
+const categoryColors: Record<string, string> = {
+  security: 'bg-red-100 text-red-800',
+  network: 'bg-blue-100 text-blue-800',
+  compute: 'bg-green-100 text-green-800',
+  cloud: 'bg-purple-100 text-purple-800',
+  storage: 'bg-yellow-100 text-yellow-800',
+  auth: 'bg-indigo-100 text-indigo-800',
+  external: 'bg-gray-100 text-gray-800',
+};
+
+const tierColors: Record<string, string> = {
+  external: 'bg-gray-100 text-gray-700',
+  dmz: 'bg-orange-100 text-orange-700',
+  internal: 'bg-emerald-100 text-emerald-700',
+  data: 'bg-violet-100 text-violet-700',
+};
+
+export default function ComponentTable({
+  components,
+  pagination,
+  onPageChange,
+  onDelete,
+}: ComponentTableProps) {
+  const router = useRouter();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`"${name}" 컴포넌트를 비활성화하시겠습니까?`)) {
+      return;
+    }
+
+    setDeletingId(id);
+    try {
+      await onDelete(id);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* 테이블 */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                컴포넌트
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                카테고리
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                티어
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                정책
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                상태
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                작업
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {components.map((component) => (
+              <tr
+                key={component.id}
+                className={`hover:bg-gray-50 ${!component.isActive ? 'opacity-50' : ''}`}
+              >
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-900">
+                      {component.nameKo}
+                    </span>
+                    <span className="text-sm text-gray-500">{component.name}</span>
+                    <span className="text-xs text-gray-400 font-mono">
+                      {component.componentId}
+                    </span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      categoryColors[component.category] || 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    {categoryLabels[component.category] || component.category}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      tierColors[component.tier] || 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {tierLabels[component.tier] || component.tier}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="text-sm text-gray-500">
+                    {component.policies.length}개
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {component.isActive ? (
+                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                      활성
+                    </span>
+                  ) : (
+                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-500">
+                      비활성
+                    </span>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div className="flex items-center justify-end gap-2">
+                    <Link
+                      href={`/admin/components/${component.id}`}
+                      className="text-blue-600 hover:text-blue-900"
+                    >
+                      상세
+                    </Link>
+                    <Link
+                      href={`/admin/components/${component.id}/edit`}
+                      className="text-indigo-600 hover:text-indigo-900"
+                    >
+                      수정
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(component.id, component.nameKo)}
+                      disabled={deletingId === component.id}
+                      className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                    >
+                      {deletingId === component.id ? '처리중...' : '삭제'}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* 페이지네이션 */}
+      {pagination.totalPages > 1 && (
+        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+          <div className="flex-1 flex justify-between sm:hidden">
+            <button
+              onClick={() => onPageChange(pagination.page - 1)}
+              disabled={!pagination.hasPrev}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              이전
+            </button>
+            <button
+              onClick={() => onPageChange(pagination.page + 1)}
+              disabled={!pagination.hasNext}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              다음
+            </button>
+          </div>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                총 <span className="font-medium">{pagination.total}</span>개 중{' '}
+                <span className="font-medium">
+                  {(pagination.page - 1) * pagination.limit + 1}
+                </span>{' '}
+                -{' '}
+                <span className="font-medium">
+                  {Math.min(pagination.page * pagination.limit, pagination.total)}
+                </span>{' '}
+                표시
+              </p>
+            </div>
+            <div>
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                <button
+                  onClick={() => onPageChange(pagination.page - 1)}
+                  disabled={!pagination.hasPrev}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">이전</span>
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                  .filter((page) => {
+                    const distance = Math.abs(page - pagination.page);
+                    return distance <= 2 || page === 1 || page === pagination.totalPages;
+                  })
+                  .map((page, index, array) => {
+                    const showEllipsis = index > 0 && page - array[index - 1] > 1;
+                    return (
+                      <span key={page}>
+                        {showEllipsis && (
+                          <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                            ...
+                          </span>
+                        )}
+                        <button
+                          onClick={() => onPageChange(page)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            page === pagination.page
+                              ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      </span>
+                    );
+                  })}
+                <button
+                  onClick={() => onPageChange(pagination.page + 1)}
+                  disabled={!pagination.hasNext}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">다음</span>
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 데이터 없음 */}
+      {components.length === 0 && (
+        <div className="text-center py-12">
+          <svg
+            className="mx-auto h-12 w-12 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+            />
+          </svg>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">데이터 없음</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            조건에 맞는 컴포넌트가 없습니다.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}

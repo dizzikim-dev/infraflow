@@ -6,3 +6,7 @@ export { TemplateGallery } from './TemplateGallery';
 export { ExportPanel } from './ExportPanel';
 export { SaveTemplateDialog } from './SaveTemplateDialog';
 export { NodeDetailPanel } from './NodeDetailPanel';
+export { CostEstimatorPanel } from './CostEstimatorPanel';
+export { SecurityAuditPanel } from './SecurityAuditPanel';
+export { ConversationPanel, type ConversationMessage } from './ConversationPanel';
+export { ReportExportPanel } from './ReportExportPanel';
