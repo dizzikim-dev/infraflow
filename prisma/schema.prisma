@@ -1,0 +1,116 @@
+// InfraFlow 인프라 데이터 관리 시스템
+// Prisma 스키마 정의
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum ComponentCategory {
+  security
+  network
+  compute
+  cloud
+  storage
+  auth
+  external
+}
+
+enum TierType {
+  external
+  dmz
+  internal
+  data
+}
+
+enum PolicyPriority {
+  critical
+  high
+  medium
+  low
+}
+
+enum PolicyCategory {
+  access
+  security
+  monitoring
+  compliance
+  performance
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+/// 인프라 구성요소 (장비/솔루션)
+model InfraComponent {
+  id            String            @id @default(cuid())
+  componentId   String            @unique  // kebab-case ID (예: firewall, load-balancer)
+
+  // 기본 정보
+  name          String            // 영문명
+  nameKo        String            // 한국어명
+  category      ComponentCategory // 카테고리
+  tier          TierType          // 티어 위치
+
+  // 상세 설명
+  description   String            @db.Text  // 영문 설명
+  descriptionKo String            @db.Text  // 한국어 설명
+
+  // 기능 및 특징 (배열)
+  functions     String[]          // 영문 기능 목록
+  functionsKo   String[]          // 한국어 기능 목록
+  features      String[]          // 영문 특징 목록
+  featuresKo    String[]          // 한국어 특징 목록
+
+  // 기술 정보
+  ports         String[]          // 사용 포트
+  protocols     String[]          // 지원 프로토콜
+  vendors       String[]          // 벤더 목록
+
+  // 관계
+  policies      PolicyRecommendation[]  // 권장 정책 목록
+
+  // 메타데이터
+  isActive      Boolean           @default(true)  // 활성화 상태 (소프트 삭제용)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([category])
+  @@index([tier])
+  @@index([isActive])
+  @@map("infra_components")
+}
+
+/// 권장 정책
+model PolicyRecommendation {
+  id          String         @id @default(cuid())
+
+  // 정책 정보
+  name        String         // 영문명
+  nameKo      String         // 한국어명
+  description String         @db.Text  // 설명
+  priority    PolicyPriority // 우선순위
+  category    PolicyCategory // 정책 분류
+
+  // 관계
+  componentId String
+  component   InfraComponent @relation(fields: [componentId], references: [id], onDelete: Cascade)
+
+  // 메타데이터
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([componentId])
+  @@index([priority])
+  @@map("policy_recommendations")
+}
