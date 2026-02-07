@@ -119,7 +119,6 @@ describe('intelligentParser', () => {
     const createContext = (currentSpec: InfraSpec | null = null): ConversationContext => ({
       currentSpec,
       history: [],
-      lastModification: null,
     });
 
     describe('create intent', () => {
