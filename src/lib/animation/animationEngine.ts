@@ -18,6 +18,9 @@ export interface FlowParticle {
   duration: number;
 }
 
+// Maximum particle age in milliseconds (60 seconds)
+const MAX_PARTICLE_AGE_MS = 60000;
+
 export type AnimationEventType =
   | 'play'
   | 'pause'
@@ -205,6 +208,10 @@ export class AnimationEngine {
     for (const [edgeId, particles] of this.state.activeFlows.entries()) {
       const activeParticles = particles.filter((particle) => {
         const elapsed = now - particle.startTime;
+        // Remove particles that exceed maximum age (memory leak prevention)
+        if (elapsed > MAX_PARTICLE_AGE_MS) {
+          return false;
+        }
         particle.progress = Math.min(1, elapsed / particle.duration);
         return particle.progress < 1;
       });
@@ -277,12 +284,31 @@ export class AnimationEngine {
   }
 }
 
-// Singleton instance
+/**
+ * @deprecated Use AnimationProvider and useAnimationEngine hook instead.
+ * This singleton pattern is kept for backward compatibility only.
+ * Will be removed in a future version.
+ */
 let engineInstance: AnimationEngine | null = null;
 
+/**
+ * @deprecated Use AnimationProvider and useAnimationEngine hook instead.
+ * This singleton getter is kept for backward compatibility only.
+ */
 export function getAnimationEngine(): AnimationEngine {
   if (!engineInstance) {
     engineInstance = new AnimationEngine();
   }
   return engineInstance;
+}
+
+/**
+ * @deprecated For testing purposes only.
+ * Resets the singleton instance.
+ */
+export function resetAnimationEngine(): void {
+  if (engineInstance) {
+    engineInstance.destroy();
+    engineInstance = null;
+  }
 }

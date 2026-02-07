@@ -1,5 +1,6 @@
 import { Node, Edge } from '@xyflow/react';
 import { InfraSpec, InfraNodeData, InfraEdgeData, InfraNodeType } from '@/types';
+import { isInfraNodeData } from '@/types/guards';
 import { infrastructureDB, tierOrder } from '@/lib/data';
 
 export interface LayoutConfig {
@@ -199,15 +200,19 @@ export function specToFlow(
   const reverseAdjacency = new Map<string, string[]>();
 
   for (const conn of spec.connections) {
-    if (!adjacency.has(conn.source)) {
-      adjacency.set(conn.source, []);
+    const sourceAdj = adjacency.get(conn.source);
+    if (sourceAdj) {
+      sourceAdj.push(conn.target);
+    } else {
+      adjacency.set(conn.source, [conn.target]);
     }
-    adjacency.get(conn.source)!.push(conn.target);
 
-    if (!reverseAdjacency.has(conn.target)) {
-      reverseAdjacency.set(conn.target, []);
+    const targetRevAdj = reverseAdjacency.get(conn.target);
+    if (targetRevAdj) {
+      targetRevAdj.push(conn.source);
+    } else {
+      reverseAdjacency.set(conn.target, [conn.source]);
     }
-    reverseAdjacency.get(conn.target)!.push(conn.source);
   }
 
   // 각 티어 내에서 노드 순서 결정 (연결된 노드들 가까이 배치)
@@ -309,12 +314,21 @@ export function relayoutNodes(
   // Create a mock spec to reuse layout logic
   const spec: InfraSpec = {
     nodes: nodes.map((n) => {
-      const data = n.data as InfraNodeData;
+      // Use type guard for safe data extraction
+      if (isInfraNodeData(n.data)) {
+        return {
+          id: n.id,
+          type: n.data.nodeType,
+          label: n.data.label,
+          zone: typeof n.data.zone === 'string' ? n.data.zone : undefined,
+        };
+      }
+      // Fallback for nodes without proper data
       return {
         id: n.id,
-        type: data.nodeType,
-        label: data.label,
-        zone: data.zone as string | undefined,
+        type: 'user' as InfraNodeType,
+        label: n.id,
+        zone: undefined,
       };
     }),
     connections,

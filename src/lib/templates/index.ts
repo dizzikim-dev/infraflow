@@ -15,3 +15,11 @@ export {
   type Template,
   type TemplateCategory,
 } from './templateManager';
+
+export {
+  recommendTemplates,
+  getPopularTemplates,
+  getTemplatesByUseCase,
+  findSimilarTemplates,
+  type TemplateRecommendation,
+} from './templateRecommender';

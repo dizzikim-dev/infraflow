@@ -182,4 +182,101 @@ export const nodeIcons: Record<string, string> = {
   'internet': 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07',
 };
 
+// Tier 색상 (레이아웃/계층 표시용)
+export const tierColors: Record<string, { bg: string; border: string; text: string }> = {
+  external: {
+    bg: 'rgba(107, 114, 128, 0.1)',
+    border: 'rgba(107, 114, 128, 0.3)',
+    text: '#6b7280',
+  },
+  dmz: {
+    bg: 'rgba(245, 158, 11, 0.1)',
+    border: 'rgba(245, 158, 11, 0.3)',
+    text: '#f59e0b',
+  },
+  internal: {
+    bg: 'rgba(16, 185, 129, 0.1)',
+    border: 'rgba(16, 185, 129, 0.3)',
+    text: '#10b981',
+  },
+  data: {
+    bg: 'rgba(139, 92, 246, 0.1)',
+    border: 'rgba(139, 92, 246, 0.3)',
+    text: '#8b5cf6',
+  },
+};
+
+// 우선순위 색상 (보안 감사, 규정 준수 등)
+export const priorityColors: Record<string, { bg: string; text: string; border: string }> = {
+  critical: {
+    bg: 'rgba(239, 68, 68, 0.15)',
+    text: '#ef4444',
+    border: 'rgba(239, 68, 68, 0.5)',
+  },
+  high: {
+    bg: 'rgba(249, 115, 22, 0.15)',
+    text: '#f97316',
+    border: 'rgba(249, 115, 22, 0.5)',
+  },
+  medium: {
+    bg: 'rgba(245, 158, 11, 0.15)',
+    text: '#f59e0b',
+    border: 'rgba(245, 158, 11, 0.5)',
+  },
+  low: {
+    bg: 'rgba(34, 197, 94, 0.15)',
+    text: '#22c55e',
+    border: 'rgba(34, 197, 94, 0.5)',
+  },
+  info: {
+    bg: 'rgba(59, 130, 246, 0.15)',
+    text: '#3b82f6',
+    border: 'rgba(59, 130, 246, 0.5)',
+  },
+};
+
+// 상태 색상 (성공, 실패, 경고 등)
+export const statusColors: Record<string, { bg: string; text: string; icon: string }> = {
+  success: {
+    bg: 'rgba(34, 197, 94, 0.15)',
+    text: '#22c55e',
+    icon: '✓',
+  },
+  error: {
+    bg: 'rgba(239, 68, 68, 0.15)',
+    text: '#ef4444',
+    icon: '✕',
+  },
+  warning: {
+    bg: 'rgba(245, 158, 11, 0.15)',
+    text: '#f59e0b',
+    icon: '⚠',
+  },
+  info: {
+    bg: 'rgba(59, 130, 246, 0.15)',
+    text: '#3b82f6',
+    icon: 'ℹ',
+  },
+  pending: {
+    bg: 'rgba(107, 114, 128, 0.15)',
+    text: '#6b7280',
+    icon: '○',
+  },
+};
+
+// Tier 색상 가져오기
+export function getTierColor(tier: string) {
+  return tierColors[tier] || tierColors.internal;
+}
+
+// 우선순위 색상 가져오기
+export function getPriorityColor(priority: string) {
+  return priorityColors[priority] || priorityColors.info;
+}
+
+// 상태 색상 가져오기
+export function getStatusColor(status: string) {
+  return statusColors[status] || statusColors.info;
+}
+
 export default colors;
