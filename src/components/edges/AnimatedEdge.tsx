@@ -58,6 +58,26 @@ const flowTypeStyles: Record<EdgeFlowType, {
   },
 };
 
+// Custom comparison function for React.memo
+function areEdgePropsEqual(prevProps: EdgeProps, nextProps: EdgeProps): boolean {
+  const prevData = prevProps.data as InfraEdgeData | undefined;
+  const nextData = nextProps.data as InfraEdgeData | undefined;
+
+  return (
+    prevProps.id === nextProps.id &&
+    prevProps.sourceX === nextProps.sourceX &&
+    prevProps.sourceY === nextProps.sourceY &&
+    prevProps.targetX === nextProps.targetX &&
+    prevProps.targetY === nextProps.targetY &&
+    prevProps.sourcePosition === nextProps.sourcePosition &&
+    prevProps.targetPosition === nextProps.targetPosition &&
+    prevProps.selected === nextProps.selected &&
+    prevData?.flowType === nextData?.flowType &&
+    prevData?.animated === nextData?.animated &&
+    prevData?.label === nextData?.label
+  );
+}
+
 export const AnimatedEdge = memo(function AnimatedEdge({
   id,
   sourceX,
@@ -274,4 +294,4 @@ export const AnimatedEdge = memo(function AnimatedEdge({
       )}
     </>
   );
-});
+}, areEdgePropsEqual);

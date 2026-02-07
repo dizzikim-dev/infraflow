@@ -97,6 +97,29 @@ function NodeIcon({ nodeType }: { nodeType: string }) {
   );
 }
 
+// Custom comparison function for React.memo
+function arePropsEqual(prevProps: BaseNodeProps, nextProps: BaseNodeProps): boolean {
+  // Fast path: check reference equality for data object
+  if (prevProps.data === nextProps.data && prevProps.selected === nextProps.selected) {
+    return (
+      prevProps.isEditingLabel === nextProps.isEditingLabel &&
+      prevProps.isEditingDescription === nextProps.isEditingDescription
+    );
+  }
+
+  // Deep comparison for data properties that affect rendering
+  return (
+    prevProps.data.label === nextProps.data.label &&
+    prevProps.data.description === nextProps.data.description &&
+    prevProps.data.nodeType === nextProps.data.nodeType &&
+    prevProps.data.category === nextProps.data.category &&
+    prevProps.data.policies?.length === nextProps.data.policies?.length &&
+    prevProps.selected === nextProps.selected &&
+    prevProps.isEditingLabel === nextProps.isEditingLabel &&
+    prevProps.isEditingDescription === nextProps.isEditingDescription
+  );
+}
+
 export const BaseNode = memo(function BaseNode({
   data,
   icon,
@@ -293,4 +316,4 @@ export const BaseNode = memo(function BaseNode({
       />
     </motion.div>
   );
-});
+}, arePropsEqual);
