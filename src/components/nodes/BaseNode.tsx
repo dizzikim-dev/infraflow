@@ -146,15 +146,24 @@ export const BaseNode = memo(function BaseNode({
     onCancelEdit?.();
   }, [onCancelEdit]);
 
+  // Generate accessible description
+  const accessibleDescription = `${data.label}, ${nodeType.replace('-', ' ')} node${data.description ? `, ${data.description}` : ''}${data.policies?.length ? `, ${data.policies.length} policies attached` : ''}`;
+
   return (
     <motion.div
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ scale: 1.02, y: -2 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      role="button"
+      tabIndex={0}
+      aria-label={accessibleDescription}
+      aria-selected={selected}
+      aria-roledescription="infrastructure node"
       className={`
         relative group
         min-w-[140px] max-w-[180px]
+        focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900
       `}
     >
       {/* Glow Effect */}

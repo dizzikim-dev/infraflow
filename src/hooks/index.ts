@@ -46,3 +46,11 @@ export {
   type ErrorHandlerOptions,
   type UseErrorHandlerReturn,
 } from './useErrorHandler';
+export {
+  useKeyboardNavigation,
+  formatShortcutKey,
+  defaultCanvasShortcuts,
+  type KeyboardShortcut,
+  type UseKeyboardNavigationOptions,
+  type UseKeyboardNavigationReturn,
+} from './useKeyboardNavigation';
