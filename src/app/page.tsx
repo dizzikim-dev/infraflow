@@ -1,29 +1,61 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { AnimatePresence } from 'framer-motion';
 import { XYPosition } from '@xyflow/react';
 import { FlowCanvas } from '@/components/shared';
 import { Header, EmptyState } from '@/components/layout';
-import {
-  PromptPanel,
-  AnimationControlPanel,
-  PolicyOverlay,
-  ScenarioSelector,
-  TemplateGallery,
-  ExportPanel,
-  SaveTemplateDialog,
-  NodeDetailPanel,
-} from '@/components/panels';
+import { PromptPanel } from '@/components/panels';
 import {
   CanvasContextMenu,
   NodeContextMenu,
   EdgeContextMenu,
   ComponentPicker,
 } from '@/components/contextMenu';
-import { ComparisonView } from '@/components/comparison';
 import { useInfraState, useModalManager, useContextMenu, useComparisonMode, type ComponentData } from '@/hooks';
 import { InfraNodeType } from '@/types';
+
+// Dynamic imports for conditionally rendered heavy components
+const AnimationControlPanel = dynamic(
+  () => import('@/components/panels/AnimationControlPanel').then(mod => ({ default: mod.AnimationControlPanel })),
+  { ssr: false }
+);
+
+const PolicyOverlay = dynamic(
+  () => import('@/components/panels/PolicyOverlay').then(mod => ({ default: mod.PolicyOverlay })),
+  { ssr: false }
+);
+
+const ScenarioSelector = dynamic(
+  () => import('@/components/panels/ScenarioSelector').then(mod => ({ default: mod.ScenarioSelector })),
+  { ssr: false }
+);
+
+const TemplateGallery = dynamic(
+  () => import('@/components/panels/TemplateGallery').then(mod => ({ default: mod.TemplateGallery })),
+  { ssr: false }
+);
+
+const ExportPanel = dynamic(
+  () => import('@/components/panels/ExportPanel').then(mod => ({ default: mod.ExportPanel })),
+  { ssr: false }
+);
+
+const SaveTemplateDialog = dynamic(
+  () => import('@/components/panels/SaveTemplateDialog').then(mod => ({ default: mod.SaveTemplateDialog })),
+  { ssr: false }
+);
+
+const NodeDetailPanel = dynamic(
+  () => import('@/components/panels/NodeDetailPanel').then(mod => ({ default: mod.NodeDetailPanel })),
+  { ssr: false }
+);
+
+const ComparisonView = dynamic(
+  () => import('@/components/comparison/ComparisonView').then(mod => ({ default: mod.ComparisonView })),
+  { ssr: false }
+);
 
 export default function Home() {
   // Infrastructure state management
