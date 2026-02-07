@@ -118,6 +118,8 @@ export interface InfraEdgeData {
 
 // Parsed Infrastructure Spec (from LLM)
 export interface InfraSpec {
+  name?: string;
+  description?: string;
   nodes: InfraNodeSpec[];
   connections: ConnectionSpec[];
   zones?: ZoneSpec[];
@@ -128,6 +130,7 @@ export interface InfraNodeSpec {
   id: string;
   type: InfraNodeType;
   label: string;
+  tier?: TierType;
   zone?: string;
   description?: string;
 }
