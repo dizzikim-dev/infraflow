@@ -26,10 +26,8 @@ const createMockNodeConfig = (id: string): NodeConfig => ({
   id,
   name: `Test ${id}`,
   category: 'security',
-  icon: null,
+  icon: 'Shield',
   color: '#ff0000',
-  description: `Test node ${id}`,
-  tier: 'dmz',
 });
 
 const createMockNodeExtension = (id: string): NodeExtension => ({

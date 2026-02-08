@@ -49,10 +49,8 @@ const createValidNodeExtension = (): NodeExtension => ({
     id: 'test-node',
     name: 'Test Node',
     category: 'security',
-    icon: MockIcon,
+    icon: 'Shield',
     color: '#ff0000',
-    description: 'Test node description',
-    tier: 'dmz',
   },
 });
 
@@ -66,7 +64,7 @@ const createValidExporterExtension = (): ExporterExtension => ({
 const createValidPanelExtension = (): PanelExtension => ({
   id: 'test-panel',
   title: 'Test Panel',
-  icon: MockIcon,
+  icon: null,
   component: () => null,
   position: 'left',
 });
