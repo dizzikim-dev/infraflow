@@ -191,7 +191,7 @@ describe('DynamicArrayField', () => {
 
       // Find and click the add button
       const buttons = screen.getAllByRole('button');
-      const addButton = buttons.find((btn) => btn.textContent === '' && btn.type === 'button');
+      const addButton = buttons.find((btn) => btn.textContent === '' && (btn as HTMLButtonElement).type === 'button');
       if (addButton) {
         await user.click(addButton);
       }
