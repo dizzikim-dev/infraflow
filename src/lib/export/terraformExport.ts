@@ -1,7 +1,37 @@
+/**
+ * Terraform Export Module
+ *
+ * This module converts InfraFlow infrastructure specifications to Terraform HCL format.
+ * It supports multiple cloud providers (AWS, Azure, GCP) and generates production-ready
+ * Terraform configurations.
+ *
+ * @module lib/export/terraformExport
+ *
+ * @example
+ * import { exportToTerraform } from '@/lib/export/terraformExport';
+ *
+ * const terraform = exportToTerraform(infraSpec, {
+ *   provider: 'aws',
+ *   region: 'ap-northeast-2',
+ *   includeVariables: true,
+ *   includeOutputs: true
+ * });
+ *
+ * console.log(terraform);
+ * // Outputs HCL configuration
+ */
+
 import { InfraSpec, InfraNodeSpec, InfraNodeType } from '@/types';
 
 /**
- * Terraform export options
+ * Options for Terraform export.
+ *
+ * @interface TerraformExportOptions
+ * @property {'aws' | 'azure' | 'gcp'} [provider='aws'] - Target cloud provider
+ * @property {string} [region='ap-northeast-2'] - Cloud region for resources
+ * @property {boolean} [includeVariables=true] - Whether to include variable definitions
+ * @property {boolean} [includeOutputs=true] - Whether to include output definitions
+ * @property {boolean} [moduleFormat=false] - Whether to format as a reusable module
  */
 export interface TerraformExportOptions {
   provider?: 'aws' | 'azure' | 'gcp';
@@ -12,7 +42,22 @@ export interface TerraformExportOptions {
 }
 
 /**
- * Map node types to Terraform resources
+ * Maps InfraFlow node types to Terraform resource generator functions.
+ *
+ * Each node type has a corresponding function that generates the appropriate
+ * Terraform HCL configuration for the target cloud provider.
+ *
+ * @constant
+ * @type {Record<InfraNodeType, (node: InfraNodeSpec, provider: string) => string>}
+ *
+ * Supported node types include:
+ * - Security: firewall, waf, ids-ips, vpn-gateway, nac, dlp
+ * - Network: router, switch-l2, switch-l3, load-balancer, sd-wan, dns, cdn
+ * - Compute: web-server, app-server, db-server, container, vm, kubernetes
+ * - Cloud: aws-vpc, azure-vnet, gcp-network, private-cloud
+ * - Storage: san-nas, object-storage, backup, cache, storage
+ * - Auth: ldap-ad, sso, mfa, iam
+ * - External: user, internet, zone
  */
 const terraformResourceMap: Record<InfraNodeType, (node: InfraNodeSpec, provider: string) => string> = {
   // Security
@@ -439,7 +484,15 @@ resource "aws_iam_role" "${sanitizeId(node.id)}" {
 };
 
 /**
- * Generate EC2 instance resource
+ * Generates an AWS EC2 instance Terraform resource.
+ *
+ * Creates an EC2 instance configuration with appropriate subnet placement
+ * based on the node's zone (DMZ uses public subnet, others use private).
+ *
+ * @param {InfraNodeSpec} node - The infrastructure node specification
+ * @param {string} provider - Cloud provider (only generates for 'aws')
+ * @param {string} tier - Instance tier (web, app, vm)
+ * @returns {string} Terraform HCL configuration for the EC2 instance
  */
 function generateEC2Instance(node: InfraNodeSpec, provider: string, tier: string): string {
   if (provider !== 'aws') {
@@ -461,14 +514,31 @@ resource "aws_instance" "${sanitizeId(node.id)}" {
 }
 
 /**
- * Sanitize ID for Terraform resource names
+ * Sanitizes an ID for use as a Terraform resource name.
+ *
+ * Terraform resource names must contain only alphanumeric characters and underscores.
+ * This function replaces all invalid characters with underscores and converts to lowercase.
+ *
+ * @param {string} id - The original ID to sanitize
+ * @returns {string} Sanitized ID safe for Terraform resource names
+ *
+ * @example
+ * sanitizeId('web-server-1') // Returns 'web_server_1'
+ * sanitizeId('My App') // Returns 'my_app'
  */
 function sanitizeId(id: string): string {
   return id.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase();
 }
 
 /**
- * Generate Terraform provider block
+ * Generates the Terraform provider configuration block.
+ *
+ * Creates the required_providers and provider blocks for the specified
+ * cloud provider with the given region.
+ *
+ * @param {string} provider - Cloud provider ('aws', 'azure', or 'gcp')
+ * @param {string} region - Cloud region (e.g., 'ap-northeast-2', 'us-east-1')
+ * @returns {string} Terraform HCL for the provider configuration
  */
 function generateProviderBlock(provider: string, region: string): string {
   switch (provider) {
@@ -524,7 +594,12 @@ provider "google" {
 }
 
 /**
- * Generate Terraform variables block
+ * Generates the Terraform variables block with common infrastructure variables.
+ *
+ * Creates variable definitions for sensitive values like database credentials
+ * and project configuration.
+ *
+ * @returns {string} Terraform HCL for variable definitions
  */
 function generateVariablesBlock(): string {
   return `
@@ -548,7 +623,25 @@ variable "project_id" {
 }
 
 /**
- * Export InfraSpec to Terraform HCL format
+ * Exports an InfraSpec to Terraform HCL format.
+ *
+ * Converts an infrastructure specification into a complete Terraform configuration
+ * including provider setup, variables, resources, and outputs.
+ *
+ * @param {InfraSpec} spec - The infrastructure specification to export
+ * @param {TerraformExportOptions} [options={}] - Export configuration options
+ * @returns {string} Complete Terraform HCL configuration
+ *
+ * @example
+ * const terraform = exportToTerraform(spec, {
+ *   provider: 'aws',
+ *   region: 'us-west-2',
+ *   includeVariables: true,
+ *   includeOutputs: true
+ * });
+ *
+ * // Save to file
+ * fs.writeFileSync('main.tf', terraform);
  */
 export function exportToTerraform(
   spec: InfraSpec,

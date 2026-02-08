@@ -1,5 +1,8 @@
 import { InfraSpec } from '@/types';
 import { isInfraSpec } from '@/types/guards';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('LLMParser');
 
 export interface LLMConfig {
   provider: 'claude' | 'openai';
@@ -74,7 +77,10 @@ export async function isLLMConfigured(): Promise<boolean> {
 
     const data = await response.json();
     return data.configured === true;
-  } catch {
+  } catch (error) {
+    logger.debug('Failed to check LLM configuration', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return false;
   }
 }
@@ -94,7 +100,10 @@ export async function getAvailableProviders(): Promise<{
 
     const data = await response.json();
     return data.providers || { claude: false, openai: false };
-  } catch {
+  } catch (error) {
+    logger.debug('Failed to get available LLM providers', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return { claude: false, openai: false };
   }
 }

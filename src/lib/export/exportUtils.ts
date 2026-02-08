@@ -10,6 +10,9 @@
 
 import { InfraSpec } from '@/types';
 import type { ExporterExtension } from '@/types/plugin';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('ExportUtils');
 
 export type ExportFormat = 'png' | 'svg' | 'json' | 'pdf';
 
@@ -197,7 +200,10 @@ export async function copyImageToClipboard(element: HTMLElement): Promise<void> 
     await navigator.clipboard.write([
       new ClipboardItem({ 'image/png': blob }),
     ]);
-  } catch {
+  } catch (error) {
+    logger.warn('Failed to copy image to clipboard', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw new Error('Failed to copy to clipboard');
   }
 }
@@ -228,7 +234,10 @@ function getExporterRegistry() {
   try {
     const { exporterRegistry } = require('./ExporterRegistry');
     return exporterRegistry;
-  } catch {
+  } catch (error) {
+    logger.debug('ExporterRegistry not available', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }

@@ -155,3 +155,178 @@ export function detectCommandType(text: string): CommandType {
 
   return 'create'; // 기본값: 새 아키텍처 생성
 }
+
+// ============================================================
+// Performance Optimization: Caching & Pre-filtering
+// ============================================================
+
+/**
+ * 캐시 설정
+ */
+const CACHE_CONFIG = {
+  maxSize: 1000,  // 최대 캐시 항목 수
+  keyMaxLength: 100,  // 캐시 키 최대 길이
+} as const;
+
+/**
+ * 패턴 매칭 결과 캐시
+ * LRU 방식으로 관리 (Map의 순서 활용)
+ */
+interface PatternCache {
+  cache: Map<string, NodeTypePattern[]>;
+  hits: number;
+  misses: number;
+}
+
+const patternCache: PatternCache = {
+  cache: new Map(),
+  hits: 0,
+  misses: 0,
+};
+
+/**
+ * 캐시 키 생성 (정규화된 입력의 앞부분)
+ */
+function createCacheKey(text: string): string {
+  return text.toLowerCase().trim().slice(0, CACHE_CONFIG.keyMaxLength);
+}
+
+/**
+ * 캐시에서 결과 조회 (LRU 갱신)
+ */
+function getFromCache(key: string): NodeTypePattern[] | undefined {
+  const cached = patternCache.cache.get(key);
+  if (cached) {
+    // LRU: 조회된 항목을 끝으로 이동
+    patternCache.cache.delete(key);
+    patternCache.cache.set(key, cached);
+    patternCache.hits++;
+    return cached;
+  }
+  patternCache.misses++;
+  return undefined;
+}
+
+/**
+ * 캐시에 결과 저장 (크기 제한 적용)
+ */
+function setToCache(key: string, value: NodeTypePattern[]): void {
+  // 캐시 크기 초과 시 가장 오래된 항목 제거 (LRU)
+  if (patternCache.cache.size >= CACHE_CONFIG.maxSize) {
+    const firstKey = patternCache.cache.keys().next().value;
+    if (firstKey) {
+      patternCache.cache.delete(firstKey);
+    }
+  }
+  patternCache.cache.set(key, value);
+}
+
+/**
+ * 캐시 초기화
+ */
+export function clearPatternCache(): void {
+  patternCache.cache.clear();
+  patternCache.hits = 0;
+  patternCache.misses = 0;
+}
+
+/**
+ * 캐시 통계 조회
+ */
+export function getPatternCacheStats(): {
+  size: number;
+  maxSize: number;
+  hits: number;
+  misses: number;
+  hitRatio: number;
+} {
+  const total = patternCache.hits + patternCache.misses;
+  return {
+    size: patternCache.cache.size,
+    maxSize: CACHE_CONFIG.maxSize,
+    hits: patternCache.hits,
+    misses: patternCache.misses,
+    hitRatio: total > 0 ? patternCache.hits / total : 0,
+  };
+}
+
+/**
+ * 키워드 사전 필터링을 위한 빠른 키워드 세트
+ * 정규식 패턴에서 주요 키워드 추출
+ */
+const quickMatchKeywords: Set<string> = new Set([
+  // English keywords (lowercase)
+  'user', 'client', 'internet', 'waf', 'firewall', 'fw', 'ids', 'ips', 'intrusion',
+  'vpn', 'nac', 'dlp', 'cdn', 'content', 'delivery', 'load', 'balancer', 'lb',
+  'router', 'switch', 'l3', 'l2', 'sd-wan', 'sdwan', 'dns', 'web', 'server',
+  'app', 'was', 'db', 'database', 'kubernetes', 'k8s', 'container', 'docker',
+  'vm', 'virtual', 'machine', 'aws', 'vpc', 'azure', 'vnet', 'gcp', 'google',
+  'cloud', 'private', 'san', 'nas', 'object', 'storage', 's3', 'backup',
+  'cache', 'redis', 'memcached', 'ldap', 'ad', 'active', 'directory',
+  'sso', 'single', 'sign', 'mfa', 'multi', 'factor', 'iam', 'identity', 'access',
+  // Korean keywords
+  '사용자', '유저', '클라이언트', '인터넷', '외부망', '웹방화벽', '방화벽',
+  '침입', '탐지', '방지', '가상사설망', '네트워크', '접근', '제어',
+  '데이터', '유출', '로드', '밸런서', '부하분산', '라우터', '스위치',
+  '레이어', '도메인', '네임', '웹', '서버', '앱', '애플리케이션',
+  '데이터베이스', '디비', '쿠버네티스', '컨테이너', '도커', '가상', '머신',
+  '사설', '클라우드', '스토리지', '영역', '오브젝트', '백업', '캐시',
+  '액티브', '디렉토리', '싱글', '사인온', '다중', '인증',
+]);
+
+/**
+ * 빠른 키워드 존재 확인
+ * 입력 텍스트에 매칭 가능한 키워드가 있는지 빠르게 확인
+ */
+function hasAnyKeyword(text: string): boolean {
+  const words = text.toLowerCase().split(/[\s,.\-_:;!?'"()[\]{}]+/);
+  for (const word of words) {
+    if (word.length >= 2 && quickMatchKeywords.has(word)) {
+      return true;
+    }
+  }
+  // 한국어 키워드는 단어 분리가 어려우므로 직접 검색
+  for (const keyword of quickMatchKeywords) {
+    if (keyword.length >= 2 && text.includes(keyword)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * 최적화된 모든 노드 타입 감지
+ * - 캐싱: 동일 입력에 대한 중복 계산 방지
+ * - 키워드 사전 필터링: 관련 없는 입력에 대한 빠른 반환
+ */
+export function detectAllNodeTypesOptimized(text: string): NodeTypePattern[] {
+  // 빈 문자열 처리
+  if (!text || text.trim().length === 0) {
+    return [];
+  }
+
+  const cacheKey = createCacheKey(text);
+
+  // 캐시 조회
+  const cached = getFromCache(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const normalized = text.toLowerCase();
+
+  // 키워드 사전 필터링: 관련 키워드가 없으면 빈 배열 반환
+  if (!hasAnyKeyword(normalized)) {
+    const emptyResult: NodeTypePattern[] = [];
+    setToCache(cacheKey, emptyResult);
+    return emptyResult;
+  }
+
+  // 실제 패턴 매칭
+  const result = nodeTypePatterns.filter(p => p.pattern.test(normalized));
+
+  // 결과 캐싱
+  setToCache(cacheKey, result);
+
+  return result;
+}

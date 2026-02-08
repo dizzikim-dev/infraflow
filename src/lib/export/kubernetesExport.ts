@@ -1,7 +1,37 @@
+/**
+ * Kubernetes Export Module
+ *
+ * This module converts InfraFlow infrastructure specifications to Kubernetes YAML manifests.
+ * It generates production-ready Kubernetes resources including Deployments, Services,
+ * StatefulSets, NetworkPolicies, and Ingress configurations.
+ *
+ * @module lib/export/kubernetesExport
+ *
+ * @example
+ * import { exportToKubernetes } from '@/lib/export/kubernetesExport';
+ *
+ * const yaml = exportToKubernetes(infraSpec, {
+ *   namespace: 'production',
+ *   includeIngress: true,
+ *   includeNetworkPolicy: true,
+ *   replicaCount: 3
+ * });
+ *
+ * console.log(yaml);
+ * // Outputs Kubernetes YAML manifests
+ */
+
 import { InfraSpec, InfraNodeSpec, InfraNodeType } from '@/types';
 
 /**
- * Kubernetes export options
+ * Options for Kubernetes export.
+ *
+ * @interface KubernetesExportOptions
+ * @property {string} [namespace='default'] - Kubernetes namespace for resources
+ * @property {boolean} [includeNamespace=true] - Whether to include namespace resource
+ * @property {boolean} [includeIngress=true] - Whether to include Ingress resource
+ * @property {boolean} [includeNetworkPolicy=true] - Whether to include NetworkPolicy resources
+ * @property {number} [replicaCount=2] - Default replica count for Deployments
  */
 export interface KubernetesExportOptions {
   namespace?: string;
@@ -12,7 +42,20 @@ export interface KubernetesExportOptions {
 }
 
 /**
- * Map node types to Kubernetes resources
+ * Maps InfraFlow node types to Kubernetes resource generator functions.
+ *
+ * Each node type has a corresponding function that generates the appropriate
+ * Kubernetes YAML manifest(s) for that infrastructure component.
+ *
+ * @constant
+ * @type {Record<InfraNodeType, (node: InfraNodeSpec, options: KubernetesExportOptions) => string>}
+ *
+ * Generated resources by category:
+ * - Security nodes: NetworkPolicy, ConfigMap (WAF rules), DaemonSet (IDS)
+ * - Network nodes: Service (LoadBalancer, ClusterIP)
+ * - Compute nodes: Deployment, StatefulSet, Service
+ * - Storage nodes: PersistentVolumeClaim
+ * - Other nodes: Comments indicating external management
  */
 const kubernetesResourceMap: Record<InfraNodeType, (node: InfraNodeSpec, options: KubernetesExportOptions) => string> = {
   // Security nodes
@@ -316,7 +359,16 @@ spec:
 };
 
 /**
- * Generate a standard Deployment
+ * Generates a standard Kubernetes Deployment with associated Service.
+ *
+ * Creates a Deployment with configured replicas, resource limits, and
+ * health probes, along with a ClusterIP Service for internal access.
+ *
+ * @param {InfraNodeSpec} node - The infrastructure node specification
+ * @param {KubernetesExportOptions} options - Export options including namespace and replica count
+ * @param {string} tier - Application tier (web, app, container)
+ * @param {number} port - Container and service port
+ * @returns {string} Kubernetes YAML for Deployment and Service
  */
 function generateDeployment(
   node: InfraNodeSpec,
@@ -390,7 +442,20 @@ spec:
 }
 
 /**
- * Sanitize name for Kubernetes resources (lowercase, alphanumeric, hyphens)
+ * Sanitizes a name for use as a Kubernetes resource name.
+ *
+ * Kubernetes resource names must:
+ * - Be lowercase
+ * - Contain only alphanumeric characters and hyphens
+ * - Not start or end with a hyphen
+ * - Be at most 63 characters
+ *
+ * @param {string} name - The original name to sanitize
+ * @returns {string} Sanitized name safe for Kubernetes resources
+ *
+ * @example
+ * sanitizeK8sName('Web Server 1') // Returns 'web-server-1'
+ * sanitizeK8sName('My__App') // Returns 'my-app'
  */
 function sanitizeK8sName(name: string): string {
   return name
@@ -402,7 +467,10 @@ function sanitizeK8sName(name: string): string {
 }
 
 /**
- * Generate namespace resource
+ * Generates a Kubernetes Namespace resource.
+ *
+ * @param {string} namespace - The namespace name
+ * @returns {string} Kubernetes YAML for the Namespace
  */
 function generateNamespace(namespace: string): string {
   return `
@@ -416,7 +484,14 @@ metadata:
 }
 
 /**
- * Generate Ingress resource
+ * Generates a Kubernetes Ingress resource for web-facing services.
+ *
+ * Creates an Ingress with TLS configuration and path-based routing
+ * for web servers and load balancers found in the specification.
+ *
+ * @param {InfraSpec} spec - The infrastructure specification
+ * @param {KubernetesExportOptions} options - Export options including namespace
+ * @returns {string} Kubernetes YAML for the Ingress, or empty string if no web nodes
  */
 function generateIngress(spec: InfraSpec, options: KubernetesExportOptions): string {
   const webNodes = spec.nodes.filter((n) =>
@@ -456,7 +531,14 @@ spec:
 }
 
 /**
- * Generate default NetworkPolicy
+ * Generates default NetworkPolicy resources for namespace isolation.
+ *
+ * Creates two NetworkPolicies:
+ * 1. default-deny-ingress: Blocks all ingress traffic by default
+ * 2. allow-internal: Allows traffic between pods in the same namespace
+ *
+ * @param {KubernetesExportOptions} options - Export options including namespace
+ * @returns {string} Kubernetes YAML for NetworkPolicy resources
  */
 function generateDefaultNetworkPolicy(options: KubernetesExportOptions): string {
   return `
@@ -486,7 +568,25 @@ spec:
 }
 
 /**
- * Export InfraSpec to Kubernetes YAML format
+ * Exports an InfraSpec to Kubernetes YAML format.
+ *
+ * Converts an infrastructure specification into complete Kubernetes manifests
+ * including namespace, network policies, deployments, services, and ingress.
+ *
+ * @param {InfraSpec} spec - The infrastructure specification to export
+ * @param {KubernetesExportOptions} [options={}] - Export configuration options
+ * @returns {string} Complete Kubernetes YAML manifests
+ *
+ * @example
+ * const yaml = exportToKubernetes(spec, {
+ *   namespace: 'production',
+ *   includeIngress: true,
+ *   includeNetworkPolicy: true,
+ *   replicaCount: 3
+ * });
+ *
+ * // Apply with kubectl
+ * // kubectl apply -f manifests.yaml
  */
 export function exportToKubernetes(
   spec: InfraSpec,

@@ -3,14 +3,12 @@
 import { useCallback, useRef, useEffect } from 'react';
 import { Node, Edge } from '@xyflow/react';
 import { HISTORY_MAX_SIZE, HISTORY_DEBOUNCE_MS } from '@/lib/constants';
+import { createStateSnapshot, generateStateHash, StateSnapshot } from '@/lib/utils';
 
 /**
  * History state snapshot
  */
-export interface HistoryState {
-  nodes: Node[];
-  edges: Edge[];
-}
+export type HistoryState = StateSnapshot;
 
 /**
  * Options for useHistory hook
@@ -80,32 +78,6 @@ export function useHistory(
   const lastSavedRef = useRef<string>('');
 
   /**
-   * Create an immutable snapshot of current state
-   */
-  const createSnapshot = useCallback((nodes: Node[], edges: Edge[]): HistoryState => {
-    return {
-      nodes: nodes.map(n => ({
-        ...n,
-        data: { ...n.data },
-        position: { ...n.position },
-      })),
-      edges: edges.map(e => ({
-        ...e,
-        data: e.data ? { ...e.data } : undefined,
-      })),
-    };
-  }, []);
-
-  /**
-   * Generate a simple hash for change detection
-   */
-  const getStateHash = useCallback((nodes: Node[], edges: Edge[]): string => {
-    const nodesHash = nodes.map(n => `${n.id}:${n.position.x}:${n.position.y}`).join(',');
-    const edgesHash = edges.map(e => `${e.id}:${e.source}:${e.target}`).join(',');
-    return `${nodes.length}-${nodesHash}-${edges.length}-${edgesHash}`;
-  }, []);
-
-  /**
    * Save current state to history
    */
   const saveToHistory = useCallback(() => {
@@ -115,13 +87,13 @@ export function useHistory(
     }
 
     // Skip if state hasn't changed
-    const currentHash = getStateHash(nodes, edges);
+    const currentHash = generateStateHash(nodes, edges);
     if (currentHash === lastSavedRef.current) {
       return;
     }
     lastSavedRef.current = currentHash;
 
-    const currentState = createSnapshot(nodes, edges);
+    const currentState = createStateSnapshot(nodes, edges);
 
     // Remove any redo states if we're not at the end
     if (historyIndexRef.current < historyRef.current.length - 1) {
@@ -137,7 +109,7 @@ export function useHistory(
       historyRef.current.shift();
       historyIndexRef.current--;
     }
-  }, [nodes, edges, createSnapshot, getStateHash, maxSize]);
+  }, [nodes, edges, maxSize]);
 
   /**
    * Undo to previous state
@@ -149,9 +121,9 @@ export function useHistory(
       const prevState = historyRef.current[historyIndexRef.current];
       setNodes(prevState.nodes);
       setEdges(prevState.edges);
-      lastSavedRef.current = getStateHash(prevState.nodes, prevState.edges);
+      lastSavedRef.current = generateStateHash(prevState.nodes, prevState.edges);
     }
-  }, [setNodes, setEdges, getStateHash]);
+  }, [setNodes, setEdges]);
 
   /**
    * Redo to next state
@@ -163,9 +135,9 @@ export function useHistory(
       const nextState = historyRef.current[historyIndexRef.current];
       setNodes(nextState.nodes);
       setEdges(nextState.edges);
-      lastSavedRef.current = getStateHash(nextState.nodes, nextState.edges);
+      lastSavedRef.current = generateStateHash(nextState.nodes, nextState.edges);
     }
-  }, [setNodes, setEdges, getStateHash]);
+  }, [setNodes, setEdges]);
 
   /**
    * Clear all history
@@ -193,12 +165,12 @@ export function useHistory(
   // Initialize history with initial state
   useEffect(() => {
     if (historyRef.current.length === 0 && (nodes.length > 0 || edges.length > 0)) {
-      const initialState = createSnapshot(nodes, edges);
+      const initialState = createStateSnapshot(nodes, edges);
       historyRef.current = [initialState];
       historyIndexRef.current = 0;
-      lastSavedRef.current = getStateHash(nodes, edges);
+      lastSavedRef.current = generateStateHash(nodes, edges);
     }
-  }, [nodes, edges, createSnapshot, getStateHash]);
+  }, [nodes, edges]);
 
   // Save to history when nodes or edges change (debounced)
   useEffect(() => {

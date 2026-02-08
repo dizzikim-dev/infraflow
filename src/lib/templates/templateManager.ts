@@ -1,5 +1,8 @@
 import { InfraSpec } from '@/types';
 import { infraTemplates } from '../parser/templates';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('TemplateManager');
 
 export interface Template {
   id: string;
@@ -193,7 +196,10 @@ export function getCustomTemplates(): Template[] {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return [];
     return JSON.parse(stored);
-  } catch {
+  } catch (error) {
+    logger.warn('Failed to load custom templates from localStorage', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return [];
   }
 }
@@ -309,6 +315,10 @@ export function importTemplate(json: string): Template | null {
 
     // Validate required fields
     if (!template.name || !template.spec) {
+      logger.warn('Invalid template import: missing required fields', {
+        hasName: !!template.name,
+        hasSpec: !!template.spec,
+      });
       return null;
     }
 
@@ -319,7 +329,10 @@ export function importTemplate(json: string): Template | null {
       template.spec,
       template.category || 'custom'
     );
-  } catch {
+  } catch (error) {
+    logger.warn('Failed to import template: JSON parse error', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -344,7 +357,10 @@ export function parseShareLink(encoded: string): Partial<Template> | null {
   try {
     const json = decodeURIComponent(atob(encoded));
     return JSON.parse(json);
-  } catch {
+  } catch (error) {
+    logger.warn('Failed to parse share link', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }

@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { Node, Edge } from '@xyflow/react';
-import { InfraSpec, InfraNodeData, isInfraNodeData } from '@/types';
+import { InfraSpec, isInfraNodeData } from '@/types';
+import { createStateSnapshot } from '@/lib/utils';
 
 export type ComparisonMode = 'before-after' | 'independent';
 
@@ -144,20 +145,9 @@ function hasNodeChanged(left: Node, right: Node): boolean {
 
 /**
  * Deep clone nodes and edges for comparison
+ * Wrapper around shared utility for backward compatibility
  */
-function clonePanelData(nodes: Node[], edges: Edge[]): { nodes: Node[]; edges: Edge[] } {
-  return {
-    nodes: nodes.map((n) => ({
-      ...n,
-      data: { ...n.data },
-      position: { ...n.position },
-    })),
-    edges: edges.map((e) => ({
-      ...e,
-      data: e.data ? { ...e.data } : undefined,
-    })),
-  };
-}
+const clonePanelData = createStateSnapshot;
 
 /**
  * Hook for managing comparison mode state

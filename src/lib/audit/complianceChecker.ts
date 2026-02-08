@@ -1,13 +1,41 @@
 /**
- * InfraFlow - Compliance Checker
+ * Compliance Checker Module
  *
- * 규정 준수 체크 및 What-if 분석
+ * This module provides compliance checking against major security frameworks
+ * (ISMS-P, ISO 27001, PCI-DSS, GDPR, HIPAA, K-ISMS) and what-if analysis
+ * for infrastructure changes.
+ *
+ * @module lib/audit/complianceChecker
+ *
+ * @example
+ * import { checkCompliance, checkAllCompliance, analyzeWhatIfAdd } from '@/lib/audit/complianceChecker';
+ *
+ * // Check compliance against a specific framework
+ * const ismsReport = checkCompliance(infraSpec, 'isms-p');
+ * console.log(`ISMS-P Score: ${ismsReport.score}%`);
+ *
+ * // Check all frameworks
+ * const allReports = checkAllCompliance(infraSpec);
+ *
+ * // What-if analysis
+ * const impact = analyzeWhatIfAdd(infraSpec, 'waf');
+ * console.log(`Risk delta: ${impact.riskDelta}`);
  */
 
 import type { InfraSpec, InfraNodeType, InfraNodeSpec, ConnectionSpec } from '@/types';
 
 /**
- * Compliance frameworks
+ * Supported compliance frameworks.
+ *
+ * @typedef {string} ComplianceFramework
+ *
+ * Frameworks:
+ * - isms-p: ISMS-P (Korean Information Security Management System - Personal)
+ * - iso27001: ISO 27001 (International Information Security Standard)
+ * - pci-dss: PCI DSS (Payment Card Industry Data Security Standard)
+ * - gdpr: GDPR (EU General Data Protection Regulation)
+ * - hipaa: HIPAA (US Health Insurance Portability and Accountability Act)
+ * - k-isms: K-ISMS (Korean Information Security Management System)
  */
 export type ComplianceFramework =
   | 'isms-p'      // ISMS-P (한국 정보보호관리체계)
@@ -18,7 +46,16 @@ export type ComplianceFramework =
   | 'k-isms';     // K-ISMS (한국 정보보호관리체계)
 
 /**
- * Compliance check result
+ * Result of a single compliance check.
+ *
+ * @interface ComplianceCheck
+ * @property {string} id - Requirement ID (e.g., 'ISMS-P-2.6.1', 'PCI-1.1')
+ * @property {ComplianceFramework} framework - The compliance framework
+ * @property {string} requirement - Short requirement name
+ * @property {string} description - Detailed requirement description
+ * @property {'pass' | 'fail' | 'partial' | 'not-applicable'} status - Check status
+ * @property {string} details - Details about the check result
+ * @property {string} [remediation] - Recommended remediation action
  */
 export interface ComplianceCheck {
   id: string;
@@ -31,7 +68,19 @@ export interface ComplianceCheck {
 }
 
 /**
- * Compliance report
+ * Complete compliance report for a framework.
+ *
+ * @interface ComplianceReport
+ * @property {ComplianceFramework} framework - The compliance framework
+ * @property {string} frameworkName - Human-readable framework name
+ * @property {string} timestamp - ISO timestamp of the check
+ * @property {number} totalChecks - Total number of requirements checked
+ * @property {number} passed - Number of passed checks
+ * @property {number} failed - Number of failed checks
+ * @property {number} partial - Number of partially met checks
+ * @property {number} notApplicable - Number of not applicable checks
+ * @property {number} score - Compliance score from 0-100
+ * @property {ComplianceCheck[]} checks - Detailed check results
  */
 export interface ComplianceReport {
   framework: ComplianceFramework;
@@ -47,7 +96,13 @@ export interface ComplianceReport {
 }
 
 /**
- * What-if analysis result
+ * Result of a what-if analysis for infrastructure changes.
+ *
+ * @interface WhatIfResult
+ * @property {WhatIfChange} change - The proposed change
+ * @property {WhatIfImpact[]} impacts - List of impacts from the change
+ * @property {number} riskDelta - Risk change from -100 to +100 (positive = improvement)
+ * @property {string[]} recommendations - Recommendations for the change
  */
 export interface WhatIfResult {
   change: WhatIfChange;
@@ -56,6 +111,15 @@ export interface WhatIfResult {
   recommendations: string[];
 }
 
+/**
+ * Description of a proposed infrastructure change.
+ *
+ * @interface WhatIfChange
+ * @property {'add' | 'remove' | 'modify'} type - Type of change
+ * @property {InfraNodeType} [nodeType] - Type of node being added
+ * @property {string} [nodeId] - ID of node being modified or removed
+ * @property {string} description - Human-readable description
+ */
 export interface WhatIfChange {
   type: 'add' | 'remove' | 'modify';
   nodeType?: InfraNodeType;
@@ -63,6 +127,14 @@ export interface WhatIfChange {
   description: string;
 }
 
+/**
+ * An impact resulting from a proposed change.
+ *
+ * @interface WhatIfImpact
+ * @property {'security' | 'availability' | 'compliance' | 'cost'} category - Impact category
+ * @property {'high' | 'medium' | 'low'} severity - Impact severity
+ * @property {string} description - Description of the impact
+ */
 export interface WhatIfImpact {
   category: 'security' | 'availability' | 'compliance' | 'cost';
   severity: 'high' | 'medium' | 'low';
@@ -70,7 +142,16 @@ export interface WhatIfImpact {
 }
 
 /**
- * Framework requirements
+ * Mapping of compliance frameworks to their requirements.
+ *
+ * Each framework contains an array of requirements with:
+ * - id: Unique requirement identifier
+ * - requirement: Short requirement name
+ * - description: Full requirement description
+ * - check: Function that evaluates the requirement against an InfraSpec
+ *
+ * @constant
+ * @type {Record<ComplianceFramework, Array<{id, requirement, description, check}>>}
  */
 const COMPLIANCE_REQUIREMENTS: Record<ComplianceFramework, Array<{
   id: string;
@@ -386,7 +467,14 @@ const COMPLIANCE_REQUIREMENTS: Record<ComplianceFramework, Array<{
 };
 
 /**
- * Get framework display name
+ * Returns the human-readable display name for a compliance framework.
+ *
+ * @param {ComplianceFramework} framework - The framework identifier
+ * @returns {string} Human-readable framework name
+ *
+ * @example
+ * getFrameworkName('isms-p') // Returns 'ISMS-P (정보보호관리체계)'
+ * getFrameworkName('pci-dss') // Returns 'PCI DSS'
  */
 export function getFrameworkName(framework: ComplianceFramework): string {
   const names: Record<ComplianceFramework, string> = {
@@ -401,7 +489,24 @@ export function getFrameworkName(framework: ComplianceFramework): string {
 }
 
 /**
- * Run compliance check for a specific framework
+ * Runs compliance check against a specific framework.
+ *
+ * Evaluates the infrastructure specification against all requirements
+ * of the specified compliance framework.
+ *
+ * @param {InfraSpec} spec - The infrastructure specification to check
+ * @param {ComplianceFramework} framework - The compliance framework to check against
+ * @returns {ComplianceReport} Detailed compliance report with score and findings
+ *
+ * @example
+ * const report = checkCompliance(infraSpec, 'pci-dss');
+ *
+ * if (report.score < 100) {
+ *   console.log('PCI-DSS gaps found:');
+ *   report.checks.filter(c => c.status === 'fail').forEach(c => {
+ *     console.log(`${c.id}: ${c.requirement} - ${c.remediation}`);
+ *   });
+ * }
  */
 export function checkCompliance(spec: InfraSpec, framework: ComplianceFramework): ComplianceReport {
   const requirements = COMPLIANCE_REQUIREMENTS[framework];
@@ -460,7 +565,20 @@ export function checkCompliance(spec: InfraSpec, framework: ComplianceFramework)
 }
 
 /**
- * Run compliance check for all frameworks
+ * Runs compliance check against all supported frameworks.
+ *
+ * Evaluates the infrastructure against ISMS-P, ISO 27001, PCI-DSS,
+ * GDPR, HIPAA, and K-ISMS frameworks.
+ *
+ * @param {InfraSpec} spec - The infrastructure specification to check
+ * @returns {ComplianceReport[]} Array of compliance reports for all frameworks
+ *
+ * @example
+ * const reports = checkAllCompliance(infraSpec);
+ *
+ * reports.forEach(report => {
+ *   console.log(`${report.frameworkName}: ${report.score}%`);
+ * });
  */
 export function checkAllCompliance(spec: InfraSpec): ComplianceReport[] {
   const frameworks: ComplianceFramework[] = ['isms-p', 'iso27001', 'pci-dss', 'gdpr', 'hipaa', 'k-isms'];
@@ -468,7 +586,22 @@ export function checkAllCompliance(spec: InfraSpec): ComplianceReport[] {
 }
 
 /**
- * What-if analysis: simulate adding a component
+ * Performs what-if analysis for adding a component.
+ *
+ * Simulates adding a component of the specified type and analyzes
+ * the impact on security, availability, compliance, and cost.
+ *
+ * @param {InfraSpec} spec - The current infrastructure specification
+ * @param {InfraNodeType} nodeType - Type of node to simulate adding
+ * @returns {WhatIfResult} Analysis result with impacts and risk delta
+ *
+ * @example
+ * const result = analyzeWhatIfAdd(infraSpec, 'waf');
+ *
+ * console.log(`Risk improvement: ${result.riskDelta}`);
+ * result.impacts.forEach(impact => {
+ *   console.log(`[${impact.severity}] ${impact.category}: ${impact.description}`);
+ * });
  */
 export function analyzeWhatIfAdd(spec: InfraSpec, nodeType: InfraNodeType): WhatIfResult {
   const impacts: WhatIfImpact[] = [];
@@ -546,7 +679,22 @@ export function analyzeWhatIfAdd(spec: InfraSpec, nodeType: InfraNodeType): What
 }
 
 /**
- * What-if analysis: simulate removing a component
+ * Performs what-if analysis for removing a component.
+ *
+ * Simulates removing the specified component and analyzes the impact
+ * on security, availability, compliance, and cost.
+ *
+ * @param {InfraSpec} spec - The current infrastructure specification
+ * @param {string} nodeId - ID of the node to simulate removing
+ * @returns {WhatIfResult} Analysis result with impacts and risk delta
+ *
+ * @example
+ * const result = analyzeWhatIfRemove(infraSpec, 'firewall-1');
+ *
+ * if (result.riskDelta < -10) {
+ *   console.log('WARNING: Removing this component significantly increases risk');
+ *   result.recommendations.forEach(r => console.log(`- ${r}`));
+ * }
  */
 export function analyzeWhatIfRemove(spec: InfraSpec, nodeId: string): WhatIfResult {
   const node = spec.nodes.find((n) => n.id === nodeId);
@@ -641,7 +789,18 @@ export function analyzeWhatIfRemove(spec: InfraSpec, nodeId: string): WhatIfResu
 }
 
 /**
- * Get available frameworks
+ * Returns a list of all available compliance frameworks with descriptions.
+ *
+ * @returns {Array<{id: ComplianceFramework, name: string, description: string}>}
+ *          Array of framework information objects
+ *
+ * @example
+ * const frameworks = getAvailableFrameworks();
+ *
+ * // Display in UI
+ * frameworks.forEach(f => {
+ *   console.log(`${f.name}: ${f.description}`);
+ * });
  */
 export function getAvailableFrameworks(): Array<{
   id: ComplianceFramework;

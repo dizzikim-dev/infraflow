@@ -17,6 +17,9 @@ import { BaseNode } from './BaseNode';
 import { InfraNodeData } from '@/types';
 import { useEditableNode } from './useEditableNode';
 import { defaultNodeConfigs, NodeConfig, getNodeConfigsFromRegistry } from './nodeConfig';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('NodeFactory');
 
 export type InfraNodeProps = NodeProps<Node<InfraNodeData>>;
 
@@ -147,8 +150,11 @@ export function getNodeComponent(nodeId: string): ComponentType<InfraNodeProps> 
     if (config) {
       return getOrCreateNodeComponent(config);
     }
-  } catch {
-    // 플러그인 시스템 초기화 전
+  } catch (error) {
+    logger.debug('Plugin registry not available for node lookup', {
+      nodeId,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 
   return undefined;
@@ -163,7 +169,10 @@ export function useNodeTypes(): Record<string, ComponentType<InfraNodeProps>> {
   return useMemo(() => {
     try {
       return getDynamicNodeTypes();
-    } catch {
+    } catch (error) {
+      logger.debug('Failed to get dynamic node types, using defaults', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return nodeTypes;
     }
   }, []);

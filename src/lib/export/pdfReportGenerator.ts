@@ -7,6 +7,9 @@
 import type { InfraSpec } from '@/types';
 import { runSecurityAudit, checkAllCompliance, type SecurityAuditResult, type ComplianceReport } from '@/lib/audit';
 import { estimateCost, compareCosts, formatCost, type CostBreakdown, type CloudProvider } from '@/lib/cost';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('PDFReportGenerator');
 
 export interface ReportMetadata {
   title: string;
@@ -95,8 +98,10 @@ export async function generatePDFReport(
   if (options.diagramImage) {
     try {
       pdf.addImage(options.diagramImage, 'PNG', margin + 20, 110, contentWidth - 40, 80);
-    } catch {
-      // Skip if image fails
+    } catch (error) {
+      logger.warn('Failed to add diagram image to PDF report', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

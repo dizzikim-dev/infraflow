@@ -1,9 +1,34 @@
+/**
+ * Intelligent Parser Module
+ *
+ * This module provides LLM-based intent analysis for infrastructure prompts.
+ * It extracts user intent, component types, and positioning information from
+ * natural language descriptions and applies them to infrastructure specifications.
+ *
+ * @module lib/parser/intelligentParser
+ *
+ * @example
+ * // Parse intent from LLM response
+ * const intent = parseIntentResponse(llmResponse);
+ * if (intent) {
+ *   const result = applyIntentToSpec(intent, conversationContext);
+ *   console.log(result.spec);
+ * }
+ */
+
 import { InfraSpec, InfraNodeSpec, ConnectionSpec, InfraNodeType } from '@/types';
 import { ConversationContext, SmartParseResult, SpecModification } from './UnifiedParser';
 import { CommandType } from './patterns';
 
 /**
- * Intent analysis result from LLM
+ * Result of intent analysis from LLM.
+ *
+ * @interface IntentAnalysis
+ * @property {CommandType} intent - The detected command type (create, add, remove, etc.)
+ * @property {number} confidence - Confidence score from 0.0 to 1.0
+ * @property {ExtractedComponent[]} components - List of extracted infrastructure components
+ * @property {PositionInfo} [position] - Optional positioning information for add operations
+ * @property {string} [reasoning] - LLM's reasoning explanation
  */
 export interface IntentAnalysis {
   intent: CommandType;
@@ -13,6 +38,15 @@ export interface IntentAnalysis {
   reasoning?: string;
 }
 
+/**
+ * An infrastructure component extracted from user input.
+ *
+ * @interface ExtractedComponent
+ * @property {InfraNodeType} type - The infrastructure node type (e.g., 'firewall', 'web-server')
+ * @property {string} label - Display label for the component
+ * @property {string} [zone] - Network zone (dmz, internal, external, data)
+ * @property {string} [description] - Optional description of the component
+ */
 export interface ExtractedComponent {
   type: InfraNodeType;
   label: string;
@@ -20,6 +54,22 @@ export interface ExtractedComponent {
   description?: string;
 }
 
+/**
+ * Positioning information for component placement.
+ *
+ * @interface PositionInfo
+ * @property {'before' | 'after' | 'between' | 'start' | 'end'} type - Position type
+ * @property {string} [reference] - Reference component type for positioning
+ * @property {string} [referenceSecond] - Second reference for 'between' positioning
+ *
+ * @example
+ * // Add WAF after firewall
+ * { type: 'after', reference: 'firewall' }
+ *
+ * @example
+ * // Add load-balancer between WAF and web-server
+ * { type: 'between', reference: 'waf', referenceSecond: 'web-server' }
+ */
 export interface PositionInfo {
   type: 'before' | 'after' | 'between' | 'start' | 'end';
   reference?: string;
@@ -27,7 +77,15 @@ export interface PositionInfo {
 }
 
 /**
- * System prompt for intent analysis
+ * System prompt for LLM intent analysis.
+ *
+ * This prompt instructs the LLM to analyze user prompts and extract:
+ * - Intent type (create, add, remove, modify, connect, disconnect, query)
+ * - Infrastructure components with types and labels
+ * - Positioning information for component placement
+ *
+ * @constant
+ * @type {string}
  */
 export const INTENT_ANALYSIS_PROMPT = `당신은 인프라 아키텍처 전문가입니다. 사용자의 프롬프트에서 의도와 컴포넌트를 추출합니다.
 
@@ -72,7 +130,21 @@ export const INTENT_ANALYSIS_PROMPT = `당신은 인프라 아키텍처 전문�
 JSON만 출력하세요. 설명은 필요 없습니다.`;
 
 /**
- * Parse intent analysis response from LLM
+ * Parses the LLM response to extract intent analysis.
+ *
+ * Handles various response formats including:
+ * - Direct JSON objects
+ * - JSON wrapped in markdown code blocks
+ * - JSON embedded within other text
+ *
+ * @param {string} content - Raw LLM response content
+ * @returns {IntentAnalysis | null} Parsed intent analysis or null if parsing fails
+ *
+ * @example
+ * const intent = parseIntentResponse('{"intent": "add", "confidence": 0.9, "components": [...]}');
+ * if (intent) {
+ *   console.log(`Intent: ${intent.intent}, Confidence: ${intent.confidence}`);
+ * }
  */
 export function parseIntentResponse(content: string): IntentAnalysis | null {
   const tryParse = (jsonStr: string): unknown => {
@@ -111,7 +183,15 @@ export function parseIntentResponse(content: string): IntentAnalysis | null {
 }
 
 /**
- * Type guard for IntentAnalysis
+ * Type guard to validate IntentAnalysis object structure.
+ *
+ * Checks that the object has the required properties:
+ * - Valid intent type
+ * - Numeric confidence
+ * - Array of components
+ *
+ * @param {unknown} obj - Object to validate
+ * @returns {boolean} True if object is a valid IntentAnalysis
  */
 function isIntentAnalysis(obj: unknown): obj is IntentAnalysis {
   if (!obj || typeof obj !== 'object') return false;
@@ -130,7 +210,28 @@ function isIntentAnalysis(obj: unknown): obj is IntentAnalysis {
 }
 
 /**
- * Apply intent analysis to current spec
+ * Applies the analyzed intent to the current infrastructure specification.
+ *
+ * Routes the intent to the appropriate handler based on intent type:
+ * - create: Creates a new architecture from scratch
+ * - add: Adds components to existing architecture
+ * - remove: Removes components from architecture
+ * - modify: Modifies existing component properties
+ * - connect: Creates new connections between components
+ * - disconnect: Removes connections between components
+ * - query: Returns information about the current architecture
+ *
+ * @param {IntentAnalysis} intent - The analyzed intent from LLM
+ * @param {ConversationContext} context - Current conversation context with existing spec
+ * @returns {SmartParseResult} Result containing the updated spec and modifications
+ *
+ * @example
+ * const intent = { intent: 'add', confidence: 0.95, components: [...] };
+ * const context = { currentSpec: existingSpec, history: [] };
+ * const result = applyIntentToSpec(intent, context);
+ * if (result.success) {
+ *   console.log('Updated spec:', result.spec);
+ * }
  */
 export function applyIntentToSpec(
   intent: IntentAnalysis,

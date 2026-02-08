@@ -1,12 +1,52 @@
+/**
+ * Security Audit Module
+ *
+ * This module provides comprehensive security auditing for infrastructure specifications.
+ * It analyzes architecture for common security vulnerabilities, compliance gaps, and
+ * best practice violations.
+ *
+ * @module lib/audit/securityAudit
+ *
+ * @example
+ * import { runSecurityAudit, getSeverityColor } from '@/lib/audit/securityAudit';
+ *
+ * const result = runSecurityAudit(infraSpec, 'My Architecture');
+ * console.log(`Security Score: ${result.score}/100`);
+ * console.log(`Findings: ${result.findings.length}`);
+ *
+ * result.findings.forEach(finding => {
+ *   console.log(`[${finding.severity}] ${finding.title}`);
+ * });
+ */
+
 import { InfraSpec, InfraNodeSpec, ConnectionSpec, InfraNodeType } from '@/types';
 
 /**
- * Security audit severity levels
+ * Security audit severity levels.
+ *
+ * @typedef {'critical' | 'high' | 'medium' | 'low' | 'info'} AuditSeverity
+ *
+ * Severity meanings:
+ * - critical: Immediate security risk, must be addressed
+ * - high: Significant security concern, should be addressed soon
+ * - medium: Moderate security concern, should be planned for remediation
+ * - low: Minor security concern, consider addressing
+ * - info: Informational finding, no action required
  */
 export type AuditSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 
 /**
- * Security audit finding
+ * A security audit finding representing a detected issue or concern.
+ *
+ * @interface AuditFinding
+ * @property {string} id - Unique identifier for the finding (e.g., 'NET-001')
+ * @property {string} title - Short title of the finding
+ * @property {string} description - Detailed description of the issue
+ * @property {AuditSeverity} severity - Severity level of the finding
+ * @property {AuditCategory} category - Category of the finding
+ * @property {string[]} [affectedNodes] - IDs of affected infrastructure nodes
+ * @property {string} recommendation - Recommended remediation action
+ * @property {string[]} [references] - Reference standards (e.g., 'CIS Control 13')
  */
 export interface AuditFinding {
   id: string;
@@ -20,7 +60,17 @@ export interface AuditFinding {
 }
 
 /**
- * Audit category
+ * Categories for classifying audit findings.
+ *
+ * @typedef {string} AuditCategory
+ *
+ * Categories:
+ * - network-security: Firewall, WAF, IDS/IPS, network segmentation issues
+ * - access-control: Authentication, authorization, MFA issues
+ * - data-protection: Encryption, DLP, backup issues
+ * - availability: High availability, disaster recovery issues
+ * - compliance: Regulatory compliance gaps
+ * - best-practice: Industry best practice violations
  */
 export type AuditCategory =
   | 'network-security'
@@ -31,7 +81,16 @@ export type AuditCategory =
   | 'best-practice';
 
 /**
- * Security audit result
+ * Complete result of a security audit.
+ *
+ * @interface SecurityAuditResult
+ * @property {string} timestamp - ISO timestamp of when the audit was performed
+ * @property {string} [specName] - Name of the audited architecture
+ * @property {number} totalNodes - Total number of nodes in the architecture
+ * @property {number} totalConnections - Total number of connections
+ * @property {AuditFinding[]} findings - List of security findings
+ * @property {number} score - Security score from 0-100 (higher is better)
+ * @property {AuditSummary} summary - Summary of findings by severity
  */
 export interface SecurityAuditResult {
   timestamp: string;
@@ -44,7 +103,15 @@ export interface SecurityAuditResult {
 }
 
 /**
- * Audit summary by severity
+ * Summary of audit findings grouped by severity.
+ *
+ * @interface AuditSummary
+ * @property {number} critical - Count of critical findings
+ * @property {number} high - Count of high severity findings
+ * @property {number} medium - Count of medium severity findings
+ * @property {number} low - Count of low severity findings
+ * @property {number} info - Count of informational findings
+ * @property {number} passed - Count of checks that passed
  */
 export interface AuditSummary {
   critical: number;
@@ -56,7 +123,12 @@ export interface AuditSummary {
 }
 
 /**
- * Security rules for auditing
+ * Internal structure for a security audit rule.
+ *
+ * @interface SecurityRule
+ * @property {string} id - Unique rule identifier
+ * @property {string} title - Rule title
+ * @property {function} check - Function that checks the rule and returns a finding or null
  */
 interface SecurityRule {
   id: string;
@@ -65,7 +137,18 @@ interface SecurityRule {
 }
 
 /**
- * Define security rules
+ * Collection of security rules for infrastructure auditing.
+ *
+ * Rules are organized by category:
+ * - NET-*: Network security rules
+ * - ACC-*: Access control rules
+ * - DATA-*: Data protection rules
+ * - AVAIL-*: Availability rules
+ * - COMP-*: Compliance rules
+ * - BP-*: Best practice rules
+ *
+ * @constant
+ * @type {SecurityRule[]}
  */
 const securityRules: SecurityRule[] = [
   // Network Security Rules
@@ -456,7 +539,17 @@ const securityRules: SecurityRule[] = [
 ];
 
 /**
- * Calculate security score based on findings
+ * Calculates a security score based on audit findings.
+ *
+ * The score starts at 100 and deductions are made based on finding severity:
+ * - Critical: -25 points
+ * - High: -15 points
+ * - Medium: -8 points
+ * - Low: -3 points
+ * - Info: -1 point
+ *
+ * @param {AuditFinding[]} findings - List of security findings
+ * @returns {number} Security score from 0-100 (minimum is 0)
  */
 function calculateScore(findings: AuditFinding[]): number {
   const severityWeights: Record<AuditSeverity, number> = {
@@ -477,7 +570,11 @@ function calculateScore(findings: AuditFinding[]): number {
 }
 
 /**
- * Generate audit summary
+ * Generates a summary of audit findings by severity.
+ *
+ * @param {AuditFinding[]} findings - List of security findings
+ * @param {number} totalChecks - Total number of checks performed
+ * @returns {AuditSummary} Summary object with counts by severity
  */
 function generateSummary(findings: AuditFinding[], totalChecks: number): AuditSummary {
   const summary: AuditSummary = {
@@ -497,7 +594,24 @@ function generateSummary(findings: AuditFinding[], totalChecks: number): AuditSu
 }
 
 /**
- * Run security audit on InfraSpec
+ * Runs a comprehensive security audit on an infrastructure specification.
+ *
+ * Evaluates the architecture against predefined security rules and returns
+ * detailed findings with recommendations for improvement.
+ *
+ * @param {InfraSpec} spec - The infrastructure specification to audit
+ * @param {string} [specName] - Optional name for the architecture
+ * @returns {SecurityAuditResult} Complete audit result with score and findings
+ *
+ * @example
+ * const result = runSecurityAudit(infraSpec, 'Production Architecture');
+ *
+ * if (result.score < 70) {
+ *   console.log('WARNING: Security improvements needed');
+ *   result.findings.filter(f => f.severity === 'critical').forEach(f => {
+ *     console.log(`CRITICAL: ${f.title} - ${f.recommendation}`);
+ *   });
+ * }
  */
 export function runSecurityAudit(spec: InfraSpec, specName?: string): SecurityAuditResult {
   const findings: AuditFinding[] = [];
@@ -532,7 +646,17 @@ export function runSecurityAudit(spec: InfraSpec, specName?: string): SecurityAu
 }
 
 /**
- * Get severity color for display
+ * Returns the display color for a severity level.
+ *
+ * Colors are chosen for high contrast and accessibility:
+ * - critical: Red (#DC2626)
+ * - high: Orange (#EA580C)
+ * - medium: Amber (#D97706)
+ * - low: Blue (#2563EB)
+ * - info: Gray (#6B7280)
+ *
+ * @param {AuditSeverity} severity - The severity level
+ * @returns {string} Hex color code for the severity
  */
 export function getSeverityColor(severity: AuditSeverity): string {
   switch (severity) {
@@ -552,7 +676,14 @@ export function getSeverityColor(severity: AuditSeverity): string {
 }
 
 /**
- * Get severity badge
+ * Returns a display badge text for a severity level.
+ *
+ * @param {AuditSeverity} severity - The severity level
+ * @returns {string} Human-readable severity label
+ *
+ * @example
+ * getSeverityBadge('critical') // Returns 'Critical'
+ * getSeverityBadge('medium') // Returns 'Medium'
  */
 export function getSeverityBadge(severity: AuditSeverity): string {
   switch (severity) {

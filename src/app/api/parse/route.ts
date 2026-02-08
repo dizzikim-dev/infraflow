@@ -1,3 +1,29 @@
+/**
+ * Smart Parse API Route
+ *
+ * This module provides intelligent infrastructure prompt parsing using LLM (Claude/OpenAI).
+ * It analyzes user prompts in natural language and converts them into structured infrastructure specifications.
+ *
+ * @module api/parse
+ *
+ * @example
+ * // POST request to parse a prompt
+ * const response = await fetch('/api/parse', {
+ *   method: 'POST',
+ *   headers: { 'Content-Type': 'application/json' },
+ *   body: JSON.stringify({
+ *     prompt: '3-tier web architecture with WAF',
+ *     provider: 'claude',
+ *     useLLM: true
+ *   })
+ * });
+ *
+ * @example
+ * // GET request to check availability
+ * const status = await fetch('/api/parse');
+ * // Returns: { available: true, providers: { claude: true, openai: false }, features: {...} }
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { isInfraSpec } from '@/types/guards';
 import type { InfraSpec } from '@/types';
@@ -9,6 +35,18 @@ import {
 } from '@/lib/parser/intelligentParser';
 import { ConversationContext, SmartParseResult } from '@/lib/parser/smartParser';
 
+/**
+ * Request body for the smart parse endpoint.
+ *
+ * @interface SmartParseRequestBody
+ * @property {string} prompt - The natural language prompt describing the infrastructure
+ * @property {object} [context] - Optional context for contextual parsing
+ * @property {InfraSpec | null} [context.currentSpec] - Current infrastructure specification
+ * @property {Array<{prompt: string, timestamp: number}>} [context.history] - Prompt history
+ * @property {'claude' | 'openai'} [provider='claude'] - LLM provider to use
+ * @property {string} [model] - Specific model to use (e.g., 'claude-3-haiku-20240307')
+ * @property {boolean} [useLLM=true] - Whether to use LLM for parsing (false uses rule-based)
+ */
 export interface SmartParseRequestBody {
   prompt: string;
   context?: {
@@ -20,6 +58,16 @@ export interface SmartParseRequestBody {
   useLLM?: boolean;
 }
 
+/**
+ * Response from the smart parse endpoint.
+ *
+ * @interface SmartParseResponse
+ * @property {boolean} success - Whether the parsing was successful
+ * @property {SmartParseResult} [result] - The parsed result with infrastructure spec
+ * @property {IntentAnalysis} [intent] - The analyzed intent from the prompt
+ * @property {string} [error] - Error message if parsing failed
+ * @property {string} [rawResponse] - Raw LLM response for debugging
+ */
 export interface SmartParseResponse {
   success: boolean;
   result?: SmartParseResult;
@@ -29,7 +77,27 @@ export interface SmartParseResponse {
 }
 
 /**
- * Call Claude API for intent analysis
+ * Analyzes user intent using Claude API.
+ *
+ * Sends the prompt to Claude's API with context about the current architecture
+ * and parses the response to extract intent analysis.
+ *
+ * @param {string} prompt - The user's natural language prompt
+ * @param {InfraSpec | null} contextSpec - Current infrastructure spec for context
+ * @param {string} apiKey - Anthropic API key
+ * @param {string} [model='claude-3-haiku-20240307'] - Claude model to use
+ * @returns {Promise<{intent: IntentAnalysis | null, rawResponse: string, error?: string}>}
+ *          Returns the parsed intent, raw response, and optional error message
+ *
+ * @example
+ * const result = await analyzeIntentWithClaude(
+ *   'Add a WAF before the load balancer',
+ *   currentSpec,
+ *   process.env.ANTHROPIC_API_KEY
+ * );
+ * if (result.intent) {
+ *   console.log(result.intent.components);
+ * }
  */
 async function analyzeIntentWithClaude(
   prompt: string,
@@ -91,7 +159,24 @@ async function analyzeIntentWithClaude(
 }
 
 /**
- * Call OpenAI API for intent analysis
+ * Analyzes user intent using OpenAI API.
+ *
+ * Sends the prompt to OpenAI's API with context about the current architecture
+ * and parses the response to extract intent analysis.
+ *
+ * @param {string} prompt - The user's natural language prompt
+ * @param {InfraSpec | null} contextSpec - Current infrastructure spec for context
+ * @param {string} apiKey - OpenAI API key
+ * @param {string} [model='gpt-4o-mini'] - OpenAI model to use
+ * @returns {Promise<{intent: IntentAnalysis | null, rawResponse: string, error?: string}>}
+ *          Returns the parsed intent, raw response, and optional error message
+ *
+ * @example
+ * const result = await analyzeIntentWithOpenAI(
+ *   'Create a VDI architecture with VPN',
+ *   null,
+ *   process.env.OPENAI_API_KEY
+ * );
  */
 async function analyzeIntentWithOpenAI(
   prompt: string,
@@ -153,8 +238,44 @@ async function analyzeIntentWithOpenAI(
 }
 
 /**
+ * POST /api/parse - Smart Parsing Endpoint
+ *
+ * Parses a natural language prompt describing infrastructure architecture
+ * using LLM-based intent analysis (Claude or OpenAI).
+ *
+ * @route POST /api/parse
+ * @param {NextRequest} request - The incoming request containing SmartParseRequestBody
+ * @returns {Promise<NextResponse<SmartParseResponse>>} JSON response with parsed result
+ *
+ * @throws {400} Invalid prompt - When prompt is missing or not a string
+ * @throws {400} Unknown provider - When provider is neither 'claude' nor 'openai'
+ * @throws {500} Server error - When an unexpected error occurs
+ *
+ * @example
+ * // Request
  * POST /api/parse
- * Smart parsing endpoint with LLM intent analysis
+ * {
+ *   "prompt": "VDI with internal LLM integration",
+ *   "provider": "claude",
+ *   "useLLM": true,
+ *   "context": {
+ *     "currentSpec": null
+ *   }
+ * }
+ *
+ * // Response
+ * {
+ *   "success": true,
+ *   "result": {
+ *     "spec": { "nodes": [...], "connections": [...] },
+ *     "commandType": "create"
+ *   },
+ *   "intent": {
+ *     "intent": "create",
+ *     "confidence": 0.95,
+ *     "components": [...]
+ *   }
+ * }
  */
 export async function POST(
   request: NextRequest
@@ -259,8 +380,28 @@ export async function POST(
 }
 
 /**
- * GET /api/parse
- * Check if smart parsing is available
+ * GET /api/parse - Check Smart Parsing Availability
+ *
+ * Returns the availability status of smart parsing features and
+ * which LLM providers are configured.
+ *
+ * @route GET /api/parse
+ * @returns {Promise<NextResponse>} JSON response with availability status
+ *
+ * @example
+ * // Response
+ * {
+ *   "available": true,
+ *   "providers": {
+ *     "claude": true,
+ *     "openai": false
+ *   },
+ *   "features": {
+ *     "intentAnalysis": true,
+ *     "positionParsing": true,
+ *     "contextAwareness": true
+ *   }
+ * }
  */
 export async function GET(): Promise<NextResponse> {
   const claudeConfigured = !!process.env.ANTHROPIC_API_KEY;

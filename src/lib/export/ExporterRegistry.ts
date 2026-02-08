@@ -11,6 +11,9 @@ import type {
   ResourceMapper,
 } from '@/types/plugin';
 import type { InfraSpec, InfraNodeType } from '@/types/infra';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('ExporterRegistry');
 
 // ============================================================
 // Registry Class
@@ -150,7 +153,11 @@ export class ExporterRegistry {
   ): string | Blob | null {
     try {
       return this.export(format, spec, options);
-    } catch {
+    } catch (error) {
+      logger.warn('Safe export failed, returning null', {
+        format,
+        error: error instanceof Error ? error.message : String(error),
+      });
       return null;
     }
   }

@@ -9,6 +9,9 @@
  */
 
 import { NodeCategory } from '@/types';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('NodeConfig');
 
 export interface NodeConfig {
   /** Unique identifier for the node type (used in nodeTypes registry) */
@@ -119,7 +122,10 @@ export function getNodeConfigsFromRegistry(): NodeConfig[] {
     const { pluginRegistry } = require('@/lib/plugins/registry');
     const configs = pluginRegistry.getAllNodeConfigs();
     return configs.length > 0 ? configs : defaultNodeConfigs;
-  } catch {
+  } catch (error) {
+    logger.debug('Plugin registry unavailable, using default node configs', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return defaultNodeConfigs;
   }
 }
@@ -134,8 +140,12 @@ export function getNodeConfig(id: string): NodeConfig | undefined {
     const { pluginRegistry } = require('@/lib/plugins/registry');
     const config = pluginRegistry.getNodeConfig(id);
     if (config) return config;
-  } catch {
-    // 플러그인 시스템 초기화 전
+  } catch (error) {
+    // 플러그인 시스템 초기화 전 - debug level since this is expected during startup
+    logger.debug('Plugin registry not initialized, falling back to defaults', {
+      nodeId: id,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
   return defaultNodeConfigs.find((config) => config.id === id);
 }
@@ -148,8 +158,12 @@ export function getNodeConfigsByCategory(category: NodeConfig['category']): Node
     const { pluginRegistry } = require('@/lib/plugins/registry');
     const configs = pluginRegistry.getNodeConfigsByCategory(category);
     if (configs.length > 0) return configs;
-  } catch {
-    // 플러그인 시스템 초기화 전
+  } catch (error) {
+    // 플러그인 시스템 초기화 전 - debug level since this is expected during startup
+    logger.debug('Plugin registry not initialized for category lookup', {
+      category,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
   return defaultNodeConfigs.filter((config) => config.category === category);
 }

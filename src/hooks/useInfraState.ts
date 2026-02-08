@@ -47,14 +47,7 @@ export function useInfraState() {
   } = useInfraSelection();
 
   // Nodes hook with spec synchronization
-  const {
-    nodes,
-    setNodes,
-    addNode,
-    deleteNode: deleteNodeBase,
-    duplicateNode,
-    updateNodeData: updateNodeDataBase,
-  } = useNodes({
+  const nodesHook = useNodes({
     onSpecUpdate: setCurrentSpec,
     onEdgesUpdate: (updater) => setEdges(updater as React.SetStateAction<Edge[]>),
     onSelectionClear: (nodeId) => {
@@ -64,18 +57,14 @@ export function useInfraState() {
       setSelectedNodePolicy(null);
     },
   });
+  const { nodes, setNodes, addNode, duplicateNode } = nodesHook;
 
   // Edges hook with spec synchronization
-  const {
-    edges,
-    setEdges,
-    deleteEdge,
-    reverseEdge,
-    insertNodeBetween: insertNodeBetweenBase,
-  } = useEdges({
+  const edgesHook = useEdges({
     nodes,
     onSpecUpdate: setCurrentSpec,
   });
+  const { edges, setEdges, deleteEdge, reverseEdge } = edgesHook;
 
   // Animation scenario hook
   const {
@@ -86,13 +75,7 @@ export function useInfraState() {
   } = useAnimationScenario({ currentSpec });
 
   // Prompt parser hook
-  const {
-    isLoading,
-    lastResult,
-    handlePromptSubmit,
-    handleTemplateSelect: handleTemplateSelectBase,
-    setLastResult,
-  } = usePromptParser({
+  const parserHook = usePromptParser({
     currentSpec,
     onNodesUpdate: setNodes,
     onEdgesUpdate: setEdges,
@@ -100,30 +83,21 @@ export function useInfraState() {
     onAnimationReset: resetAnimation,
     onPolicyReset: () => setSelectedNodePolicy(null),
   });
+  const { isLoading, lastResult, handlePromptSubmit, handleTemplateSelect, setLastResult } = parserHook;
 
   /**
-   * Wrapper for deleteNode that clears selection
-   */
-  const deleteNode = useCallback(
-    (nodeId: string) => {
-      deleteNodeBase(nodeId);
-    },
-    [deleteNodeBase]
-  );
-
-  /**
-   * Wrapper for updateNodeData that also updates selection
+   * Update node data and sync selection state
    */
   const updateNodeData = useCallback(
     (nodeId: string, field: 'label' | 'description', value: string) => {
-      updateNodeDataBase(nodeId, field, value);
+      nodesHook.updateNodeData(nodeId, field, value);
       updateSelectedNodeDetail(nodeId, field, value);
     },
-    [updateNodeDataBase, updateSelectedNodeDetail]
+    [nodesHook, updateSelectedNodeDetail]
   );
 
   /**
-   * Wrapper for insertNodeBetween that passes addNode
+   * Insert node between two connected nodes
    */
   const insertNodeBetween = useCallback(
     (
@@ -131,19 +105,9 @@ export function useInfraState() {
       nodeType: InfraNodeType,
       componentData?: ComponentData
     ): string | null => {
-      return insertNodeBetweenBase(edgeId, nodeType, componentData, addNode);
+      return edgesHook.insertNodeBetween(edgeId, nodeType, componentData, addNode);
     },
-    [insertNodeBetweenBase, addNode]
-  );
-
-  /**
-   * Wrapper for handleTemplateSelect that resets animation
-   */
-  const handleTemplateSelect = useCallback(
-    (template: Parameters<typeof handleTemplateSelectBase>[0]) => {
-      handleTemplateSelectBase(template);
-    },
-    [handleTemplateSelectBase]
+    [edgesHook, addNode]
   );
 
   /**
@@ -193,7 +157,7 @@ export function useInfraState() {
 
     // CRUD operations
     addNode,
-    deleteNode,
+    deleteNode: nodesHook.deleteNode,
     duplicateNode,
     insertNodeBetween,
     deleteEdge,

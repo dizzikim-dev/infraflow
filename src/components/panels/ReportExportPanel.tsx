@@ -21,6 +21,9 @@ import {
 } from '@/lib/export';
 import type { InfraSpec } from '@/types';
 import type { CloudProvider } from '@/lib/cost';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('ReportExportPanel');
 
 interface ReportExportPanelProps {
   spec: InfraSpec;
@@ -54,7 +57,10 @@ export function ReportExportPanel({ spec, canvasRef, onClose }: ReportExportPane
       if (includeDiagram && canvasRef.current) {
         try {
           diagramImage = await generateShareableImage(canvasRef.current);
-        } catch {
+        } catch (error) {
+          logger.warn('Failed to generate diagram image for report', {
+            error: error instanceof Error ? error.message : String(error),
+          });
           // Continue without image
         }
       }

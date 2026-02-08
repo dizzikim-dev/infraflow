@@ -8,6 +8,9 @@
  */
 
 import type { ThemeExtension, ThemeColors, CategoryStyle } from '@/types/plugin';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('ThemeManager');
 
 // ============================================================
 // Types
@@ -156,8 +159,11 @@ export class ThemeManager {
     if (this.options.storageKey) {
       try {
         localStorage.setItem(this.options.storageKey, themeId);
-      } catch {
-        // 스토리지 접근 실패 무시
+      } catch (error) {
+        logger.debug('Failed to save theme to localStorage', {
+          themeId,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
 
@@ -180,8 +186,10 @@ export class ThemeManager {
     if (this.options.storageKey && typeof window !== 'undefined') {
       try {
         localStorage.removeItem(this.options.storageKey);
-      } catch {
-        // 스토리지 접근 실패 무시
+      } catch (error) {
+        logger.debug('Failed to remove theme from localStorage', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
   }
@@ -198,8 +206,10 @@ export class ThemeManager {
         if (savedThemeId && this.themes.has(savedThemeId)) {
           return this.apply(savedThemeId);
         }
-      } catch {
-        // 스토리지 접근 실패 무시
+      } catch (error) {
+        logger.debug('Failed to restore theme from localStorage', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
 

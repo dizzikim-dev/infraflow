@@ -5,6 +5,9 @@
 import { prisma } from '@/lib/db/prisma';
 import { ComponentCategory, TierType } from '@/generated/prisma';
 import Link from 'next/link';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('AdminDashboard');
 
 interface CategoryStat {
   category: ComponentCategory;
@@ -48,8 +51,11 @@ async function getStats() {
       tierStats,
       totalPolicies,
     };
-  } catch {
+  } catch (error) {
     // DB 연결 실패 시 기본값 반환
+    logger.warn('Failed to fetch admin dashboard stats - DB connection may be unavailable', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       totalComponents: 0,
       activeComponents: 0,

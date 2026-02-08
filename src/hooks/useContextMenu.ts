@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { XYPosition } from '@xyflow/react';
 
 export type ContextMenuType = 'canvas' | 'node' | 'edge' | null;
@@ -33,7 +33,6 @@ const initialState: ContextMenuState = {
  */
 export function useContextMenu(): UseContextMenuReturn {
   const [menuState, setMenuState] = useState<ContextMenuState>(initialState);
-  const menuRef = useRef<HTMLDivElement | null>(null);
 
   // Open context menu for canvas (right-click on empty area)
   const openCanvasMenu = useCallback(

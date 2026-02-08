@@ -3,6 +3,9 @@
 import { useCallback } from 'react';
 import { useNodeId } from '@xyflow/react';
 import { useNodeEditingContext } from '@/hooks/useNodeEditing';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('useEditableNode');
 
 /**
  * Hook for making nodes editable
@@ -16,8 +19,12 @@ export function useEditableNode() {
   let editingContext: ReturnType<typeof useNodeEditingContext> | null = null;
   try {
     editingContext = useNodeEditingContext();
-  } catch {
-    // Context not available, editing disabled
+  } catch (error) {
+    // Context not available, editing disabled - debug level as this is expected in some contexts
+    logger.debug('Node editing context not available, editing disabled', {
+      nodeId,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 
   const isEditingLabel = editingContext?.editingNodeId === nodeId && editingContext?.editingField === 'label';
