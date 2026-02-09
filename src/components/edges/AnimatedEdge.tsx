@@ -56,6 +56,29 @@ const flowTypeStyles: Record<EdgeFlowType, {
     particleSize: 5,
     speed: 1.2,
   },
+  'wan-link': {
+    color: '#14b8a6',
+    glowColor: 'rgba(20, 184, 166, 0.4)',
+    strokeWidth: 3,
+    particleSize: 6,
+    speed: 2,
+  },
+  wireless: {
+    color: '#06b6d4',
+    glowColor: 'rgba(6, 182, 212, 0.4)',
+    strokeWidth: 2,
+    dashArray: '6,6',
+    particleSize: 3,
+    speed: 1,
+  },
+  tunnel: {
+    color: '#6366f1',
+    glowColor: 'rgba(99, 102, 241, 0.4)',
+    strokeWidth: 2,
+    dashArray: '2,2,8,2',
+    particleSize: 4,
+    speed: 1.5,
+  },
 };
 
 // Custom comparison function for React.memo
@@ -266,6 +289,85 @@ export const AnimatedEdge = memo(function AnimatedEdge({
               <path d="M7 11V7a5 5 0 0110 0v4" />
             </svg>
             TLS
+          </motion.div>
+        </EdgeLabelRenderer>
+      )}
+
+      {/* WAN Link Indicator */}
+      {flowType === 'wan-link' && (
+        <EdgeLabelRenderer>
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            style={{
+              position: 'absolute',
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY - 20}px)`,
+            }}
+            className="
+              bg-teal-500/20 backdrop-blur-sm
+              text-teal-400 px-2 py-1 rounded-full
+              text-[10px] font-medium
+              border border-teal-500/30
+              flex items-center gap-1
+            "
+          >
+            WAN
+          </motion.div>
+        </EdgeLabelRenderer>
+      )}
+
+      {/* Wireless Indicator */}
+      {flowType === 'wireless' && (
+        <EdgeLabelRenderer>
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            style={{
+              position: 'absolute',
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY - 20}px)`,
+            }}
+            className="
+              bg-cyan-500/20 backdrop-blur-sm
+              text-cyan-400 px-2 py-1 rounded-full
+              text-[10px] font-medium
+              border border-cyan-500/30
+              flex items-center gap-1
+            "
+          >
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+              <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+              <line x1="12" y1="20" x2="12.01" y2="20" />
+            </svg>
+            5G
+          </motion.div>
+        </EdgeLabelRenderer>
+      )}
+
+      {/* Tunnel Indicator */}
+      {flowType === 'tunnel' && (
+        <EdgeLabelRenderer>
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            style={{
+              position: 'absolute',
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY - 20}px)`,
+            }}
+            className="
+              bg-indigo-500/20 backdrop-blur-sm
+              text-indigo-400 px-2 py-1 rounded-full
+              text-[10px] font-medium
+              border border-indigo-500/30
+              flex items-center gap-1
+            "
+          >
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0110 0v4" />
+            </svg>
+            MPLS
           </motion.div>
         </EdgeLabelRenderer>
       )}

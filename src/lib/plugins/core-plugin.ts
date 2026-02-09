@@ -80,6 +80,20 @@ export const coreCategoryStyles: Record<NodeCategory | 'external' | 'zone', Cate
     shadow: 'shadow-slate-500/20',
     glowColor: '#64748b',
   },
+  telecom: {
+    gradient: 'from-teal-500/20 to-cyan-600/20',
+    iconBg: 'bg-gradient-to-br from-teal-500 to-cyan-600',
+    border: 'border-teal-500/30',
+    shadow: 'shadow-teal-500/20',
+    glowColor: '#14b8a6',
+  },
+  wan: {
+    gradient: 'from-indigo-500/20 to-blue-600/20',
+    iconBg: 'bg-gradient-to-br from-indigo-500 to-blue-600',
+    border: 'border-indigo-500/30',
+    shadow: 'shadow-indigo-500/20',
+    glowColor: '#6366f1',
+  },
 };
 
 // ============================================================

@@ -7,7 +7,9 @@ export type NodeCategory =
   | 'compute'
   | 'cloud'
   | 'storage'
-  | 'auth';
+  | 'auth'
+  | 'telecom'
+  | 'wan';
 
 // Security Devices
 export type SecurityNodeType =
@@ -59,6 +61,29 @@ export type AuthNodeType =
   | 'mfa'
   | 'iam';
 
+// Telecom Infrastructure
+export type TelecomNodeType =
+  | 'central-office'       // 국사/POP
+  | 'base-station'         // 기지국 (gNB/eNB)
+  | 'olt'                  // 광선로 단말 (OLT)
+  | 'customer-premise'     // 고객 구내 (CPE)
+  | 'idc';                 // IDC/데이터센터
+
+// WAN Services/Transport
+export type WanNodeType =
+  | 'pe-router'            // Provider Edge 라우터
+  | 'p-router'             // Provider Core 라우터
+  | 'mpls-network'         // MPLS 망
+  | 'dedicated-line'       // 전용회선
+  | 'metro-ethernet'       // 메트로 이더넷
+  | 'corporate-internet'   // 기업인터넷 (KORNET)
+  | 'vpn-service'          // VPN 서비스
+  | 'sd-wan-service'       // SD-WAN 서비스
+  | 'private-5g'           // 5G 특화망
+  | 'core-network'         // 모바일 코어망
+  | 'upf'                  // 5G UPF
+  | 'ring-network';        // 링 네트워크 (이중화)
+
 // Generic Node Types
 export type InfraNodeType =
   | SecurityNodeType
@@ -67,6 +92,8 @@ export type InfraNodeType =
   | CloudNodeType
   | StorageNodeType
   | AuthNodeType
+  | TelecomNodeType
+  | WanNodeType
   | 'user'
   | 'internet'
   | 'zone';
@@ -105,7 +132,10 @@ export type EdgeFlowType =
   | 'response'     // 응답 (녹색)
   | 'sync'         // 동기화 (주황색)
   | 'blocked'      // 차단 (빨간색)
-  | 'encrypted';   // 암호화 (굵은 실선)
+  | 'encrypted'    // 암호화 (굵은 실선)
+  | 'wan-link'     // WAN 전용회선 (청록색, 굵은 선)
+  | 'wireless'     // 무선 구간 (점선 + 안테나)
+  | 'tunnel';      // VPN/MPLS 터널 (이중선)
 
 export interface InfraEdgeData {
   flowType: EdgeFlowType;
@@ -146,7 +176,11 @@ export interface ConnectionSpec {
 export interface ZoneSpec {
   id: string;
   label: string;
-  type: 'dmz' | 'internal' | 'external' | 'db' | 'custom';
+  type: 'dmz' | 'internal' | 'external' | 'db' | 'custom'
+    | 'access'       // 접속 계층
+    | 'aggregation'  // 집선 계층
+    | 'backbone'     // 백본
+    | 'core-dc';     // 코어/IDC
   color?: string;
 }
 

@@ -757,12 +757,176 @@ const architectureAntiPatterns: AntiPattern[] = [
 // Combined registry
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Telecom Anti-patterns (AP-TEL)
+// ---------------------------------------------------------------------------
+
+const telecomAntiPatterns: AntiPattern[] = [
+  {
+    id: 'AP-TEL-001',
+    type: 'antipattern',
+    name: 'IDC Single Path',
+    nameKo: 'IDC 단일 경로',
+    severity: 'critical',
+    detection: (spec: InfraSpec): boolean => {
+      // IDC exists but central-office count <= 1
+      if (!hasNodeType(spec, 'idc')) return false;
+      return countNodesByType(spec, 'central-office') <= 1;
+    },
+    detectionDescriptionKo: 'IDC가 존재하지만 국사(central-office)가 1개 이하인지 검사합니다.',
+    problemKo: 'IDC가 단일 국사를 통해서만 연결되면 해당 국사 장애 시 IDC 전체의 외부 연결이 단절됩니다.',
+    impactKo: 'IDC 호스팅 서비스 전면 중단, SLA 위반, 고객 서비스 불가, 매출 손실이 발생합니다.',
+    solutionKo: '최소 2개 이상의 서로 다른 국사로 이중 접속(Dual Homing)을 구성하고, 링 네트워크를 통해 물리 경로를 이중화하세요.',
+    tags: ['telecom', 'idc', 'single-path', 'availability', 'critical'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(NIST_800_41, 'Section 4.2 - Dual-Firewall DMZ'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'AP-TEL-002',
+    type: 'antipattern',
+    name: 'Non-redundant Dedicated Line',
+    nameKo: '전용회선 비이중화',
+    severity: 'high',
+    detection: (spec: InfraSpec): boolean => {
+      // dedicated-line count === 1 AND central-office count === 1
+      return countNodesByType(spec, 'dedicated-line') === 1 && countNodesByType(spec, 'central-office') === 1;
+    },
+    detectionDescriptionKo: '전용회선이 1회선이고 국사가 1개뿐인지 검사합니다.',
+    problemKo: '단일 전용회선은 회선 절단 또는 국사 장애 시 기업의 외부 네트워크 연결이 완전히 단절됩니다.',
+    impactKo: '전체 WAN 통신 두절, 업무 마비, 원격 서비스 불가, 복구 시 수 시간 소요가 발생합니다.',
+    solutionKo: '서로 다른 국사로 연결되는 이중 전용회선을 구성하고, 동적 라우팅(BGP/OSPF)으로 자동 페일오버를 설정하세요.',
+    tags: ['telecom', 'dedicated-line', 'non-redundant', 'availability'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(AWS_WAF_REL, 'Design for Failure - Eliminate Single Points of Failure'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'AP-TEL-003',
+    type: 'antipattern',
+    name: 'WAN Border No Firewall',
+    nameKo: 'WAN 경계 방화벽 미설치',
+    severity: 'critical',
+    detection: (spec: InfraSpec): boolean => {
+      // pe-router exists but no firewall
+      if (!hasNodeType(spec, 'pe-router')) return false;
+      return !hasNodeType(spec, 'firewall');
+    },
+    detectionDescriptionKo: 'PE 라우터가 존재하지만 방화벽이 없는지 검사합니다.',
+    problemKo: 'WAN 경계(PE 라우터)에 방화벽이 없으면 캐리어 네트워크로부터의 비인가 접근이 내부 네트워크에 직접 도달합니다.',
+    impactKo: '외부로부터의 무단 접근, 네트워크 공격 직접 노출, 내부 시스템 침해 위험이 발생합니다.',
+    solutionKo: 'PE 라우터와 내부 네트워크 사이에 방화벽을 배치하고, 기본 차단(Default Deny) 정책을 적용하세요.',
+    tags: ['telecom', 'wan', 'firewall', 'security', 'pe-router', 'critical'],
+    trust: {
+      confidence: 0.95,
+      sources: [
+        withSection(NIST_800_41, 'Section 4.1 - Firewall Policy Recommendations'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'AP-TEL-004',
+    type: 'antipattern',
+    name: 'Corporate Internet Only',
+    nameKo: '기업인터넷 단독 사용',
+    severity: 'medium',
+    detection: (spec: InfraSpec): boolean => {
+      // corporate-internet exists but no dedicated-line (SLA risk)
+      if (!hasNodeType(spec, 'corporate-internet')) return false;
+      return !hasNodeType(spec, 'dedicated-line');
+    },
+    detectionDescriptionKo: '기업인터넷만 존재하고 전용회선이 없는지 검사합니다.',
+    problemKo: '기업인터넷만으로 WAN을 구성하면 Best-Effort 품질이므로 SLA 보장이 어렵고, 장애 시 통신사 복구 우선순위가 낮습니다.',
+    impactKo: '네트워크 품질 불안정, QoS 미보장, 장애 복구 지연, 미션 크리티컬 업무 지장이 발생합니다.',
+    solutionKo: '핵심 업무용 전용회선을 병행 구성하고, SD-WAN으로 트래픽을 지능적으로 분배하세요.',
+    tags: ['telecom', 'corporate-internet', 'sla', 'quality', 'availability'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(AWS_WAF_REL, 'Network Connectivity - Redundancy'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'AP-TEL-005',
+    type: 'antipattern',
+    name: 'Private 5G Without UPF',
+    nameKo: '5G 특화망 UPF 미배치',
+    severity: 'high',
+    detection: (spec: InfraSpec): boolean => {
+      // private-5g exists but no upf
+      if (!hasNodeType(spec, 'private-5g')) return false;
+      return !hasNodeType(spec, 'upf');
+    },
+    detectionDescriptionKo: '5G 특화망(private-5g)이 존재하지만 UPF가 없는지 검사합니다.',
+    problemKo: 'UPF 없이 5G 특화망을 구성하면 모든 데이터가 공용 코어를 거쳐 지연이 증가하고, 로컬 브레이크아웃이 불가능합니다.',
+    impactKo: '초저지연 서비스 불가, 데이터 보안 위험 증가, 로컬 데이터 처리 불가, 5G 특화망의 이점 상실이 발생합니다.',
+    solutionKo: '로컬 UPF를 배치하여 온프레미스 데이터 라우팅을 구현하고, 필요한 트래픽만 공용 코어로 전달하세요.',
+    tags: ['telecom', '5g', 'private-5g', 'upf', 'local-breakout'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(NIST_800_144, 'Section 3 - Cloud Computing Benefits and Concerns'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'AP-TEL-006',
+    type: 'antipattern',
+    name: 'Wireless-Wired Transition No Security',
+    nameKo: '무선-유선 전환점 보안 미비',
+    severity: 'high',
+    detection: (spec: InfraSpec): boolean => {
+      // base-station exists and core-network exists but no firewall
+      if (!hasNodeType(spec, 'base-station')) return false;
+      if (!hasNodeType(spec, 'core-network')) return false;
+      return !hasNodeType(spec, 'firewall');
+    },
+    detectionDescriptionKo: '기지국과 코어 네트워크가 존재하지만 방화벽이 없는지 검사합니다.',
+    problemKo: '무선-유선 전환점(기지국~코어망)에 보안 장비가 없으면 무선 측 공격이 유선 인프라로 직접 전파될 수 있습니다.',
+    impactKo: '무선 경유 공격의 내부망 전파, 코어 네트워크 침해, 다른 기지국/서비스 영향 확산이 발생합니다.',
+    solutionKo: '기지국과 코어 네트워크 사이에 방화벽을 배치하고, 무선-유선 경계에서 트래픽 검사를 수행하세요.',
+    tags: ['telecom', 'base-station', 'core-network', 'firewall', 'wireless-security'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(NIST_800_53, 'SC-7 - Boundary Protection'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+];
+
 /** All verified anti-patterns (frozen, readonly) */
 export const ANTI_PATTERNS: readonly AntiPattern[] = Object.freeze([
   ...securityAntiPatterns,
   ...availabilityAntiPatterns,
   ...performanceAntiPatterns,
   ...architectureAntiPatterns,
+  ...telecomAntiPatterns,
 ]);
 
 /** Public alias used by the knowledge graph index */

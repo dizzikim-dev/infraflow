@@ -481,6 +481,27 @@ resource "aws_iam_role" "${sanitizeId(node.id)}" {
 
   // Zone
   'zone': (node) => `# Zone: ${node.label} - Network zone boundary`,
+
+  // Telecom
+  'central-office': (node) => `# Central Office: ${node.label} - Telecom facility`,
+  'base-station': (node) => `# Base Station: ${node.label} - Wireless access point`,
+  'olt': (node) => `# OLT: ${node.label} - Optical line terminal`,
+  'customer-premise': (node) => `# Customer Premise: ${node.label} - CPE equipment`,
+  'idc': (node) => `# IDC: ${node.label} - Internet data center`,
+
+  // WAN
+  'pe-router': (node) => `# PE Router: ${node.label} - Provider edge router`,
+  'p-router': (node) => `# P Router: ${node.label} - Provider core router`,
+  'mpls-network': (node) => `# MPLS Network: ${node.label} - MPLS backbone`,
+  'dedicated-line': (node) => `# Dedicated Line: ${node.label} - Leased line`,
+  'metro-ethernet': (node) => `# Metro Ethernet: ${node.label} - Metro ethernet service`,
+  'corporate-internet': (node) => `# Corporate Internet: ${node.label} - Enterprise internet`,
+  'vpn-service': (node) => `# VPN Service: ${node.label} - MPLS VPN service`,
+  'sd-wan-service': (node) => `# SD-WAN Service: ${node.label} - SD-WAN overlay`,
+  'private-5g': (node) => `# Private 5G: ${node.label} - Private 5G network`,
+  'core-network': (node) => `# Core Network: ${node.label} - Mobile core network`,
+  'upf': (node) => `# UPF: ${node.label} - User plane function`,
+  'ring-network': (node) => `# Ring Network: ${node.label} - Ring topology`,
 };
 
 /**

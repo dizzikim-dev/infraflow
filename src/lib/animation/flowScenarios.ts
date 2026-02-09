@@ -11,7 +11,14 @@ export type ScenarioType =
   | 'failover'          // 페일오버 동작
   | 'ddos-attack'       // DDoS 공격 시뮬레이션
   | 'network-partition' // 네트워크 단절
-  | 'load-balancing';   // 부하 분산 시각화
+  | 'load-balancing'    // 부하 분산 시각화
+  // 통신망 시나리오
+  | 'dedicated-line-flow'   // 전용회선 데이터 흐름
+  | 'wireless-to-server'    // 무선→서버 경로
+  | 'dual-homing-failover'  // 이중화 전환
+  | 'mpls-vpn-multisite'    // MPLS VPN 다지점
+  | 'hybrid-wan-balancing'  // 하이브리드 WAN 분산
+  | '5g-private-network';   // 5G 특화망 흐름
 
 /**
  * Generate animation sequence from infrastructure spec
@@ -357,6 +364,246 @@ export function generateFlowSequence(
         }
       }
       break;
+
+    // -----------------------------------------------------------------------
+    // Telecom Scenarios
+    // -----------------------------------------------------------------------
+
+    case 'dedicated-line-flow':
+      // Dedicated line data flow: CPE → Dedicated Line → CO → PE → P → IDC → Server
+      {
+        const telecomPath = buildTelecomPath(spec, [
+          'customer-premise', 'dedicated-line', 'central-office', 'pe-router', 'p-router', 'idc',
+        ]);
+        const pathToUse = telecomPath.length > 0 ? telecomPath : connectionPath;
+
+        pathToUse.forEach((conn, index) => {
+          steps.push({
+            from: conn.source,
+            to: conn.target,
+            delay: index === 0 ? 0 : stepDelay,
+            duration: stepDuration,
+            type: 'wan-link',
+            label: index === 0 ? '전용회선 데이터' : undefined,
+          });
+        });
+
+        // Response back
+        [...pathToUse].reverse().forEach((conn, index) => {
+          steps.push({
+            from: conn.target,
+            to: conn.source,
+            delay: index === 0 ? stepDelay * 2 : stepDelay,
+            duration: stepDuration,
+            type: 'response',
+            label: index === 0 ? 'Response' : undefined,
+          });
+        });
+      }
+      break;
+
+    case 'wireless-to-server':
+      // Wireless to server: UE → Base Station → CO → Core Network → UPF → IDC → Server
+      {
+        const wirelessPath = buildTelecomPath(spec, [
+          'base-station', 'central-office', 'core-network', 'upf', 'idc',
+        ]);
+        const pathToUse = wirelessPath.length > 0 ? wirelessPath : connectionPath;
+
+        pathToUse.forEach((conn, index) => {
+          const isWireless = index === 0; // first hop is wireless
+          steps.push({
+            from: conn.source,
+            to: conn.target,
+            delay: index === 0 ? 0 : stepDelay,
+            duration: stepDuration,
+            type: isWireless ? 'wireless' : 'wan-link',
+            label: isWireless ? '5G 무선' : undefined,
+          });
+        });
+
+        // Response back
+        [...pathToUse].reverse().forEach((conn, index) => {
+          const isWireless = index === pathToUse.length - 1;
+          steps.push({
+            from: conn.target,
+            to: conn.source,
+            delay: index === 0 ? stepDelay * 2 : stepDelay,
+            duration: stepDuration,
+            type: isWireless ? 'wireless' : 'response',
+            label: index === 0 ? 'Response' : undefined,
+          });
+        });
+      }
+      break;
+
+    case 'dual-homing-failover':
+      // Dual homing failover: Primary path fails → secondary path takes over
+      {
+        const primaryPath = buildTelecomPath(spec, [
+          'customer-premise', 'dedicated-line', 'central-office', 'pe-router',
+        ]);
+        const secondaryPath = buildTelecomPath(spec, [
+          'customer-premise', 'ring-network', 'central-office', 'pe-router',
+        ]);
+        const mainPath = primaryPath.length > 0 ? primaryPath : connectionPath.slice(0, Math.ceil(connectionPath.length / 2));
+        const backupPath = secondaryPath.length > 0 ? secondaryPath : connectionPath.slice(Math.ceil(connectionPath.length / 2));
+
+        // Primary path attempt
+        mainPath.forEach((conn, index) => {
+          steps.push({
+            from: conn.source,
+            to: conn.target,
+            delay: index === 0 ? 0 : stepDelay,
+            duration: stepDuration,
+            type: 'wan-link',
+            label: index === 0 ? '주 경로' : undefined,
+          });
+        });
+
+        // Primary path failure
+        const lastMain = mainPath[mainPath.length - 1];
+        if (lastMain) {
+          steps.push({
+            from: lastMain.target,
+            to: lastMain.target,
+            delay: stepDelay,
+            duration: stepDuration * 1.5,
+            type: 'blocked',
+            label: '주 경로 장애',
+          });
+        }
+
+        // Failover to secondary
+        if (backupPath.length > 0) {
+          steps.push({
+            from: mainPath[0]?.source || spec.nodes[0]?.id || '',
+            to: backupPath[0]?.source || '',
+            delay: stepDelay * 2,
+            duration: stepDuration,
+            type: 'sync',
+            label: '경로 전환',
+          });
+
+          backupPath.forEach((conn, index) => {
+            steps.push({
+              from: conn.source,
+              to: conn.target,
+              delay: stepDelay,
+              duration: stepDuration,
+              type: 'wan-link',
+              label: index === 0 ? '보조 경로' : undefined,
+            });
+          });
+        }
+      }
+      break;
+
+    case 'mpls-vpn-multisite':
+      // MPLS VPN multisite: Site A(PE) → P → P → PE → Site B
+      {
+        const mplsPath = buildTelecomPath(spec, [
+          'pe-router', 'p-router', 'mpls-network', 'pe-router',
+        ]);
+        const pathToUse = mplsPath.length > 0 ? mplsPath : connectionPath;
+
+        // Forward MPLS tunnel
+        pathToUse.forEach((conn, index) => {
+          steps.push({
+            from: conn.source,
+            to: conn.target,
+            delay: index === 0 ? 0 : stepDelay,
+            duration: stepDuration,
+            type: 'tunnel',
+            label: index === 0 ? 'MPLS VPN (Site A → B)' : undefined,
+          });
+        });
+
+        // Reverse MPLS tunnel
+        [...pathToUse].reverse().forEach((conn, index) => {
+          steps.push({
+            from: conn.target,
+            to: conn.source,
+            delay: index === 0 ? stepDelay * 2 : stepDelay,
+            duration: stepDuration,
+            type: 'tunnel',
+            label: index === 0 ? 'MPLS VPN (Site B → A)' : undefined,
+          });
+        });
+      }
+      break;
+
+    case 'hybrid-wan-balancing':
+      // Hybrid WAN: dedicated-line + internet simultaneously
+      {
+        const dedicatedPath = buildTelecomPath(spec, [
+          'customer-premise', 'dedicated-line', 'central-office',
+        ]);
+        const internetPath = buildTelecomPath(spec, [
+          'customer-premise', 'corporate-internet', 'sd-wan-service',
+        ]);
+        const primary = dedicatedPath.length > 0 ? dedicatedPath : connectionPath.slice(0, 2);
+        const secondary = internetPath.length > 0 ? internetPath : connectionPath.slice(2, 4);
+
+        // Dedicated line traffic (primary)
+        primary.forEach((conn, index) => {
+          steps.push({
+            from: conn.source,
+            to: conn.target,
+            delay: index === 0 ? 0 : stepDelay,
+            duration: stepDuration,
+            type: 'wan-link',
+            label: index === 0 ? '전용회선 (우선)' : undefined,
+          });
+        });
+
+        // Internet traffic (secondary, slightly delayed)
+        secondary.forEach((conn, index) => {
+          steps.push({
+            from: conn.source,
+            to: conn.target,
+            delay: stepDelay / 2 + index * stepDelay,
+            duration: stepDuration,
+            type: 'encrypted',
+            label: index === 0 ? '인터넷 (보조)' : undefined,
+          });
+        });
+      }
+      break;
+
+    case '5g-private-network':
+      // 5G Private Network: UE → gNB → Core → UPF → Private Server
+      {
+        const fiveGPath = buildTelecomPath(spec, [
+          'base-station', 'core-network', 'upf', 'private-5g', 'idc',
+        ]);
+        const pathToUse = fiveGPath.length > 0 ? fiveGPath : connectionPath;
+
+        pathToUse.forEach((conn, index) => {
+          const isWireless = index === 0;
+          steps.push({
+            from: conn.source,
+            to: conn.target,
+            delay: index === 0 ? 0 : stepDelay,
+            duration: stepDuration,
+            type: isWireless ? 'wireless' : 'wan-link',
+            label: isWireless ? '5G NR' : undefined,
+          });
+        });
+
+        // Response back
+        [...pathToUse].reverse().forEach((conn, index) => {
+          const isWireless = index === pathToUse.length - 1;
+          steps.push({
+            from: conn.target,
+            to: conn.source,
+            delay: index === 0 ? stepDelay * 2 : stepDelay,
+            duration: stepDuration,
+            type: isWireless ? 'wireless' : 'response',
+          });
+        });
+      }
+      break;
   }
 
   return {
@@ -366,6 +613,53 @@ export function generateFlowSequence(
     steps,
     loop,
   };
+}
+
+/**
+ * Build a telecom-specific path by finding nodes matching the requested
+ * type sequence. Returns connection segments between matched nodes.
+ * Falls back to empty array if the type sequence cannot be satisfied.
+ */
+function buildTelecomPath(
+  spec: InfraSpec,
+  typeSequence: string[],
+): Array<{ source: string; target: string; flowType?: EdgeFlowType; label?: string }> {
+  // Find matching nodes for each type in sequence
+  const matchedNodeIds: string[] = [];
+  const usedIds = new Set<string>();
+
+  for (const nodeType of typeSequence) {
+    const candidate = spec.nodes.find(
+      (n) => n.type === nodeType && !usedIds.has(n.id),
+    );
+    if (candidate) {
+      matchedNodeIds.push(candidate.id);
+      usedIds.add(candidate.id);
+    }
+  }
+
+  if (matchedNodeIds.length < 2) return [];
+
+  // Build path segments between consecutive matched nodes
+  const path: Array<{ source: string; target: string; flowType?: EdgeFlowType; label?: string }> = [];
+  for (let i = 0; i < matchedNodeIds.length - 1; i++) {
+    const source = matchedNodeIds[i];
+    const target = matchedNodeIds[i + 1];
+
+    // Try to find an existing connection
+    const existingConn = spec.connections.find(
+      (c) => c.source === source && c.target === target,
+    );
+
+    path.push({
+      source,
+      target,
+      flowType: existingConn?.flowType,
+      label: existingConn?.label,
+    });
+  }
+
+  return path;
 }
 
 /**
@@ -426,6 +720,13 @@ function getScenarioName(type: ScenarioType): string {
     'ddos-attack': 'DDoS 공격',
     'network-partition': '네트워크 단절',
     'load-balancing': '부하 분산',
+    // 통신망 시나리오
+    'dedicated-line-flow': '전용회선 흐름',
+    'wireless-to-server': '무선→서버 경로',
+    'dual-homing-failover': '이중화 전환',
+    'mpls-vpn-multisite': 'MPLS VPN 다지점',
+    'hybrid-wan-balancing': '하이브리드 WAN',
+    '5g-private-network': '5G 특화망',
   };
   return names[type];
 }
@@ -443,6 +744,13 @@ function getScenarioDescription(type: ScenarioType): string {
     'ddos-attack': 'DDoS 공격 시도 및 WAF 차단 시뮬레이션',
     'network-partition': '네트워크 단절로 인한 타임아웃 발생',
     'load-balancing': '로드밸런서 트래픽 분산 동작',
+    // 통신망 시나리오
+    'dedicated-line-flow': '고객 구내에서 IDC까지 전용회선 경유 데이터 흐름',
+    'wireless-to-server': '무선 기지국에서 코어망/UPF를 거쳐 서버까지의 경로',
+    'dual-homing-failover': '주 전용회선 장애 시 보조 경로로 자동 전환',
+    'mpls-vpn-multisite': 'MPLS VPN을 통한 다지점 사이트 간 데이터 전송',
+    'hybrid-wan-balancing': '전용회선과 인터넷을 동시 활용하는 하이브리드 WAN',
+    '5g-private-network': '5G 특화망(gNB→Core→UPF)을 통한 산업용 데이터 흐름',
   };
   return descriptions[type];
 }
@@ -455,7 +763,7 @@ export function getAvailableScenarios(): Array<{
   name: string;
   description: string;
   icon: string;
-  category: 'basic' | 'failure' | 'performance';
+  category: 'basic' | 'failure' | 'performance' | 'telecom';
 }> {
   return [
     // 기본 시나리오
@@ -530,6 +838,49 @@ export function getAvailableScenarios(): Array<{
       description: 'LB 트래픽 분산',
       icon: '⚖️',
       category: 'performance',
+    },
+    // 통신망 시나리오
+    {
+      type: 'dedicated-line-flow',
+      name: '전용회선 흐름',
+      description: 'CPE→국사→IDC 전용회선',
+      icon: '🔗',
+      category: 'telecom',
+    },
+    {
+      type: 'wireless-to-server',
+      name: '무선→서버',
+      description: '기지국→코어→서버 경로',
+      icon: '📡',
+      category: 'telecom',
+    },
+    {
+      type: 'dual-homing-failover',
+      name: '이중화 전환',
+      description: '주 경로 장애→보조 경로',
+      icon: '🔀',
+      category: 'telecom',
+    },
+    {
+      type: 'mpls-vpn-multisite',
+      name: 'MPLS VPN',
+      description: '다지점 VPN 터널',
+      icon: '🌐',
+      category: 'telecom',
+    },
+    {
+      type: 'hybrid-wan-balancing',
+      name: '하이브리드 WAN',
+      description: '전용회선+인터넷 병렬',
+      icon: '⚡',
+      category: 'telecom',
+    },
+    {
+      type: '5g-private-network',
+      name: '5G 특화망',
+      description: 'gNB→Core→UPF 경로',
+      icon: '📶',
+      category: 'telecom',
     },
   ];
 }

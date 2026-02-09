@@ -7,7 +7,7 @@ export interface InfraComponent {
   id: string;
   name: string;
   nameKo: string;
-  category: 'security' | 'network' | 'compute' | 'cloud' | 'storage' | 'auth' | 'external';
+  category: 'security' | 'network' | 'compute' | 'cloud' | 'storage' | 'auth' | 'external' | 'telecom' | 'wan';
   description: string;
   descriptionKo: string;
   functions: string[];

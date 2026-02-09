@@ -13,6 +13,8 @@ import { cloudComponents } from './cloud';
 import { storageComponents } from './storage';
 import { authComponents } from './auth';
 import { externalComponents } from './external';
+import { telecomComponents } from './telecom';
+import { wanComponents } from './wan';
 import type { InfraComponent } from './types';
 
 // Combined all components
@@ -24,6 +26,8 @@ export const allComponents: Record<string, InfraComponent> = {
   ...storageComponents,
   ...authComponents,
   ...externalComponents,
+  ...telecomComponents,
+  ...wanComponents,
 };
 
 // Export individual category components
@@ -35,6 +39,8 @@ export {
   storageComponents,
   authComponents,
   externalComponents,
+  telecomComponents,
+  wanComponents,
 };
 
 // Category labels for UI
@@ -46,6 +52,8 @@ export const categoryLabels: Record<string, { en: string; ko: string }> = {
   storage: { en: 'Storage', ko: '스토리지' },
   auth: { en: 'Auth', ko: '인증' },
   external: { en: 'External', ko: '외부' },
+  telecom: { en: 'Telecom', ko: '통신' },
+  wan: { en: 'WAN', ko: 'WAN' },
 };
 
 // Tier labels for UI
@@ -73,6 +81,10 @@ export function getComponentsByCategory(category: InfraComponent['category']): R
       return authComponents;
     case 'external':
       return externalComponents;
+    case 'telecom':
+      return telecomComponents;
+    case 'wan':
+      return wanComponents;
     default:
       return {};
   }

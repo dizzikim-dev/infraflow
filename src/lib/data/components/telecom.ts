@@ -1,0 +1,223 @@
+/**
+ * Telecom Infrastructure Components
+ * Central Office, Base Station, OLT, Customer Premise, IDC
+ */
+
+import type { InfraComponent } from './types';
+
+export const telecomComponents: Record<string, InfraComponent> = {
+  'central-office': {
+    id: 'central-office',
+    name: 'Central Office',
+    nameKo: '국사',
+    category: 'telecom',
+    description: 'Telecommunications central office (CO/POP) where carrier equipment is housed. Serves as aggregation point for customer connections and backbone network access.',
+    descriptionKo: '통신사 장비가 설치된 국사(CO/POP). 고객 회선의 집선점이자 백본 네트워크 접속점 역할을 합니다.',
+    functions: [
+      'Customer line aggregation and termination',
+      'Optical fiber distribution frame management',
+      'Backbone network interconnection',
+      'Power and environmental control for telecom equipment',
+      'Cross-connect and patch panel management',
+    ],
+    functionsKo: [
+      '고객 회선 집선 및 종단',
+      '광섬유 배선 프레임(ODF) 관리',
+      '백본 네트워크 상호 연결',
+      '통신 장비 전원 및 환경 관리',
+      '크로스 커넥트 및 패치패널 관리',
+    ],
+    features: [
+      'Redundant power systems (UPS, generator)',
+      'Physical security and access control',
+      'Environmental monitoring (temperature, humidity)',
+      'High-density fiber connectivity',
+    ],
+    featuresKo: [
+      '이중화 전원 시스템 (UPS, 발전기)',
+      '물리적 보안 및 출입 통제',
+      '환경 모니터링 (온도, 습도)',
+      '고밀도 광섬유 연결',
+    ],
+    recommendedPolicies: [
+      { name: 'Physical Access Control', nameKo: '물리적 접근 통제', description: 'Restrict physical access to authorized personnel only', priority: 'critical', category: 'security' },
+      { name: 'Power Redundancy', nameKo: '전원 이중화', description: 'Maintain dual power feeds with automatic failover', priority: 'critical', category: 'compliance' },
+      { name: 'Environmental Monitoring', nameKo: '환경 모니터링', description: 'Monitor temperature, humidity, and fire detection systems', priority: 'high', category: 'monitoring' },
+    ],
+    tier: 'dmz',
+    protocols: ['DWDM', 'SONET/SDH', 'Ethernet'],
+    vendors: ['Nokia', 'Ericsson', 'Huawei', 'Samsung'],
+  },
+
+  'base-station': {
+    id: 'base-station',
+    name: 'Base Station',
+    nameKo: '기지국',
+    category: 'telecom',
+    description: 'Wireless base station (gNB for 5G, eNB for LTE) providing radio access to mobile devices. Connects to core network through fronthaul/backhaul links.',
+    descriptionKo: '모바일 기기에 무선 접속을 제공하는 무선 기지국 (5G용 gNB, LTE용 eNB). 프론트홀/백홀 링크를 통해 코어 네트워크에 연결됩니다.',
+    functions: [
+      'Radio signal transmission and reception',
+      'User equipment (UE) authentication',
+      'Radio resource management (RRM)',
+      'Handover management between cells',
+      'Beamforming and MIMO processing',
+    ],
+    functionsKo: [
+      '무선 신호 송수신',
+      '사용자 단말(UE) 인증',
+      '무선 자원 관리(RRM)',
+      '셀 간 핸드오버 관리',
+      '빔포밍 및 MIMO 처리',
+    ],
+    features: [
+      'Massive MIMO antenna arrays',
+      'Dynamic spectrum sharing',
+      'Network slicing support',
+      'Edge computing capability (MEC)',
+    ],
+    featuresKo: [
+      'Massive MIMO 안테나 어레이',
+      '동적 주파수 공유',
+      '네트워크 슬라이싱 지원',
+      '엣지 컴퓨팅 기능 (MEC)',
+    ],
+    recommendedPolicies: [
+      { name: 'Backhaul Redundancy', nameKo: '백홀 이중화', description: 'Maintain redundant backhaul links to prevent single point of failure', priority: 'high', category: 'compliance' },
+      { name: 'RF Monitoring', nameKo: 'RF 모니터링', description: 'Continuous monitoring of signal quality and interference', priority: 'high', category: 'monitoring' },
+      { name: 'Access Security', nameKo: '접근 보안', description: 'Secure physical and logical access to base station equipment', priority: 'critical', category: 'security' },
+    ],
+    tier: 'external',
+    protocols: ['5G NR', 'LTE', 'CPRI', 'eCPRI'],
+    vendors: ['Ericsson', 'Nokia', 'Samsung', 'Huawei'],
+  },
+
+  'olt': {
+    id: 'olt',
+    name: 'OLT',
+    nameKo: 'OLT',
+    category: 'telecom',
+    description: 'Optical Line Terminal providing fiber-to-the-home (FTTH) and GPON/XGS-PON services. Aggregates customer ONT/ONU connections at the central office.',
+    descriptionKo: 'FTTH 및 GPON/XGS-PON 서비스를 제공하는 광선로 단말(OLT). 국사에서 고객 ONT/ONU 연결을 집선합니다.',
+    functions: [
+      'Optical signal distribution to ONTs',
+      'Bandwidth allocation (DBA)',
+      'VLAN tagging and traffic management',
+      'ONU/ONT registration and authentication',
+      'PON port management',
+    ],
+    functionsKo: [
+      'ONT로의 광신호 분배',
+      '대역폭 동적 할당(DBA)',
+      'VLAN 태깅 및 트래픽 관리',
+      'ONU/ONT 등록 및 인증',
+      'PON 포트 관리',
+    ],
+    features: [
+      'High split ratio (1:64 or 1:128)',
+      'Long reach fiber (up to 20km)',
+      'QoS-aware scheduling',
+      'GPON/XGS-PON dual mode',
+    ],
+    featuresKo: [
+      '높은 분기비 (1:64 또는 1:128)',
+      '장거리 광섬유 (최대 20km)',
+      'QoS 기반 스케줄링',
+      'GPON/XGS-PON 듀얼 모드',
+    ],
+    recommendedPolicies: [
+      { name: 'ONT Authentication', nameKo: 'ONT 인증', description: 'Authenticate all ONT devices before service activation', priority: 'critical', category: 'security' },
+      { name: 'Bandwidth Monitoring', nameKo: '대역폭 모니터링', description: 'Monitor PON port utilization and DBA efficiency', priority: 'high', category: 'monitoring' },
+    ],
+    tier: 'dmz',
+    ports: ['PON', 'GE/10GE Uplink'],
+    protocols: ['GPON', 'XGS-PON', 'Ethernet'],
+    vendors: ['Huawei', 'Nokia', 'ZTE', 'Calix'],
+  },
+
+  'customer-premise': {
+    id: 'customer-premise',
+    name: 'Customer Premise',
+    nameKo: '고객 구내',
+    category: 'telecom',
+    description: 'Customer premises equipment (CPE) including routers, switches, and demarcation devices at the customer site. Serves as the boundary between carrier and enterprise networks.',
+    descriptionKo: '고객 사이트에 설치된 라우터, 스위치, 구분 장치 등 고객 구내 장비(CPE). 통신사 망과 기업 망의 경계 역할을 합니다.',
+    functions: [
+      'WAN interface termination',
+      'LAN-to-WAN routing',
+      'NAT and basic firewall functions',
+      'QoS marking and traffic shaping',
+      'Service demarcation',
+    ],
+    functionsKo: [
+      'WAN 인터페이스 종단',
+      'LAN-WAN 라우팅',
+      'NAT 및 기본 방화벽 기능',
+      'QoS 마킹 및 트래픽 셰이핑',
+      '서비스 구분점(Demarcation)',
+    ],
+    features: [
+      'Managed or unmanaged deployment',
+      'Zero-touch provisioning',
+      'Integrated security features',
+      'SD-WAN agent capable',
+    ],
+    featuresKo: [
+      '관리형/비관리형 배포',
+      '제로터치 프로비저닝',
+      '통합 보안 기능',
+      'SD-WAN 에이전트 탑재 가능',
+    ],
+    recommendedPolicies: [
+      { name: 'Access Control', nameKo: '접근 제어', description: 'Restrict management access to authorized IP ranges', priority: 'critical', category: 'access' },
+      { name: 'Configuration Backup', nameKo: '설정 백업', description: 'Regular backup of CPE configuration', priority: 'high', category: 'compliance' },
+    ],
+    tier: 'external',
+    ports: ['WAN (GE/10GE)', 'LAN (GE)'],
+    protocols: ['Ethernet', 'PPPoE', 'DHCP'],
+    vendors: ['Cisco', 'Juniper', 'Fortinet', 'Samsung'],
+  },
+
+  'idc': {
+    id: 'idc',
+    name: 'IDC',
+    nameKo: 'IDC',
+    category: 'telecom',
+    description: 'Internet Data Center housing servers, storage, and network equipment. Provides colocation, hosting, and cloud services with carrier-grade infrastructure.',
+    descriptionKo: '서버, 스토리지, 네트워크 장비가 설치된 인터넷 데이터센터. 통신사급 인프라로 코로케이션, 호스팅, 클라우드 서비스를 제공합니다.',
+    functions: [
+      'Server hosting and colocation',
+      'Network interconnection (IX/PNI)',
+      'Power distribution and cooling',
+      'Physical security management',
+      'Disaster recovery site operation',
+    ],
+    functionsKo: [
+      '서버 호스팅 및 코로케이션',
+      '네트워크 상호 연결 (IX/PNI)',
+      '전원 분배 및 냉각',
+      '물리적 보안 관리',
+      '재해 복구 사이트 운영',
+    ],
+    features: [
+      'Tier 3/4 data center design',
+      'Redundant power and cooling',
+      'Multi-carrier connectivity',
+      'Biometric access control',
+    ],
+    featuresKo: [
+      'Tier 3/4 데이터센터 설계',
+      '이중화 전원 및 냉각',
+      '멀티 캐리어 연결',
+      '생체인식 출입 통제',
+    ],
+    recommendedPolicies: [
+      { name: 'Multi-path Connectivity', nameKo: '다중 경로 연결', description: 'Maintain at least two independent network paths', priority: 'critical', category: 'compliance' },
+      { name: 'Physical Security', nameKo: '물리적 보안', description: 'Multi-layer physical access control and CCTV monitoring', priority: 'critical', category: 'security' },
+      { name: 'Power Monitoring', nameKo: '전원 모니터링', description: 'Monitor UPS and generator status continuously', priority: 'high', category: 'monitoring' },
+    ],
+    tier: 'internal',
+    protocols: ['BGP', 'OSPF', 'Ethernet', 'Fiber Channel'],
+    vendors: ['KT', 'SK broadband', 'LG U+', 'Equinix'],
+  },
+};

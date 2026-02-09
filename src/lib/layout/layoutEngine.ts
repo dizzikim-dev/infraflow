@@ -14,13 +14,13 @@ export interface LayoutConfig {
 }
 
 const defaultConfig: LayoutConfig = {
-  nodeWidth: 160,
-  nodeHeight: 80,
-  horizontalGap: 220,  // 티어 간 가로 간격
-  verticalGap: 100,    // 같은 티어 내 세로 간격
-  tierGap: 280,        // 티어 영역 간 간격
-  startX: 150,
-  startY: 150,
+  nodeWidth: 180,
+  nodeHeight: 90,
+  horizontalGap: 260,  // 레이어 간 가로 간격
+  verticalGap: 140,    // 같은 레이어 내 세로 간격
+  tierGap: 260,        // alias (backward compat)
+  startX: 100,
+  startY: 100,
 };
 
 // Map InfraNodeType to React Flow node type
@@ -72,6 +72,15 @@ function getTierForNode(type: InfraNodeType, zone?: string): typeof tierOrder[nu
       'data': 'data',
       'db': 'data',
       'storage': 'data',
+      // Telecom zone keywords (order matters: longer patterns first to avoid substring matches)
+      'aggregation': 'dmz',
+      'backbone': 'internal',
+      'core-dc': 'internal',
+      'transport': 'dmz',
+      'ran': 'external',
+      '국사': 'dmz',
+      '백본': 'internal',
+      '기지국': 'external',
     };
 
     const lowerZone = zone.toLowerCase();
@@ -93,8 +102,111 @@ function getTierForNode(type: InfraNodeType, zone?: string): typeof tierOrder[nu
 }
 
 /**
- * Convert InfraSpec to React Flow nodes and edges with horizontal tiered layout
- * 왼쪽→오른쪽: External → DMZ → Internal → Data
+ * Topological layering: assign each node a layer (column) based on
+ * longest-path from source nodes. This ensures chain nodes (A→B→C)
+ * are placed in consecutive columns, and fan-out (A→B1,B2) stacks vertically.
+ */
+function computeTopologicalLayers(
+  specNodes: InfraSpec['nodes'],
+  connections: InfraSpec['connections'],
+): Map<string, number> {
+  const nodeIds = new Set(specNodes.map(n => n.id));
+  const forward = new Map<string, string[]>();
+  const reverse = new Map<string, string[]>();
+
+  for (const conn of connections) {
+    if (!nodeIds.has(conn.source) || !nodeIds.has(conn.target)) continue;
+    if (!forward.has(conn.source)) forward.set(conn.source, []);
+    forward.get(conn.source)!.push(conn.target);
+    if (!reverse.has(conn.target)) reverse.set(conn.target, []);
+    reverse.get(conn.target)!.push(conn.source);
+  }
+
+  const tierLayerFallback: Record<string, number> = { external: 0, dmz: 1, internal: 2, data: 3 };
+
+  // If no connections, fall back to tier-based layering
+  if (connections.length === 0) {
+    const layerMap = new Map<string, number>();
+    for (const node of specNodes) {
+      const tier = getTierForNode(node.type, node.zone);
+      layerMap.set(node.id, tierLayerFallback[tier] ?? 0);
+    }
+    return layerMap;
+  }
+
+  // Root nodes = no incoming edges
+  const roots = specNodes.filter(n => !reverse.has(n.id) || reverse.get(n.id)!.length === 0);
+
+  const layerMap = new Map<string, number>();
+
+  // BFS longest-path layering from roots
+  const queue: string[] = [];
+  for (const root of roots) {
+    layerMap.set(root.id, 0);
+    queue.push(root.id);
+  }
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const currentLayer = layerMap.get(current)!;
+    for (const target of (forward.get(current) || [])) {
+      const newLayer = currentLayer + 1;
+      if ((layerMap.get(target) ?? -1) < newLayer) {
+        layerMap.set(target, newLayer);
+        queue.push(target);
+      }
+    }
+  }
+
+  // Handle disconnected nodes (no edges to/from main graph) — place by tier order
+  for (const node of specNodes) {
+    if (!layerMap.has(node.id)) {
+      const tier = getTierForNode(node.type, node.zone);
+      layerMap.set(node.id, tierLayerFallback[tier] ?? 0);
+    }
+  }
+
+  return layerMap;
+}
+
+/**
+ * Barycenter ordering: sort nodes within each layer by the average
+ * Y-position of their connected nodes in the previous layer.
+ * This minimizes edge crossings.
+ */
+function orderLayersByBarycenter(
+  layers: Map<number, InfraSpec['nodes']>,
+  sortedKeys: number[],
+  reverse: Map<string, string[]>,
+): void {
+  for (let i = 1; i < sortedKeys.length; i++) {
+    const layerNodes = layers.get(sortedKeys[i])!;
+    const prevNodes = layers.get(sortedKeys[i - 1])!;
+
+    // Build index lookup for previous layer
+    const prevIndex = new Map<string, number>();
+    prevNodes.forEach((n, idx) => prevIndex.set(n.id, idx));
+
+    layerNodes.sort((a, b) => {
+      const aParents = (reverse.get(a.id) || []).filter(p => prevIndex.has(p));
+      const bParents = (reverse.get(b.id) || []).filter(p => prevIndex.has(p));
+
+      const aCenter = aParents.length > 0
+        ? aParents.reduce((sum, p) => sum + prevIndex.get(p)!, 0) / aParents.length
+        : Infinity; // no parent in prev layer → push to bottom
+      const bCenter = bParents.length > 0
+        ? bParents.reduce((sum, p) => sum + prevIndex.get(p)!, 0) / bParents.length
+        : Infinity;
+
+      return aCenter - bCenter;
+    });
+  }
+}
+
+/**
+ * Convert InfraSpec to React Flow nodes and edges with topological layout.
+ * Nodes are placed left-to-right by their depth in the connection graph.
+ * Same-depth nodes are stacked vertically and ordered to minimize edge crossings.
  */
 export function specToFlow(
   spec: InfraSpec,
@@ -102,86 +214,56 @@ export function specToFlow(
 ): { nodes: Node[]; edges: Edge[] } {
   const cfg = { ...defaultConfig, ...config };
 
-  // 노드를 티어별로 그룹화
-  const tierGroups: Record<string, Array<{ id: string; type: InfraNodeType; label: string; zone?: string }>> = {
-    external: [],
-    dmz: [],
-    internal: [],
-    data: [],
-  };
-
-  for (const node of spec.nodes) {
-    const tier = getTierForNode(node.type, node.zone);
-    tierGroups[tier].push(node);
+  if (spec.nodes.length === 0) {
+    return { nodes: [], edges: [] };
   }
 
-  // 연결 그래프 구축 (같은 티어 내 순서 결정용)
-  const adjacency = new Map<string, string[]>();
-  const reverseAdjacency = new Map<string, string[]>();
-
+  // --- Step 1: Build adjacency ---
+  const nodeIds = new Set(spec.nodes.map(n => n.id));
+  const reverse = new Map<string, string[]>();
   for (const conn of spec.connections) {
-    const sourceAdj = adjacency.get(conn.source);
-    if (sourceAdj) {
-      sourceAdj.push(conn.target);
-    } else {
-      adjacency.set(conn.source, [conn.target]);
-    }
-
-    const targetRevAdj = reverseAdjacency.get(conn.target);
-    if (targetRevAdj) {
-      targetRevAdj.push(conn.source);
-    } else {
-      reverseAdjacency.set(conn.target, [conn.source]);
-    }
+    if (!nodeIds.has(conn.source) || !nodeIds.has(conn.target)) continue;
+    if (!reverse.has(conn.target)) reverse.set(conn.target, []);
+    reverse.get(conn.target)!.push(conn.source);
   }
 
-  // 각 티어 내에서 노드 순서 결정 (연결된 노드들 가까이 배치)
-  const sortNodesInTier = (nodes: typeof tierGroups.external) => {
-    if (nodes.length <= 1) return nodes;
+  // --- Step 2: Topological layering ---
+  const layerMap = computeTopologicalLayers(spec.nodes, spec.connections);
 
-    // 연결이 많은 노드부터 배치
-    return [...nodes].sort((a, b) => {
-      const aConnections = (adjacency.get(a.id)?.length || 0) + (reverseAdjacency.get(a.id)?.length || 0);
-      const bConnections = (adjacency.get(b.id)?.length || 0) + (reverseAdjacency.get(b.id)?.length || 0);
-      return bConnections - aConnections;
-    });
-  };
-
-  // 각 티어 내 노드 정렬
-  for (const tier of tierOrder) {
-    tierGroups[tier] = sortNodesInTier(tierGroups[tier]);
+  // Group nodes by layer
+  const layers = new Map<number, typeof spec.nodes>();
+  for (const node of spec.nodes) {
+    const layer = layerMap.get(node.id) ?? 0;
+    if (!layers.has(layer)) layers.set(layer, []);
+    layers.get(layer)!.push(node);
   }
 
-  // 위치 계산 (가로: 티어별, 세로: 티어 내 인덱스)
+  const sortedLayerKeys = [...layers.keys()].sort((a, b) => a - b);
+
+  // --- Step 3: Minimize edge crossings (barycenter) ---
+  orderLayersByBarycenter(layers, sortedLayerKeys, reverse);
+
+  // --- Step 4: Position calculation ---
+  const maxInLayer = Math.max(...[...layers.values()].map(l => l.length), 1);
+  const centerY = cfg.startY + ((maxInLayer - 1) * cfg.verticalGap) / 2;
+
   const nodePositions = new Map<string, { x: number; y: number }>();
 
-  let currentX = cfg.startX;
+  sortedLayerKeys.forEach((_, colIndex) => {
+    const layerKey = sortedLayerKeys[colIndex];
+    const layerNodes = layers.get(layerKey)!;
+    const layerHeight = (layerNodes.length - 1) * cfg.verticalGap;
+    const layerStartY = centerY - layerHeight / 2;
 
-  for (const tier of tierOrder) {
-    const nodes = tierGroups[tier];
-    if (nodes.length === 0) continue;
-
-    // 티어 내 노드들의 총 높이 계산
-    const totalHeight = (nodes.length - 1) * cfg.verticalGap;
-    const startY = cfg.startY + 100; // 상단 여백
-
-    nodes.forEach((node, index) => {
-      // 세로 중앙 정렬
-      const offsetY = nodes.length > 1
-        ? (index - (nodes.length - 1) / 2) * cfg.verticalGap
-        : 0;
-
+    layerNodes.forEach((node, rowIndex) => {
       nodePositions.set(node.id, {
-        x: currentX,
-        y: startY + 150 + offsetY, // 전체 다이어그램 세로 중앙
+        x: cfg.startX + colIndex * cfg.horizontalGap,
+        y: layerStartY + rowIndex * cfg.verticalGap,
       });
     });
+  });
 
-    // 다음 티어로 이동
-    currentX += cfg.tierGap;
-  }
-
-  // React Flow 노드 생성
+  // --- Step 5: Create React Flow nodes ---
   const nodes: Node[] = spec.nodes.map((infraNode) => {
     const position = nodePositions.get(infraNode.id) || { x: cfg.startX, y: cfg.startY };
     const tier = getTierForNode(infraNode.type, infraNode.zone);
@@ -201,7 +283,7 @@ export function specToFlow(
     };
   });
 
-  // React Flow 엣지 생성
+  // --- Step 6: Create React Flow edges ---
   const edges: Edge[] = spec.connections.map((conn, index) => ({
     id: `e-${conn.source}-${conn.target}-${index}`,
     source: conn.source,

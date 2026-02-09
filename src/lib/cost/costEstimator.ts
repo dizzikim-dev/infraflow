@@ -261,6 +261,110 @@ const BASE_COSTS: Record<InfraNodeType, {
     gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
     onprem: { service: 'N/A', cost: 0, tier: 'N/A' },
   },
+  // Telecom
+  'central-office': {
+    aws: { service: 'N/A', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
+    onprem: { service: 'Central Office', cost: 5000, tier: 'Estimated' },
+  },
+  'base-station': {
+    aws: { service: 'N/A', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
+    onprem: { service: 'Base Station (gNB)', cost: 10000, tier: 'Estimated' },
+  },
+  'olt': {
+    aws: { service: 'N/A', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
+    onprem: { service: 'OLT', cost: 3000, tier: 'Estimated' },
+  },
+  'customer-premise': {
+    aws: { service: 'N/A', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
+    onprem: { service: 'CPE Router', cost: 500, tier: 'Estimated' },
+  },
+  'idc': {
+    aws: { service: 'N/A', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
+    onprem: { service: 'IDC Colocation', cost: 2000, tier: 'Monthly' },
+  },
+  // WAN
+  'pe-router': {
+    aws: { service: 'N/A', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
+    onprem: { service: 'PE Router', cost: 8000, tier: 'Estimated' },
+  },
+  'p-router': {
+    aws: { service: 'N/A', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
+    onprem: { service: 'P Router', cost: 15000, tier: 'Estimated' },
+  },
+  'mpls-network': {
+    aws: { service: 'N/A', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
+    onprem: { service: 'MPLS Service', cost: 3000, tier: 'Monthly' },
+  },
+  'dedicated-line': {
+    aws: { service: 'Direct Connect', cost: 200, tier: '1Gbps' },
+    azure: { service: 'ExpressRoute', cost: 250, tier: '1Gbps' },
+    gcp: { service: 'Cloud Interconnect', cost: 220, tier: '1Gbps' },
+    onprem: { service: 'Dedicated Line', cost: 500, tier: 'Monthly' },
+  },
+  'metro-ethernet': {
+    aws: { service: 'N/A', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
+    onprem: { service: 'Metro Ethernet', cost: 400, tier: 'Monthly' },
+  },
+  'corporate-internet': {
+    aws: { service: 'N/A', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
+    onprem: { service: 'Corporate Internet', cost: 300, tier: 'Monthly' },
+  },
+  'vpn-service': {
+    aws: { service: 'Site-to-Site VPN', cost: 36, tier: 'Per connection' },
+    azure: { service: 'VPN Gateway', cost: 138, tier: 'VpnGw1' },
+    gcp: { service: 'Cloud VPN', cost: 36, tier: 'Per tunnel' },
+    onprem: { service: 'MPLS VPN', cost: 800, tier: 'Monthly' },
+  },
+  'sd-wan-service': {
+    aws: { service: 'N/A', cost: 0, tier: 'N/A' },
+    azure: { service: 'Virtual WAN', cost: 250, tier: 'Standard' },
+    gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
+    onprem: { service: 'SD-WAN Service', cost: 500, tier: 'Monthly' },
+  },
+  'private-5g': {
+    aws: { service: 'Private 5G', cost: 10000, tier: 'Estimated' },
+    azure: { service: 'Private 5G Core', cost: 10000, tier: 'Estimated' },
+    gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
+    onprem: { service: 'Private 5G', cost: 15000, tier: 'Monthly' },
+  },
+  'core-network': {
+    aws: { service: 'N/A', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
+    onprem: { service: 'Mobile Core', cost: 20000, tier: 'Estimated' },
+  },
+  'upf': {
+    aws: { service: 'N/A', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
+    onprem: { service: 'UPF', cost: 5000, tier: 'Estimated' },
+  },
+  'ring-network': {
+    aws: { service: 'N/A', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
+    onprem: { service: 'Ring Network', cost: 2000, tier: 'Monthly' },
+  },
 };
 
 /**
