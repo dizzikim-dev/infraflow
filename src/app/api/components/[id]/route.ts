@@ -9,6 +9,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { UpdateComponentSchema } from '@/lib/validations/component';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('ComponentAPI');
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -57,7 +60,7 @@ export async function GET(
 
     return NextResponse.json(component);
   } catch (error) {
-    console.error('컴포넌트 조회 실패:', error);
+    log.error('컴포넌트 조회 실패', error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: '컴포넌트 조회에 실패했습니다' },
       { status: 500 }
@@ -141,7 +144,7 @@ export async function PUT(
 
     return NextResponse.json(component);
   } catch (error) {
-    console.error('컴포넌트 수정 실패:', error);
+    log.error('컴포넌트 수정 실패', error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: '컴포넌트 수정에 실패했습니다' },
       { status: 500 }
@@ -194,7 +197,7 @@ export async function DELETE(
       });
     }
   } catch (error) {
-    console.error('컴포넌트 삭제 실패:', error);
+    log.error('컴포넌트 삭제 실패', error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: '컴포넌트 삭제에 실패했습니다' },
       { status: 500 }

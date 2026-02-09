@@ -200,10 +200,11 @@ export function PluginProvider({
   }, [additionalPlugins]);
 
   useEffect(() => {
-    if (autoInitialize) {
+    if (autoInitialize && !initialized) {
       initialize();
     }
-  }, [autoInitialize, initialize]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoInitialize]);
 
   // ============================================================
   // Event Listener
@@ -253,82 +254,71 @@ export function PluginProvider({
   // Memoized Values
   // ============================================================
 
-  const plugins = useMemo(() => {
-    // updateTrigger 사용하여 의존성 유지
-    void updateTrigger;
-    return pluginRegistry.getAllPlugins();
-  }, [updateTrigger]);
+  // updateTrigger를 dependency array로 사용하여 레지스트리 변경 시 재계산
+  const plugins = useMemo(
+    () => pluginRegistry.getAllPlugins(),
+    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
-  const pluginStates = useMemo(() => {
-    void updateTrigger;
-    return pluginRegistry.getAllPluginStates();
-  }, [updateTrigger]);
+  const pluginStates = useMemo(
+    () => pluginRegistry.getAllPluginStates(),
+    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
-  const nodeConfigs = useMemo(() => {
-    void updateTrigger;
-    return pluginRegistry.getAllNodeConfigs();
-  }, [updateTrigger]);
+  const nodeConfigs = useMemo(
+    () => pluginRegistry.getAllNodeConfigs(),
+    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   const getNodeConfig = useCallback(
-    (nodeId: string) => {
-      void updateTrigger;
-      return pluginRegistry.getNodeConfig(nodeId);
-    },
-    [updateTrigger]
+    (nodeId: string) => pluginRegistry.getNodeConfig(nodeId),
+    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  const categoryStyles = useMemo(() => {
-    void updateTrigger;
-    return pluginRegistry.getCategoryStyles();
-  }, [updateTrigger]);
+  const categoryStyles = useMemo(
+    () => pluginRegistry.getCategoryStyles(),
+    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
-  const exporters = useMemo(() => {
-    void updateTrigger;
-    return pluginRegistry.getAllExporters();
-  }, [updateTrigger]);
+  const exporters = useMemo(
+    () => pluginRegistry.getAllExporters(),
+    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   const getExporter = useCallback(
-    (format: string) => {
-      void updateTrigger;
-      return pluginRegistry.getExporter(format);
-    },
-    [updateTrigger]
+    (format: string) => pluginRegistry.getExporter(format),
+    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  const supportedExportFormats = useMemo(() => {
-    void updateTrigger;
-    return pluginRegistry.getSupportedExportFormats();
-  }, [updateTrigger]);
+  const supportedExportFormats = useMemo(
+    () => pluginRegistry.getSupportedExportFormats(),
+    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
-  const panels = useMemo(() => {
-    void updateTrigger;
-    return pluginRegistry.getAllPanels();
-  }, [updateTrigger]);
+  const panels = useMemo(
+    () => pluginRegistry.getAllPanels(),
+    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   const getPanelsByPosition = useCallback(
-    (position: PanelExtension['position']) => {
-      void updateTrigger;
-      return pluginRegistry.getPanelsByPosition(position);
-    },
-    [updateTrigger]
+    (position: PanelExtension['position']) => pluginRegistry.getPanelsByPosition(position),
+    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  const themes = useMemo(() => {
-    void updateTrigger;
-    return pluginRegistry.getAllThemes();
-  }, [updateTrigger]);
+  const themes = useMemo(
+    () => pluginRegistry.getAllThemes(),
+    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   const getTheme = useCallback(
-    (themeId: string) => {
-      void updateTrigger;
-      return pluginRegistry.getTheme(themeId);
-    },
-    [updateTrigger]
+    (themeId: string) => pluginRegistry.getTheme(themeId),
+    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const currentTheme = useMemo(() => {
     if (!currentThemeId) return null;
     return pluginRegistry.getTheme(currentThemeId) ?? null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentThemeId, updateTrigger]);
 
   const setTheme = useCallback((themeId: string) => {

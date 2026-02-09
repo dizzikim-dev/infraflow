@@ -275,13 +275,24 @@ export class PluginLoader {
     const fn = new Function('module', 'exports', code);
     fn(module, exports);
 
-    const plugin = module.exports as unknown as InfraFlowPlugin;
+    const exported: unknown = module.exports;
 
-    if (!plugin.metadata) {
+    if (!exported || typeof exported !== 'object') {
+      throw new Error('Plugin code did not export a valid object');
+    }
+
+    const obj = exported as Record<string, unknown>;
+
+    if (!obj.metadata || typeof obj.metadata !== 'object') {
       throw new Error('Plugin code did not export a valid plugin');
     }
 
-    return plugin;
+    const metadata = obj.metadata as Partial<PluginMetadata>;
+    if (!metadata.id || !metadata.name || !metadata.version) {
+      throw new Error('Plugin code exported invalid metadata: missing required fields');
+    }
+
+    return exported as InfraFlowPlugin;
   }
 
   /**

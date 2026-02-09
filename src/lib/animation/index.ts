@@ -1,6 +1,5 @@
 export {
   AnimationEngine,
-  getAnimationEngine,
   type AnimationState,
   type AnimationEvent,
   type AnimationEventType,

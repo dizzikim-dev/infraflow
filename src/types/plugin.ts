@@ -152,7 +152,9 @@ export type CommandType =
   | 'connect'
   | 'disconnect'
   | 'query'
-  | 'custom';
+  | 'custom'
+  | 'llm-modify'
+  | 'template';
 
 /**
  * 스펙 수정 정의

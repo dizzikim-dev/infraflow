@@ -33,7 +33,8 @@ import {
   applyIntentToSpec,
   IntentAnalysis,
 } from '@/lib/parser/intelligentParser';
-import { ConversationContext, SmartParseResult } from '@/lib/parser/smartParser';
+import { ConversationContext, SmartParseResult } from '@/lib/parser/UnifiedParser';
+import { ParseRequestSchema } from '@/lib/validations/api';
 
 /**
  * Request body for the smart parse endpoint.
@@ -281,15 +282,17 @@ export async function POST(
   request: NextRequest
 ): Promise<NextResponse<SmartParseResponse>> {
   try {
-    const body: SmartParseRequestBody = await request.json();
-    const { prompt, context, provider = 'claude', model, useLLM = true } = body;
+    const rawBody = await request.json();
+    const parsed = ParseRequestSchema.safeParse(rawBody);
 
-    if (!prompt || typeof prompt !== 'string') {
+    if (!parsed.success) {
       return NextResponse.json(
-        { success: false, error: 'Invalid prompt' },
+        { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid request' },
         { status: 400 }
       );
     }
+
+    const { prompt, context, provider, model, useLLM } = parsed.data;
 
     // Build conversation context
     const conversationContext: ConversationContext = {

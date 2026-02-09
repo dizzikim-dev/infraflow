@@ -74,4 +74,27 @@ export const tierInfo: Record<string, { name: string; nameKo: string; color: str
   data: { name: 'Data', nameKo: '데이터', color: '#8b5cf6' },
 };
 
+// --- SSoT Helper Functions ---
+// These derive category, tier, and label from infrastructureDB to avoid duplication.
+
+import type { InfraNodeType, NodeCategory, TierType } from '@/types';
+
+/** Get category for a node type from infrastructureDB (SSoT) */
+export function getCategoryForType(type: InfraNodeType): NodeCategory | 'external' {
+  const info = infrastructureDB[type];
+  return (info?.category as NodeCategory | 'external') || 'external';
+}
+
+/** Get tier for a node type from infrastructureDB (SSoT) */
+export function getTierForType(type: InfraNodeType): TierType {
+  const info = infrastructureDB[type];
+  return (info?.tier as TierType) || 'internal';
+}
+
+/** Get display label for a node type from infrastructureDB (SSoT) */
+export function getLabelForType(type: InfraNodeType): string {
+  const info = infrastructureDB[type];
+  return info?.name || type.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export default infrastructureDB;

@@ -3,6 +3,7 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
 import type { ParseResultInfo } from '@/hooks';
+import { UserMenu } from '@/components/auth/UserMenu';
 
 // SVG Icons
 const PlayIcon = () => (
@@ -182,6 +183,11 @@ export const Header = memo(function Header({
               <DownloadIcon />
               <span className="hidden sm:inline">Export</span>
             </button>
+
+            {/* User Menu */}
+            <div className="ml-1 border-l border-zinc-700/50 pl-2">
+              <UserMenu />
+            </div>
           </div>
         </div>
       </div>

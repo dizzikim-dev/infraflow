@@ -1,1 +1,1 @@
-export { specToFlow, relayoutNodes, type LayoutConfig } from './layoutEngine';
+export { specToFlow, flowToSpec, relayoutNodes, type LayoutConfig } from './layoutEngine';

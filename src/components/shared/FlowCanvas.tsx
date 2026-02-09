@@ -25,6 +25,21 @@ import { nodeTypes } from '../nodes';
 import { edgeTypes } from '../edges';
 import { NodeEditingProvider } from '@/hooks/useNodeEditing';
 import { useHistory } from '@/hooks/useHistory';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('FlowCanvas');
+
+/** Node category colors for minimap - matches design system node category palette */
+const NODE_CATEGORY_COLORS: Record<string, string> = {
+  security: '#ef4444',  // Red 500
+  network: '#3b82f6',   // Blue 500
+  compute: '#22c55e',   // Green 500
+  cloud: '#a855f7',     // Purple 500
+  storage: '#f59e0b',   // Amber 500
+  auth: '#ec4899',      // Pink 500
+};
+
+const DEFAULT_NODE_COLOR = '#71717a'; // Zinc 500
 
 interface FlowCanvasProps {
   initialNodes?: Node[];
@@ -71,10 +86,10 @@ const FlowCanvasInner = memo(function FlowCanvasInner({
 
   const onConnect = useCallback(
     (params: Connection) => {
-      console.log('onConnect called:', params);
+      log.debug('onConnect called', { source: params.source, target: params.target });
       setEdges((eds) => {
         const newEdges = addEdge({ ...params, type: 'animated' }, eds);
-        console.log('New edges:', newEdges);
+        log.debug('Edges updated', { count: newEdges.length });
         return newEdges;
       });
     },
@@ -120,22 +135,8 @@ const FlowCanvasInner = memo(function FlowCanvasInner({
 
   // Memoize minimap node color function
   const minimapNodeColor = useCallback((node: Node) => {
-    switch (node.data?.category) {
-      case 'security':
-        return '#ef4444';
-      case 'network':
-        return '#3b82f6';
-      case 'compute':
-        return '#22c55e';
-      case 'cloud':
-        return '#a855f7';
-      case 'storage':
-        return '#f59e0b';
-      case 'auth':
-        return '#ec4899';
-      default:
-        return '#71717a';
-    }
+    const category = node.data?.category as string | undefined;
+    return (category && NODE_CATEGORY_COLORS[category]) || DEFAULT_NODE_COLOR;
   }, []);
 
   return (
@@ -161,7 +162,7 @@ const FlowCanvasInner = memo(function FlowCanvasInner({
             variant={BackgroundVariant.Dots}
             gap={20}
             size={1}
-            color="#333"
+            color="rgba(255, 255, 255, 0.08)"
           />
           <Controls className="bg-zinc-800 border-zinc-700" />
           <MiniMap

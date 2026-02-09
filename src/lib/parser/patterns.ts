@@ -1,6 +1,6 @@
 /**
  * Shared Parser Patterns
- * smartParser와 promptParser에서 공통으로 사용하는 패턴들
+ * UnifiedParser에서 사용하는 공통 패턴들
  * Single Source of Truth (SSoT)
  */
 
@@ -84,7 +84,9 @@ export type CommandType =
   | 'modify'      // 노드 속성 수정
   | 'connect'     // 연결 추가
   | 'disconnect'  // 연결 제거
-  | 'query';      // 질문/정보 요청
+  | 'query'       // 질문/정보 요청
+  | 'llm-modify'  // LLM 기반 다이어그램 수정
+  | 'template';   // 템플릿 선택
 
 /**
  * 명령어 감지 패턴

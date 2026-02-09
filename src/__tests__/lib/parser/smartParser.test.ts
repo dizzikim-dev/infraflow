@@ -4,10 +4,10 @@ import {
   createContext,
   updateContext,
   ConversationContext,
-} from '@/lib/parser/smartParser';
+} from '@/lib/parser/UnifiedParser';
 import { InfraSpec } from '@/types';
 
-describe('smartParser', () => {
+describe('UnifiedParser (smartParse)', () => {
   describe('smartParse', () => {
     it('should create new architecture when no context', () => {
       const context = createContext();

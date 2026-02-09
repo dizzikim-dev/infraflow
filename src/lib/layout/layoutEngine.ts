@@ -1,7 +1,7 @@
 import { Node, Edge } from '@xyflow/react';
 import { InfraSpec, InfraNodeData, InfraEdgeData, InfraNodeType } from '@/types';
 import { isInfraNodeData } from '@/types/guards';
-import { infrastructureDB, tierOrder } from '@/lib/data';
+import { infrastructureDB, tierOrder, getCategoryForType, getTierForType } from '@/lib/data';
 
 export interface LayoutConfig {
   nodeWidth: number;
@@ -45,45 +45,9 @@ function getNodeType(infraType: InfraNodeType): string {
   return typeMap[infraType] || infraType;
 }
 
-// Get category from node type
+// Get category from node type (delegates to SSoT in infrastructureDB)
 function getCategoryFromType(type: InfraNodeType): InfraNodeData['category'] {
-  const categoryMap: Record<string, InfraNodeData['category']> = {
-    firewall: 'security',
-    waf: 'security',
-    'ids-ips': 'security',
-    'vpn-gateway': 'security',
-    nac: 'security',
-    dlp: 'security',
-    router: 'network',
-    'switch-l2': 'network',
-    'switch-l3': 'network',
-    'load-balancer': 'network',
-    'sd-wan': 'network',
-    dns: 'network',
-    cdn: 'network',
-    'web-server': 'compute',
-    'app-server': 'compute',
-    'db-server': 'compute',
-    container: 'compute',
-    vm: 'compute',
-    kubernetes: 'compute',
-    'aws-vpc': 'cloud',
-    'azure-vnet': 'cloud',
-    'gcp-network': 'cloud',
-    'private-cloud': 'cloud',
-    'san-nas': 'storage',
-    'object-storage': 'storage',
-    backup: 'storage',
-    cache: 'storage',
-    storage: 'storage',
-    'ldap-ad': 'auth',
-    sso: 'auth',
-    mfa: 'auth',
-    iam: 'auth',
-    user: 'external',
-    internet: 'external',
-  };
-  return categoryMap[type] || 'external';
+  return getCategoryForType(type);
 }
 
 // Get tier for a node type (for horizontal layout)
@@ -124,52 +88,8 @@ function getTierForNode(type: InfraNodeType, zone?: string): typeof tierOrder[nu
     return dbInfo.tier;
   }
 
-  // 타입 기반 기본 티어
-  const typeTierMap: Record<string, typeof tierOrder[number]> = {
-    // External
-    user: 'external',
-    internet: 'external',
-
-    // DMZ
-    cdn: 'dmz',
-    waf: 'dmz',
-    firewall: 'dmz',
-    'load-balancer': 'dmz',
-    'vpn-gateway': 'dmz',
-    'ids-ips': 'dmz',
-    'sd-wan': 'dmz',
-
-    // Internal
-    router: 'internal',
-    'switch-l2': 'internal',
-    'switch-l3': 'internal',
-    'web-server': 'internal',
-    'app-server': 'internal',
-    container: 'internal',
-    vm: 'internal',
-    kubernetes: 'internal',
-    dns: 'internal',
-    nac: 'internal',
-    dlp: 'internal',
-    'ldap-ad': 'internal',
-    sso: 'internal',
-    mfa: 'internal',
-    iam: 'internal',
-    'aws-vpc': 'internal',
-    'azure-vnet': 'internal',
-    'gcp-network': 'internal',
-    'private-cloud': 'internal',
-
-    // Data
-    'db-server': 'data',
-    'san-nas': 'data',
-    'object-storage': 'data',
-    storage: 'data',
-    backup: 'data',
-    cache: 'data',
-  };
-
-  return typeTierMap[type] || 'internal';
+  // 타입 기반 기본 티어 (SSoT: infrastructureDB via getTierForType)
+  return getTierForType(type);
 }
 
 /**
@@ -295,6 +215,38 @@ export function specToFlow(
   }));
 
   return { nodes, edges };
+}
+
+/**
+ * Convert React Flow nodes and edges back to InfraSpec
+ */
+export function flowToSpec(nodes: Node[], edges: Edge[]): InfraSpec {
+  return {
+    nodes: nodes.map((n) => {
+      if (isInfraNodeData(n.data)) {
+        return {
+          id: n.id,
+          type: n.data.nodeType,
+          label: n.data.label,
+          tier: n.data.tier,
+          zone: typeof n.data.zone === 'string' ? n.data.zone : undefined,
+          description: n.data.description,
+        };
+      }
+      // Fallback for nodes without proper data
+      return {
+        id: n.id,
+        type: (n.type as InfraNodeType) || 'user',
+        label: n.id,
+      };
+    }),
+    connections: edges.map((e) => ({
+      source: e.source,
+      target: e.target,
+      flowType: (e.data as InfraEdgeData)?.flowType,
+      label: (e.data as InfraEdgeData)?.label,
+    })),
+  };
 }
 
 /**

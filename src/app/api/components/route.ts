@@ -13,6 +13,9 @@ import {
   type CreateComponentInput,
 } from '@/lib/validations/component';
 import { Prisma } from '@/generated/prisma';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('ComponentsAPI');
 
 /**
  * GET /api/components
@@ -98,7 +101,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('컴포넌트 목록 조회 실패:', error);
+    log.error('컴포넌트 목록 조회 실패', error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: '컴포넌트 목록 조회에 실패했습니다' },
       { status: 500 }
@@ -164,7 +167,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(component, { status: 201 });
   } catch (error) {
-    console.error('컴포넌트 생성 실패:', error);
+    log.error('컴포넌트 생성 실패', error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: '컴포넌트 생성에 실패했습니다' },
       { status: 500 }

@@ -4,6 +4,7 @@
  * Handles detection of infrastructure components from natural language prompts.
  */
 
+import { nanoid } from 'nanoid';
 import type { InfraSpec, InfraNodeSpec, ConnectionSpec, InfraNodeType } from '@/types';
 import {
   nodeTypePatterns as defaultNodeTypePatterns,
@@ -69,10 +70,14 @@ export function findInsertionPoint(
 }
 
 /**
- * Parse custom prompts by detecting component keywords
+ * Parse custom prompts by detecting component keywords.
  *
- * Plugin support:
- * - usePlugins=true uses plugin patterns
+ * Used as a fallback when template matching fails.
+ * Scans the prompt for known infrastructure component patterns
+ * and builds a spec from detected components.
+ *
+ * @see {@link parsePromptLocal} which calls this as step 3 in its pipeline
+ * @see {@link detectAllNodeTypes} for the underlying pattern detection
  */
 export function parseCustomPrompt(prompt: string, usePlugins = true): InfraSpec | null {
   const nodes: InfraNodeSpec[] = [];
@@ -119,5 +124,5 @@ export function parseCustomPrompt(prompt: string, usePlugins = true): InfraSpec 
  * Generate unique node ID
  */
 export function generateNodeId(type: InfraNodeType): string {
-  return `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+  return `${type}-${nanoid(8)}`;
 }

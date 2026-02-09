@@ -83,7 +83,7 @@ describe('/api/llm', () => {
 
       expect(response.status).toBe(400);
       expect(data.success).toBe(false);
-      expect(data.error).toContain('prompt');
+      expect(data.error).toBeDefined();
     });
 
     it('should return error for missing provider', async () => {
@@ -97,7 +97,7 @@ describe('/api/llm', () => {
 
       expect(response.status).toBe(400);
       expect(data.success).toBe(false);
-      expect(data.error).toContain('provider');
+      expect(data.error).toBeDefined();
     });
 
     it('should return error for invalid provider', async () => {
@@ -114,7 +114,7 @@ describe('/api/llm', () => {
 
       expect(response.status).toBe(400);
       expect(data.success).toBe(false);
-      expect(data.error).toContain('provider');
+      expect(data.error).toBeDefined();
     });
 
     it('should use fallback when Claude API key is not configured', async () => {

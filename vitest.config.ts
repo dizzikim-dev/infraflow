@@ -48,7 +48,7 @@ export default defineConfig({
     },
     // Vitest 4: isolate tests for better reliability
     isolate: true,
-    fileParallelism: false,
+    fileParallelism: true,
   },
   resolve: {
     alias: {

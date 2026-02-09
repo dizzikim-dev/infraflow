@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Edge, Node, XYPosition } from '@xyflow/react';
 import { InfraNodeType, InfraSpec } from '@/types';
 import { ComponentData } from './useNodes';
@@ -39,40 +39,64 @@ export function useEdges(config: UseEdgesConfig): UseEdgesReturn {
   const { nodes, onSpecUpdate } = config;
   const [edges, setEdges] = useState<Edge[]>([]);
 
+  // Keep a ref in sync with edges for synchronous reads (e.g., insertNodeBetween).
+  const edgesRef = useRef<Edge[]>(edges);
+  useEffect(() => {
+    edgesRef.current = edges;
+  }, [edges]);
+
   /**
    * Delete an edge
+   * Uses functional updater to read current edges, avoiding stale closure over `edges`.
    */
   const deleteEdge = useCallback(
     (edgeId: string) => {
-      const edge = edges.find((e) => e.id === edgeId);
-      if (!edge) return;
+      setEdges((prevEdges) => {
+        const edge = prevEdges.find((e) => e.id === edgeId);
+        if (!edge) return prevEdges;
 
-      setEdges((prevEdges) => prevEdges.filter((e) => e.id !== edgeId));
+        // Update InfraSpec
+        onSpecUpdate?.((prevSpec) => {
+          if (!prevSpec) return prevSpec;
+          return {
+            ...prevSpec,
+            connections: prevSpec.connections.filter(
+              (conn) => !(conn.source === edge.source && conn.target === edge.target)
+            ),
+          };
+        });
 
-      // Update InfraSpec
-      onSpecUpdate?.((prevSpec) => {
-        if (!prevSpec) return prevSpec;
-        return {
-          ...prevSpec,
-          connections: prevSpec.connections.filter(
-            (conn) => !(conn.source === edge.source && conn.target === edge.target)
-          ),
-        };
+        return prevEdges.filter((e) => e.id !== edgeId);
       });
     },
-    [edges, onSpecUpdate]
+    [onSpecUpdate, setEdges]
   );
 
   /**
    * Reverse edge direction
+   * Uses functional updater to read current edges, avoiding stale closure over `edges`.
    */
   const reverseEdge = useCallback(
     (edgeId: string) => {
-      const edge = edges.find((e) => e.id === edgeId);
-      if (!edge) return;
+      setEdges((prevEdges) => {
+        const edge = prevEdges.find((e) => e.id === edgeId);
+        if (!edge) return prevEdges;
 
-      setEdges((prevEdges) =>
-        prevEdges.map((e) => {
+        // Update InfraSpec
+        onSpecUpdate?.((prevSpec) => {
+          if (!prevSpec) return prevSpec;
+          return {
+            ...prevSpec,
+            connections: prevSpec.connections.map((conn) => {
+              if (conn.source === edge.source && conn.target === edge.target) {
+                return { ...conn, source: edge.target, target: edge.source };
+              }
+              return conn;
+            }),
+          };
+        });
+
+        return prevEdges.map((e) => {
           if (e.id === edgeId) {
             return {
               ...e,
@@ -82,28 +106,17 @@ export function useEdges(config: UseEdgesConfig): UseEdgesReturn {
             };
           }
           return e;
-        })
-      );
-
-      // Update InfraSpec
-      onSpecUpdate?.((prevSpec) => {
-        if (!prevSpec) return prevSpec;
-        return {
-          ...prevSpec,
-          connections: prevSpec.connections.map((conn) => {
-            if (conn.source === edge.source && conn.target === edge.target) {
-              return { ...conn, source: edge.target, target: edge.source };
-            }
-            return conn;
-          }),
-        };
+        });
       });
     },
-    [edges, onSpecUpdate]
+    [onSpecUpdate, setEdges]
   );
 
   /**
    * Insert a node between two nodes (on an edge)
+   * Reads the edge from edgesRef for synchronous access without stale closures.
+   * Note: `nodes` is still read from the outer closure, which is acceptable since
+   * insertNodeBetween is called from synchronous event handlers.
    */
   const insertNodeBetween = useCallback(
     (
@@ -117,7 +130,8 @@ export function useEdges(config: UseEdgesConfig): UseEdgesReturn {
         return null;
       }
 
-      const edge = edges.find((e) => e.id === edgeId);
+      // Read the edge from the ref for synchronous, always-current access.
+      const edge = edgesRef.current.find((e) => e.id === edgeId);
       if (!edge) return null;
 
       const sourceNode = nodes.find((n) => n.id === edge.source);
@@ -134,25 +148,22 @@ export function useEdges(config: UseEdgesConfig): UseEdgesReturn {
       const newNodeId = addNodeFn(nodeType, midPosition, componentData);
       if (!newNodeId) return null;
 
-      // Remove old edge
-      setEdges((prevEdges) => prevEdges.filter((e) => e.id !== edgeId));
-
-      // Create two new edges
-      const newEdge1: Edge = {
-        id: `e_${edge.source}_${newNodeId}`,
-        source: edge.source,
-        target: newNodeId,
-        type: 'animated',
-      };
-
-      const newEdge2: Edge = {
-        id: `e_${newNodeId}_${edge.target}`,
-        source: newNodeId,
-        target: edge.target,
-        type: 'animated',
-      };
-
-      setEdges((prevEdges) => [...prevEdges, newEdge1, newEdge2]);
+      // Remove old edge and add two new ones in a single update
+      setEdges((prevEdges) => {
+        const newEdge1: Edge = {
+          id: `e_${edge.source}_${newNodeId}`,
+          source: edge.source,
+          target: newNodeId,
+          type: 'animated',
+        };
+        const newEdge2: Edge = {
+          id: `e_${newNodeId}_${edge.target}`,
+          source: newNodeId,
+          target: edge.target,
+          type: 'animated',
+        };
+        return [...prevEdges.filter((e) => e.id !== edgeId), newEdge1, newEdge2];
+      });
 
       // Update InfraSpec connections
       onSpecUpdate?.((prevSpec) => {
@@ -171,7 +182,7 @@ export function useEdges(config: UseEdgesConfig): UseEdgesReturn {
 
       return newNodeId;
     },
-    [edges, nodes, onSpecUpdate]
+    [nodes, onSpecUpdate, setEdges]
   );
 
   return {

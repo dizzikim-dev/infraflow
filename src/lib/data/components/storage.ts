@@ -173,7 +173,7 @@ export const storageComponents: Record<string, InfraComponent> = {
       { name: 'No Public Access', nameKo: '비공개 접근', description: 'Only internal network access', priority: 'critical', category: 'access' },
       { name: 'Eviction Policy', nameKo: '제거 정책', description: 'Configure appropriate eviction policy', priority: 'high', category: 'performance' },
     ],
-    tier: 'internal',
+    tier: 'data',
     ports: ['6379', '11211'],
     protocols: ['Redis', 'Memcached'],
     vendors: ['Redis', 'Memcached', 'AWS ElastiCache', 'Azure Cache'],

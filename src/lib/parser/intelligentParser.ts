@@ -16,6 +16,7 @@
  * }
  */
 
+import { nanoid } from 'nanoid';
 import { InfraSpec, InfraNodeSpec, ConnectionSpec, InfraNodeType } from '@/types';
 import { ConversationContext, SmartParseResult, SpecModification } from './UnifiedParser';
 import { CommandType } from './patterns';
@@ -282,7 +283,7 @@ function handleCreateFromIntent(
 
   // Add all components
   for (const component of intent.components) {
-    const nodeId = `${component.type}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    const nodeId = `${component.type}-${nanoid(8)}`;
     nodes.push({
       id: nodeId,
       type: component.type,
@@ -337,7 +338,7 @@ function handleAddFromIntent(
   };
 
   for (const component of intent.components) {
-    const nodeId = `${component.type}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    const nodeId = `${component.type}-${nanoid(8)}`;
     const newNode: InfraNodeSpec = {
       id: nodeId,
       type: component.type,

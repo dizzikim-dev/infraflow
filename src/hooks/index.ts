@@ -32,6 +32,9 @@ export {
 export { useNodes, type UseNodesReturn, type ComponentData } from './useNodes';
 export { useEdges, type UseEdgesReturn } from './useEdges';
 export { usePromptParser, type UsePromptParserReturn } from './usePromptParser';
+export { useLocalParser, type UseLocalParserReturn } from './useLocalParser';
+export { useLLMModifier, type UseLLMModifierReturn } from './useLLMModifier';
+export { useParserContext, type UseParserContextReturn } from './useParserContext';
 export { useInfraSelection, type UseInfraSelectionReturn } from './useInfraSelection';
 export { useAnimationScenario, type UseAnimationScenarioReturn } from './useAnimationScenario';
 export {
