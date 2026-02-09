@@ -415,6 +415,201 @@ export const infraTemplates: Record<string, InfraSpec> = {
       { id: 'onprem', label: '온프레미스', type: 'internal' },
     ],
   },
+  // ── 통신망 템플릿 ──────────────────────────────────────────────
+
+  // 기업 전용회선 접속 (본사→국사→IDC)
+  'dedicated-line': {
+    nodes: [
+      { id: 'cpe', type: 'customer-premise', label: '고객 구내(CPE)', zone: 'access' },
+      { id: 'line1', type: 'dedicated-line', label: '전용회선 100M', zone: 'transport' },
+      { id: 'co', type: 'central-office', label: '국사(CO)', zone: 'aggregation' },
+      { id: 'pe', type: 'pe-router', label: 'PE 라우터', zone: 'aggregation' },
+      { id: 'fw', type: 'firewall', label: 'Firewall', zone: 'aggregation' },
+      { id: 'idc', type: 'idc', label: 'IDC', zone: 'backbone' },
+      { id: 'server', type: 'app-server', label: '업무 서버', zone: 'backbone' },
+    ],
+    connections: [
+      { source: 'cpe', target: 'line1', flowType: 'wan-link', label: '전용회선' },
+      { source: 'line1', target: 'co', flowType: 'wan-link' },
+      { source: 'co', target: 'pe', flowType: 'request' },
+      { source: 'pe', target: 'fw', flowType: 'request' },
+      { source: 'fw', target: 'idc', flowType: 'request' },
+      { source: 'idc', target: 'server', flowType: 'request' },
+    ],
+    zones: [
+      { id: 'access', label: '고객 접속', type: 'external' },
+      { id: 'transport', label: '전송 구간', type: 'dmz' },
+      { id: 'aggregation', label: '국사/집선', type: 'dmz' },
+      { id: 'backbone', label: 'IDC/백본', type: 'internal' },
+    ],
+  },
+
+  // 전용회선 이중화 (2국사, 2전용회선)
+  'dedicated-line-dual': {
+    nodes: [
+      { id: 'cpe', type: 'customer-premise', label: '고객 구내(CPE)', zone: 'access' },
+      { id: 'line-a', type: 'dedicated-line', label: '전용회선 A', zone: 'transport' },
+      { id: 'line-b', type: 'dedicated-line', label: '전용회선 B', zone: 'transport' },
+      { id: 'co-a', type: 'central-office', label: '국사 A', zone: 'aggregation' },
+      { id: 'co-b', type: 'central-office', label: '국사 B', zone: 'aggregation' },
+      { id: 'pe-a', type: 'pe-router', label: 'PE 라우터 A', zone: 'aggregation' },
+      { id: 'pe-b', type: 'pe-router', label: 'PE 라우터 B', zone: 'aggregation' },
+      { id: 'ring', type: 'ring-network', label: '링 네트워크', zone: 'backbone' },
+      { id: 'fw', type: 'firewall', label: 'Firewall', zone: 'backbone' },
+      { id: 'idc', type: 'idc', label: 'IDC', zone: 'backbone' },
+    ],
+    connections: [
+      { source: 'cpe', target: 'line-a', flowType: 'wan-link', label: '주 회선' },
+      { source: 'cpe', target: 'line-b', flowType: 'wan-link', label: '보조 회선' },
+      { source: 'line-a', target: 'co-a', flowType: 'wan-link' },
+      { source: 'line-b', target: 'co-b', flowType: 'wan-link' },
+      { source: 'co-a', target: 'pe-a', flowType: 'request' },
+      { source: 'co-b', target: 'pe-b', flowType: 'request' },
+      { source: 'pe-a', target: 'ring', flowType: 'tunnel' },
+      { source: 'pe-b', target: 'ring', flowType: 'tunnel' },
+      { source: 'ring', target: 'fw', flowType: 'request' },
+      { source: 'fw', target: 'idc', flowType: 'request' },
+    ],
+    zones: [
+      { id: 'access', label: '고객 접속', type: 'external' },
+      { id: 'transport', label: '전송 구간', type: 'dmz' },
+      { id: 'aggregation', label: '국사/집선', type: 'dmz' },
+      { id: 'backbone', label: '백본/IDC', type: 'internal' },
+    ],
+  },
+
+  // MPLS VPN 다지점 (Hub-Spoke)
+  'mpls-vpn': {
+    nodes: [
+      { id: 'hq-cpe', type: 'customer-premise', label: '본사 CPE', zone: 'access' },
+      { id: 'branch-cpe', type: 'customer-premise', label: '지사 CPE', zone: 'access' },
+      { id: 'pe-hq', type: 'pe-router', label: 'PE 라우터 (본사)', zone: 'aggregation' },
+      { id: 'pe-br', type: 'pe-router', label: 'PE 라우터 (지사)', zone: 'aggregation' },
+      { id: 'p1', type: 'p-router', label: 'P 라우터', zone: 'backbone' },
+      { id: 'mpls', type: 'mpls-network', label: 'MPLS 망', zone: 'backbone' },
+      { id: 'vpn-svc', type: 'vpn-service', label: 'MPLS VPN', zone: 'backbone' },
+      { id: 'fw', type: 'firewall', label: 'Firewall', zone: 'backbone' },
+      { id: 'idc', type: 'idc', label: 'IDC/데이터센터', zone: 'backbone' },
+    ],
+    connections: [
+      { source: 'hq-cpe', target: 'pe-hq', flowType: 'wan-link', label: '전용회선' },
+      { source: 'branch-cpe', target: 'pe-br', flowType: 'wan-link', label: '전용회선' },
+      { source: 'pe-hq', target: 'p1', flowType: 'tunnel', label: 'MPLS LSP' },
+      { source: 'pe-br', target: 'p1', flowType: 'tunnel', label: 'MPLS LSP' },
+      { source: 'p1', target: 'mpls', flowType: 'tunnel' },
+      { source: 'mpls', target: 'vpn-svc', flowType: 'tunnel' },
+      { source: 'vpn-svc', target: 'fw', flowType: 'request' },
+      { source: 'fw', target: 'idc', flowType: 'request' },
+    ],
+    zones: [
+      { id: 'access', label: '고객 접속', type: 'external' },
+      { id: 'aggregation', label: '국사/PE', type: 'dmz' },
+      { id: 'backbone', label: 'MPLS 백본', type: 'internal' },
+    ],
+  },
+
+  // 하이브리드 WAN (전용회선 + 기업인터넷)
+  'hybrid-wan': {
+    nodes: [
+      { id: 'cpe', type: 'customer-premise', label: '고객 구내(CPE)', zone: 'access' },
+      { id: 'sdwan', type: 'sd-wan-service', label: 'SD-WAN', zone: 'access' },
+      { id: 'line', type: 'dedicated-line', label: '전용회선', zone: 'transport' },
+      { id: 'internet', type: 'corporate-internet', label: '기업인터넷(KORNET)', zone: 'transport' },
+      { id: 'co', type: 'central-office', label: '국사', zone: 'aggregation' },
+      { id: 'pe', type: 'pe-router', label: 'PE 라우터', zone: 'aggregation' },
+      { id: 'fw', type: 'firewall', label: 'Firewall', zone: 'backbone' },
+      { id: 'idc', type: 'idc', label: 'IDC', zone: 'backbone' },
+      { id: 'server', type: 'app-server', label: '업무 서버', zone: 'backbone' },
+    ],
+    connections: [
+      { source: 'cpe', target: 'sdwan', flowType: 'request' },
+      { source: 'sdwan', target: 'line', flowType: 'wan-link', label: '주 경로 (전용회선)' },
+      { source: 'sdwan', target: 'internet', flowType: 'encrypted', label: '보조 경로 (인터넷)' },
+      { source: 'line', target: 'co', flowType: 'wan-link' },
+      { source: 'internet', target: 'pe', flowType: 'encrypted' },
+      { source: 'co', target: 'pe', flowType: 'request' },
+      { source: 'pe', target: 'fw', flowType: 'request' },
+      { source: 'fw', target: 'idc', flowType: 'request' },
+      { source: 'idc', target: 'server', flowType: 'request' },
+    ],
+    zones: [
+      { id: 'access', label: '고객 접속', type: 'external' },
+      { id: 'transport', label: '전송 구간', type: 'dmz' },
+      { id: 'aggregation', label: '국사/PE', type: 'dmz' },
+      { id: 'backbone', label: 'IDC/백본', type: 'internal' },
+    ],
+  },
+
+  // 5G 특화망
+  '5g-private': {
+    nodes: [
+      { id: 'device', type: 'user', label: 'IoT 디바이스/UE', zone: 'ran' },
+      { id: 'gnb', type: 'base-station', label: '기지국(gNB)', zone: 'ran' },
+      { id: 'co', type: 'central-office', label: '국사', zone: 'aggregation' },
+      { id: 'core', type: 'core-network', label: '5G 코어(5GC)', zone: 'backbone' },
+      { id: 'upf', type: 'upf', label: 'UPF', zone: 'backbone' },
+      { id: 'p5g', type: 'private-5g', label: '5G 특화망', zone: 'backbone' },
+      { id: 'fw', type: 'firewall', label: 'Firewall', zone: 'backbone' },
+      { id: 'idc', type: 'idc', label: 'IDC', zone: 'backbone' },
+      { id: 'server', type: 'app-server', label: '엣지 서버', zone: 'backbone' },
+    ],
+    connections: [
+      { source: 'device', target: 'gnb', flowType: 'wireless', label: '5G NR' },
+      { source: 'gnb', target: 'co', flowType: 'wan-link', label: 'xHaul' },
+      { source: 'co', target: 'core', flowType: 'request' },
+      { source: 'core', target: 'upf', flowType: 'request', label: 'N4' },
+      { source: 'upf', target: 'p5g', flowType: 'tunnel', label: 'GTP-U' },
+      { source: 'p5g', target: 'fw', flowType: 'request' },
+      { source: 'fw', target: 'idc', flowType: 'request' },
+      { source: 'idc', target: 'server', flowType: 'request' },
+    ],
+    zones: [
+      { id: 'ran', label: 'RAN (무선 접속)', type: 'external' },
+      { id: 'aggregation', label: '국사/집선', type: 'dmz' },
+      { id: 'backbone', label: '코어/IDC', type: 'internal' },
+    ],
+  },
+
+  // IDC 이중화 접속
+  'idc-dual': {
+    nodes: [
+      { id: 'cpe', type: 'customer-premise', label: '고객 구내(CPE)', zone: 'access' },
+      { id: 'line-a', type: 'dedicated-line', label: '전용회선 A', zone: 'transport' },
+      { id: 'line-b', type: 'dedicated-line', label: '전용회선 B', zone: 'transport' },
+      { id: 'co-a', type: 'central-office', label: '국사 A', zone: 'aggregation' },
+      { id: 'co-b', type: 'central-office', label: '국사 B', zone: 'aggregation' },
+      { id: 'pe-a', type: 'pe-router', label: 'PE 라우터 A', zone: 'aggregation' },
+      { id: 'pe-b', type: 'pe-router', label: 'PE 라우터 B', zone: 'aggregation' },
+      { id: 'fw-a', type: 'firewall', label: 'Firewall A', zone: 'backbone' },
+      { id: 'fw-b', type: 'firewall', label: 'Firewall B', zone: 'backbone' },
+      { id: 'idc-a', type: 'idc', label: 'IDC A (주)', zone: 'backbone' },
+      { id: 'idc-b', type: 'idc', label: 'IDC B (DR)', zone: 'backbone' },
+      { id: 'db-a', type: 'db-server', label: 'DB (Active)', zone: 'data' },
+      { id: 'db-b', type: 'db-server', label: 'DB (Standby)', zone: 'data' },
+    ],
+    connections: [
+      { source: 'cpe', target: 'line-a', flowType: 'wan-link', label: '주 회선' },
+      { source: 'cpe', target: 'line-b', flowType: 'wan-link', label: '보조 회선' },
+      { source: 'line-a', target: 'co-a', flowType: 'wan-link' },
+      { source: 'line-b', target: 'co-b', flowType: 'wan-link' },
+      { source: 'co-a', target: 'pe-a', flowType: 'request' },
+      { source: 'co-b', target: 'pe-b', flowType: 'request' },
+      { source: 'pe-a', target: 'fw-a', flowType: 'request' },
+      { source: 'pe-b', target: 'fw-b', flowType: 'request' },
+      { source: 'fw-a', target: 'idc-a', flowType: 'request' },
+      { source: 'fw-b', target: 'idc-b', flowType: 'request' },
+      { source: 'idc-a', target: 'db-a', flowType: 'request' },
+      { source: 'idc-b', target: 'db-b', flowType: 'request' },
+      { source: 'db-a', target: 'db-b', flowType: 'sync', label: 'DB Replication' },
+    ],
+    zones: [
+      { id: 'access', label: '고객 접속', type: 'external' },
+      { id: 'transport', label: '전송 구간', type: 'dmz' },
+      { id: 'aggregation', label: '국사/PE', type: 'dmz' },
+      { id: 'backbone', label: 'IDC', type: 'internal' },
+      { id: 'data', label: '데이터', type: 'db' },
+    ],
+  },
 };
 
 // Template keywords for matching
@@ -433,4 +628,10 @@ export const templateKeywords: Record<string, string[]> = {
   'assembly-vdi': ['의원 vdi', '다중 pc', '의회 vdi', '의원실', '본회의장', '상임위', '지역상담소', '의원 업무환경'],
   'network-separation-llm': ['망분리 llm', '내부망 llm', '인터넷망 llm', '망분리 ai', '중계서버'],
   'hybrid-vdi': ['하이브리드 vdi', '클라우드 vdi', '온프레미스 vdi', 'vdi 통합'],
+  'dedicated-line': ['전용회선', 'dedicated line', 'leased line', '전용선', '본사 지사', '점대점'],
+  'dedicated-line-dual': ['전용회선 이중화', '회선 이중화', 'dual line', 'dual homing', '이중 회선'],
+  'mpls-vpn': ['mpls', 'mpls vpn', '엠피엘에스', 'hub spoke', '다지점', '본사 지사 vpn'],
+  'hybrid-wan': ['하이브리드 wan', 'hybrid wan', 'sd-wan', 'sdwan', '전용회선 인터넷', 'kornet'],
+  '5g-private': ['5g 특화', 'private 5g', '사설 5g', '5g 특화망', '기지국', 'gnb', '스마트팩토리 5g'],
+  'idc-dual': ['idc 이중화', 'idc 이중', 'dual idc', 'idc dr', '데이터센터 이중화'],
 };

@@ -72,6 +72,27 @@ export const nodeTypePatterns: NodeTypePattern[] = [
   { pattern: /sso|single.*sign.*on|싱글.*사인온/i, type: 'sso', label: 'SSO', labelKo: 'SSO' },
   { pattern: /mfa|multi.*factor|다중.*인증/i, type: 'mfa', label: 'MFA', labelKo: 'MFA' },
   { pattern: /iam|identity.*access/i, type: 'iam', label: 'IAM', labelKo: 'IAM' },
+
+  // Telecom
+  { pattern: /국사|central\s*office|co(?:\s|$)|pop(?:\s|$)|point\s*of\s*presence/i, type: 'central-office', label: 'Central Office', labelKo: '국사' },
+  { pattern: /기지국|base\s*station|gnb|enb|bts/i, type: 'base-station', label: 'Base Station', labelKo: '기지국' },
+  { pattern: /olt|광선로\s*단말|optical\s*line\s*terminal/i, type: 'olt', label: 'OLT', labelKo: 'OLT' },
+  { pattern: /고객\s*구내|cpe|customer\s*premise/i, type: 'customer-premise', label: 'Customer Premise', labelKo: '고객 구내' },
+  { pattern: /idc|인터넷\s*데이터\s*센터|데이터\s*센터/i, type: 'idc', label: 'IDC', labelKo: 'IDC' },
+
+  // WAN
+  { pattern: /pe\s*라우터|pe[-\s]*router|provider\s*edge/i, type: 'pe-router', label: 'PE Router', labelKo: 'PE 라우터' },
+  { pattern: /p\s*라우터|p[-\s]*router|provider\s*core\s*router/i, type: 'p-router', label: 'P Router', labelKo: 'P 라우터' },
+  { pattern: /mpls|엠피엘에스/i, type: 'mpls-network', label: 'MPLS Network', labelKo: 'MPLS 망' },
+  { pattern: /전용회선|dedicated\s*line|leased\s*line|전용선/i, type: 'dedicated-line', label: 'Dedicated Line', labelKo: '전용회선' },
+  { pattern: /메트로\s*이더넷|metro[-\s]*ethernet|mef\s*서비스/i, type: 'metro-ethernet', label: 'Metro Ethernet', labelKo: '메트로 이더넷' },
+  { pattern: /기업\s*인터넷|kornet|코넷|corporate\s*internet/i, type: 'corporate-internet', label: 'Corporate Internet', labelKo: '기업인터넷' },
+  { pattern: /vpn\s*서비스|vpn\s*service|mpls\s*vpn/i, type: 'vpn-service', label: 'VPN Service', labelKo: 'VPN 서비스' },
+  { pattern: /sd[-\s]*wan\s*서비스|sd[-\s]*wan\s*service/i, type: 'sd-wan-service', label: 'SD-WAN Service', labelKo: 'SD-WAN 서비스' },
+  { pattern: /5g\s*특화|private\s*5g|사설\s*5g/i, type: 'private-5g', label: 'Private 5G', labelKo: '5G 특화망' },
+  { pattern: /코어\s*망|core\s*network|5gc|5g\s*core/i, type: 'core-network', label: 'Core Network', labelKo: '코어망' },
+  { pattern: /upf|user\s*plane\s*function/i, type: 'upf', label: 'UPF', labelKo: 'UPF' },
+  { pattern: /링\s*네트워크|ring\s*network|이중화\s*링/i, type: 'ring-network', label: 'Ring Network', labelKo: '링 네트워크' },
 ];
 
 /**
@@ -266,6 +287,11 @@ const quickMatchKeywords: Set<string> = new Set([
   'cloud', 'private', 'san', 'nas', 'object', 'storage', 's3', 'backup',
   'cache', 'redis', 'memcached', 'ldap', 'ad', 'active', 'directory',
   'sso', 'single', 'sign', 'mfa', 'multi', 'factor', 'iam', 'identity', 'access',
+  // Telecom/WAN English keywords
+  'central', 'office', 'pop', 'base', 'station', 'gnb', 'enb', 'bts',
+  'olt', 'optical', 'cpe', 'premise', 'idc',
+  'pe', 'mpls', 'dedicated', 'line', 'leased', 'metro', 'ethernet', 'mef',
+  'kornet', 'corporate', '5g', 'upf', 'ring', 'core',
   // Korean keywords
   '사용자', '유저', '클라이언트', '인터넷', '외부망', '웹방화벽', '방화벽',
   '침입', '탐지', '방지', '가상사설망', '네트워크', '접근', '제어',
@@ -274,6 +300,10 @@ const quickMatchKeywords: Set<string> = new Set([
   '데이터베이스', '디비', '쿠버네티스', '컨테이너', '도커', '가상', '머신',
   '사설', '클라우드', '스토리지', '영역', '오브젝트', '백업', '캐시',
   '액티브', '디렉토리', '싱글', '사인온', '다중', '인증',
+  // Telecom/WAN Korean keywords
+  '국사', '기지국', '광선로', '고객', '구내', '전용회선', '전용선',
+  '메트로', '이더넷', '기업', '코넷', '코어', '특화',
+  '링', '이중화',
 ]);
 
 /**

@@ -549,7 +549,8 @@ describe('Gold Set - Cloud/Hybrid', () => {
   });
 
   it('GS-068: SD-WAN cloud connectivity', () => {
-    expectNodesPresent('SD-WAN 구성', ['sd-wan']);
+    const types = getNodeTypes('SD-WAN 구성');
+    expect(types.some((t) => t === 'sd-wan' || t === 'sd-wan-service')).toBe(true);
   });
 
   it('GS-069: SAN/NAS storage', () => {

@@ -35,6 +35,12 @@ import {
   SANS_CIS_TOP20,
   CNCF_SECURITY,
   OWASP_TOP10,
+  RFC_3031,
+  RFC_4364,
+  ITU_G984,
+  THREEGPP_38401,
+  THREEGPP_23002,
+  MEF_4,
 } from './sourceRegistry';
 
 // ---------------------------------------------------------------------------
@@ -1123,6 +1129,253 @@ const AUTH_FAILURES: FailureScenario[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Telecom Failures (FAIL-TEL-001 ~ FAIL-TEL-008)
+// ---------------------------------------------------------------------------
+
+const TELECOM_FAILURES: FailureScenario[] = [
+  {
+    id: 'FAIL-TEL-001',
+    type: 'failure',
+    component: 'central-office',
+    titleKo: '국사 장애',
+    scenarioKo:
+      '국사(CO/POP)의 전원 장애, 화재, 수해, 장비 고장 등으로 해당 국사를 경유하는 모든 회선의 서비스가 중단됩니다. 단일 국사를 통해 연결된 모든 고객이 영향을 받으며, 물리적 복구가 필요하여 장시간 서비스 중단이 발생합니다.',
+    impact: 'service-down',
+    likelihood: 'low',
+    affectedComponents: ['dedicated-line', 'pe-router', 'olt', 'base-station'],
+    preventionKo: [
+      '이중 국사 접속(Dual Homing)으로 단일 국사 장애에 대비합니다',
+      '국사 간 링 네트워크를 구성하여 자동 우회 경로를 확보합니다',
+      '핵심 고객은 서로 다른 국사에 물리적으로 분리된 회선을 구성합니다',
+    ],
+    mitigationKo: [
+      '이중화된 국사로 트래픽을 자동 전환합니다',
+      '통신사에 긴급 장애 신고 및 복구 우선순위를 요청합니다',
+      '임시로 모바일(LTE/5G) 백업 회선을 활성화합니다',
+    ],
+    estimatedMTTR: '4~12시간',
+    tags: ['telecom', 'central-office', 'outage', 'physical', 'availability'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(MEF_4, 'Metro Ethernet Network Architecture')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-TEL-002',
+    type: 'failure',
+    component: 'dedicated-line',
+    titleKo: '전용회선 절단',
+    scenarioKo:
+      '건설 공사, 자연재해, 장비 고장 등으로 전용회선이 물리적으로 절단됩니다. 해당 회선을 통한 WAN 통신이 완전히 중단되며, 물리적 복구(광케이블 접속, 장비 교체 등)가 필요합니다.',
+    impact: 'service-down',
+    likelihood: 'medium',
+    affectedComponents: ['customer-premise', 'pe-router', 'central-office'],
+    preventionKo: [
+      '이중 전용회선을 서로 다른 물리 경로(관로)로 구성합니다',
+      '모바일(LTE/5G) 또는 인터넷 기반 백업 회선을 사전 구성합니다',
+      '회선 상태 모니터링 및 자동 전환(failover) 장비를 설치합니다',
+    ],
+    mitigationKo: [
+      '백업 회선(이중화 전용회선 또는 인터넷)으로 트래픽을 전환합니다',
+      '통신사에 긴급 장애 신고하여 복구 작업을 시작합니다',
+      'SD-WAN이 있는 경우 자동으로 대체 경로를 선택합니다',
+    ],
+    estimatedMTTR: '2~8시간',
+    tags: ['telecom', 'dedicated-line', 'cut', 'physical', 'wan'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(RFC_4364, 'Section 4 - CE-PE Connection')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-TEL-003',
+    type: 'failure',
+    component: 'pe-router',
+    titleKo: 'PE 라우터 장애',
+    scenarioKo:
+      'PE(Provider Edge) 라우터의 소프트웨어 버그, 하드웨어 고장, 또는 설정 오류로 인해 해당 PE를 경유하는 모든 VPN/전용회선 서비스가 중단됩니다. 다수의 고객 회선이 동시에 영향을 받습니다.',
+    impact: 'service-down',
+    likelihood: 'medium',
+    affectedComponents: ['dedicated-line', 'vpn-service', 'metro-ethernet', 'central-office'],
+    preventionKo: [
+      'PE 라우터를 이중화(Active-Standby)로 구성하여 자동 페일오버를 보장합니다',
+      '라우터 소프트웨어를 검증된 안정 버전으로 유지합니다',
+      '설정 변경 시 변경 관리 프로세스를 적용합니다',
+    ],
+    mitigationKo: [
+      '대기 PE 라우터로 자동 페일오버를 트리거합니다',
+      '영향받는 고객 회선을 인접 PE로 임시 이전합니다',
+      '라우터 설정을 마지막 정상 백업으로 복원합니다',
+    ],
+    estimatedMTTR: '1~4시간',
+    tags: ['telecom', 'pe-router', 'outage', 'mpls', 'vpn'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(RFC_3031, 'Section 2.2 - Label Switching')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-TEL-004',
+    type: 'failure',
+    component: 'base-station',
+    titleKo: '기지국 장애',
+    scenarioKo:
+      '기지국(gNB/eNB)의 전원 장애, 장비 고장, 또는 백홀 링크 단절로 해당 셀 커버리지 내 모든 무선 단말의 통신이 중단됩니다. 주변 기지국의 커버리지로 일부 보상되지만 품질이 저하됩니다.',
+    impact: 'degraded',
+    likelihood: 'medium',
+    affectedComponents: ['core-network', 'private-5g', 'central-office'],
+    preventionKo: [
+      '기지국 전원을 UPS/배터리로 이중화합니다',
+      '백홀 링크를 이중화(유선+무선 또는 이중 유선)로 구성합니다',
+      '셀 간 겹침(overlap)을 충분히 설계하여 단일 기지국 장애 시 주변 셀이 보상합니다',
+    ],
+    mitigationKo: [
+      '주변 기지국의 출력을 높여 커버리지 홀을 최소화합니다',
+      '이동식 기지국(COW)을 긴급 배치합니다',
+      '백홀 링크를 대체 경로로 복구합니다',
+    ],
+    estimatedMTTR: '2~6시간',
+    tags: ['telecom', 'base-station', '5g', 'radio', 'coverage'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(THREEGPP_38401, 'Section 6 - NG-RAN Architecture')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-TEL-005',
+    type: 'failure',
+    component: 'core-network',
+    titleKo: '코어망 장애',
+    scenarioKo:
+      '모바일 코어 네트워크(5GC/EPC)의 제어 플레인 또는 사용자 플레인 장비 장애로 광범위한 지역의 모바일 서비스가 중단됩니다. AMF, SMF 등 핵심 기능 장애 시 신규 세션 수립이 불가능해집니다.',
+    impact: 'service-down',
+    likelihood: 'low',
+    affectedComponents: ['base-station', 'upf', 'private-5g'],
+    preventionKo: [
+      '코어 네트워크 기능(NF)을 지리적으로 분산 배치합니다',
+      '제어 플레인과 사용자 플레인을 분리(CUPS)하여 독립적 이중화를 구성합니다',
+      '코어 NF 상태를 실시간 모니터링하고 자동 페일오버를 설정합니다',
+    ],
+    mitigationKo: [
+      '대기(Standby) 코어 NF로 자동 페일오버를 실행합니다',
+      '영향 범위를 특정 지역/서비스로 격리합니다',
+      '기존 세션을 유지하면서 신규 세션은 정상 코어로 라우팅합니다',
+    ],
+    estimatedMTTR: '2~8시간',
+    tags: ['telecom', 'core-network', '5g', 'epc', 'control-plane'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(THREEGPP_23002, 'Section 4 - Network Architecture')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-TEL-006',
+    type: 'failure',
+    component: 'upf',
+    titleKo: 'UPF 장애',
+    scenarioKo:
+      'UPF(User Plane Function)의 소프트웨어 오류, 리소스 고갈, 또는 하드웨어 장애로 사용자 데이터 포워딩이 중단됩니다. 해당 UPF를 통과하는 모든 사용자 세션의 데이터 전송이 불가능해집니다.',
+    impact: 'service-down',
+    likelihood: 'low',
+    affectedComponents: ['core-network', 'private-5g', 'idc'],
+    preventionKo: [
+      'UPF를 Active-Standby 이중화로 구성합니다',
+      'UPF 리소스(CPU, 메모리, 세션 수)를 모니터링하고 임계치 경보를 설정합니다',
+      '로컬 UPF와 중앙 UPF를 병행 배치하여 장애 영향을 분산합니다',
+    ],
+    mitigationKo: [
+      '대기 UPF로 세션을 전환합니다',
+      '영향받는 세션을 다른 UPF 인스턴스로 재할당합니다',
+      'UPF를 재시작하고 세션 복구를 수행합니다',
+    ],
+    estimatedMTTR: '1~2시간',
+    tags: ['telecom', 'upf', '5g', 'user-plane', 'data-forwarding'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(THREEGPP_23002, 'Section 4 - Network Architecture')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-TEL-007',
+    type: 'failure',
+    component: 'mpls-network',
+    titleKo: 'MPLS 망 장애',
+    scenarioKo:
+      'MPLS 백본 네트워크의 P 라우터 장애, LDP/RSVP-TE 세션 끊김, 또는 광케이블 절단으로 레이블 스위칭 경로(LSP)가 단절됩니다. 해당 LSP를 사용하는 모든 VPN, 전용회선 서비스가 중단됩니다.',
+    impact: 'service-down',
+    likelihood: 'low',
+    affectedComponents: ['pe-router', 'p-router', 'vpn-service', 'dedicated-line'],
+    preventionKo: [
+      'MPLS FRR(Fast ReRoute)를 구성하여 50ms 이내 경로 전환을 보장합니다',
+      'P 라우터를 이중화하고 다양한 물리 경로를 확보합니다',
+      'LDP/RSVP-TE 세션 상태를 모니터링하고 경보를 설정합니다',
+    ],
+    mitigationKo: [
+      'FRR 백업 LSP로 자동 전환을 확인합니다',
+      '장애 P 라우터를 우회하는 수동 LSP를 구성합니다',
+      '통신사 NOC에 긴급 장애 보고 및 복구를 요청합니다',
+    ],
+    estimatedMTTR: '2~6시간',
+    tags: ['telecom', 'mpls-network', 'lsp', 'backbone', 'p-router'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(RFC_3031, 'Section 2.2 - Label Switching')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-TEL-008',
+    type: 'failure',
+    component: 'ring-network',
+    titleKo: '링 네트워크 단절',
+    scenarioKo:
+      '링 네트워크의 한 구간이 절단되면 트래픽은 자동으로 반대 방향으로 우회합니다. 그러나 두 번째 구간도 동시 장애(double failure)가 발생하면 링이 완전히 분리되어 일부 국사 간 통신이 두절됩니다.',
+    impact: 'degraded',
+    likelihood: 'medium',
+    affectedComponents: ['central-office', 'pe-router', 'dedicated-line'],
+    preventionKo: [
+      '링 보호 절체(APS: Automatic Protection Switching)를 50ms 이내로 설정합니다',
+      '핵심 구간은 이중 링 또는 메시 토폴로지로 구성합니다',
+      '링 구간별 광케이블 상태를 실시간 모니터링합니다',
+    ],
+    mitigationKo: [
+      'APS가 정상 동작하여 반대 방향으로 우회하는지 확인합니다',
+      '절단 구간의 긴급 복구 작업을 시작합니다',
+      '이중 장애 시 임시 직접 연결(점퍼)로 영향 국사를 연결합니다',
+    ],
+    estimatedMTTR: '50ms~1시간',
+    tags: ['telecom', 'ring-network', 'aps', 'protection-switching', 'fiber-cut'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(MEF_4, 'Metro Ethernet Network Architecture')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
 
@@ -1133,6 +1386,7 @@ export const FAILURE_SCENARIOS: readonly FailureScenario[] = Object.freeze([
   ...COMPUTE_FAILURES,
   ...DATA_FAILURES,
   ...AUTH_FAILURES,
+  ...TELECOM_FAILURES,
 ]);
 
 /** Alias for FAILURE_SCENARIOS */

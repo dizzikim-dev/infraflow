@@ -356,6 +356,27 @@ spec:
 
   // Zone
   'zone': () => `# Zone: Network zone boundary`,
+
+  // Telecom
+  'central-office': () => `# Central Office: Telecom facility`,
+  'base-station': () => `# Base Station: Wireless access point`,
+  'olt': () => `# OLT: Optical line terminal`,
+  'customer-premise': () => `# Customer Premise: CPE equipment`,
+  'idc': () => `# IDC: Internet data center`,
+
+  // WAN
+  'pe-router': () => `# PE Router: Provider edge router`,
+  'p-router': () => `# P Router: Provider core router`,
+  'mpls-network': () => `# MPLS Network: MPLS backbone`,
+  'dedicated-line': () => `# Dedicated Line: Leased line`,
+  'metro-ethernet': () => `# Metro Ethernet: Metro ethernet service`,
+  'corporate-internet': () => `# Corporate Internet: Enterprise internet`,
+  'vpn-service': () => `# VPN Service: MPLS VPN`,
+  'sd-wan-service': () => `# SD-WAN Service: SD-WAN overlay`,
+  'private-5g': () => `# Private 5G: Private 5G network`,
+  'core-network': () => `# Core Network: Mobile core`,
+  'upf': () => `# UPF: User plane function`,
+  'ring-network': () => `# Ring Network: Ring topology`,
 };
 
 /**

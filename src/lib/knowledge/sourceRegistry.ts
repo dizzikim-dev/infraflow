@@ -53,6 +53,24 @@ function industry(title: string, url: string, section?: string): KnowledgeSource
   return { type: 'industry', title, url, section, accessedDate: '2026-02-09' };
 }
 
+function itu(id: string, title: string, url: string, section?: string): KnowledgeSource {
+  return { type: 'vendor', title: `ITU-T ${id}: ${title}`, url, section, accessedDate: '2026-02-09' };
+}
+
+function threeGpp(id: string, title: string, section?: string): KnowledgeSource {
+  return {
+    type: 'vendor',
+    title: `3GPP ${id}: ${title}`,
+    url: `https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=${id}`,
+    section,
+    accessedDate: '2026-02-09',
+  };
+}
+
+function mef(id: string, title: string, url: string, section?: string): KnowledgeSource {
+  return { type: 'industry', title: `${id}: ${title}`, url, section, accessedDate: '2026-02-09' };
+}
+
 // ---------------------------------------------------------------------------
 // NIST Special Publications
 // ---------------------------------------------------------------------------
@@ -221,6 +239,23 @@ export const SANS_FIREWALL = industry(
 );
 
 // ---------------------------------------------------------------------------
+// Telecom Standards
+// ---------------------------------------------------------------------------
+
+export const RFC_3031 = rfc(3031, 'Multiprotocol Label Switching Architecture', '2001-01');
+export const RFC_4364 = rfc(4364, 'BGP/MPLS IP Virtual Private Networks (VPNs)', '2006-02');
+export const RFC_5036 = rfc(5036, 'LDP Specification', '2007-10');
+export const RFC_7348 = rfc(7348, 'VXLAN: Virtual eXtensible LAN', '2014-08');
+export const RFC_4381 = rfc(4381, 'Analysis of the Security of BGP/MPLS IP VPNs', '2006-02');
+export const ITU_G984 = itu('G.984', 'GPON - Gigabit-capable Passive Optical Networks', 'https://www.itu.int/rec/T-REC-G.984.1');
+export const ITU_Y3183 = itu('Y.3183', 'Framework for network slicing', 'https://www.itu.int/rec/T-REC-Y.3183');
+export const THREEGPP_23002 = threeGpp('23.002', 'Network Architecture', 'Section 4');
+export const THREEGPP_38401 = threeGpp('38.401', 'NG-RAN Architecture', 'Section 6');
+export const MEF_4 = mef('MEF 4', 'Metro Ethernet Network Architecture Framework', 'https://www.mef.net/resources/technical-specifications/');
+export const ETSI_NFV_MAN = vendor('ETSI GS NFV-MAN 001: Network Functions Virtualisation Management', 'https://www.etsi.org/deliver/etsi_gs/NFV-MAN/001_099/001/');
+export const KT_5G_ARCH = vendor('KT 5G Network Architecture Reference (Netmanias)', 'https://www.netmanias.com/en/post/reports/14808/5g-kt-kt-5g-network-architecture');
+
+// ---------------------------------------------------------------------------
 // Utility: get source with section override
 // ---------------------------------------------------------------------------
 
@@ -236,10 +271,13 @@ export const ALL_SOURCES: KnowledgeSource[] = [
   NIST_800_41, NIST_800_44, NIST_800_53, NIST_800_63B, NIST_800_77,
   NIST_800_81, NIST_800_94, NIST_800_123, NIST_800_144, NIST_800_125,
   RFC_7230, RFC_8446, RFC_1034, RFC_2818, RFC_7540,
+  RFC_3031, RFC_4364, RFC_5036, RFC_7348, RFC_4381,
   CIS_V8, CIS_V8_12, CIS_V8_13,
   OWASP_TOP10, OWASP_WSTG, OWASP_API_TOP10,
   AWS_WAF_REL, AWS_WAF_SEC, AWS_WAF_PERF, AZURE_CAF,
   SANS_CIS_TOP20, CNCF_SECURITY, SANS_FIREWALL,
+  ITU_G984, ITU_Y3183, THREEGPP_23002, THREEGPP_38401,
+  MEF_4, ETSI_NFV_MAN, KT_5G_ARCH,
 ];
 
 /** Validate that a source type maps to a known confidence level */

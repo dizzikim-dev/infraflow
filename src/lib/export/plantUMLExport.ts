@@ -64,6 +64,27 @@ const c4ElementMap: Record<InfraNodeType, { stereotype: string; shape: string }>
 
   // Zone
   'zone': { stereotype: 'Zone', shape: 'System_Boundary' },
+
+  // Telecom
+  'central-office': { stereotype: 'Telecom', shape: 'Container' },
+  'base-station': { stereotype: 'Telecom', shape: 'Container' },
+  'olt': { stereotype: 'Telecom', shape: 'Container' },
+  'customer-premise': { stereotype: 'Telecom', shape: 'Container' },
+  'idc': { stereotype: 'Telecom', shape: 'Container' },
+
+  // WAN
+  'pe-router': { stereotype: 'WAN', shape: 'Container' },
+  'p-router': { stereotype: 'WAN', shape: 'Container' },
+  'mpls-network': { stereotype: 'WAN', shape: 'System_Boundary' },
+  'dedicated-line': { stereotype: 'WAN', shape: 'Container' },
+  'metro-ethernet': { stereotype: 'WAN', shape: 'Container' },
+  'corporate-internet': { stereotype: 'WAN', shape: 'Container' },
+  'vpn-service': { stereotype: 'WAN', shape: 'Container' },
+  'sd-wan-service': { stereotype: 'WAN', shape: 'Container' },
+  'private-5g': { stereotype: 'WAN', shape: 'Container' },
+  'core-network': { stereotype: 'WAN', shape: 'Container' },
+  'upf': { stereotype: 'WAN', shape: 'Container' },
+  'ring-network': { stereotype: 'WAN', shape: 'System_Boundary' },
 };
 
 /**

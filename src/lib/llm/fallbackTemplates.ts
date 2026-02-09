@@ -68,6 +68,23 @@ export const FALLBACK_TEMPLATES: Record<string, InfraSpec> = {
       { source: 'vdi', target: 'storage' },
     ],
   },
+  'telecom': {
+    nodes: [
+      { id: 'cpe', type: 'customer-premise', label: 'CPE', zone: 'access' },
+      { id: 'line', type: 'dedicated-line', label: 'Dedicated Line', zone: 'transport' },
+      { id: 'co', type: 'central-office', label: 'Central Office', zone: 'aggregation' },
+      { id: 'pe', type: 'pe-router', label: 'PE Router', zone: 'aggregation' },
+      { id: 'fw', type: 'firewall', label: 'Firewall', zone: 'backbone' },
+      { id: 'idc', type: 'idc', label: 'IDC', zone: 'backbone' },
+    ],
+    connections: [
+      { source: 'cpe', target: 'line', flowType: 'wan-link' },
+      { source: 'line', target: 'co', flowType: 'wan-link' },
+      { source: 'co', target: 'pe' },
+      { source: 'pe', target: 'fw' },
+      { source: 'fw', target: 'idc' },
+    ],
+  },
   'default': {
     nodes: [
       { id: 'user', type: 'user', label: 'User' },
@@ -111,6 +128,17 @@ export function matchFallbackTemplate(prompt: string): InfraSpec {
     lowerPrompt.includes('secure')
   ) {
     return FALLBACK_TEMPLATES['web-secure'];
+  }
+
+  if (
+    lowerPrompt.includes('전용회선') ||
+    lowerPrompt.includes('dedicated line') ||
+    lowerPrompt.includes('국사') ||
+    lowerPrompt.includes('mpls') ||
+    lowerPrompt.includes('5g 특화') ||
+    lowerPrompt.includes('idc 이중화')
+  ) {
+    return FALLBACK_TEMPLATES['telecom'];
   }
 
   return FALLBACK_TEMPLATES['default'];

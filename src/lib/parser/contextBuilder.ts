@@ -41,10 +41,13 @@ export function buildContext(nodes: Node<InfraNodeData>[], edges: Edge[]): Diagr
     label: (edge.data as { label?: string })?.label,
   }));
 
+  const summary = generateSummary(nodeContexts);
+  const telecomContext = detectTelecomContext(nodeContexts);
+
   return {
     nodes: nodeContexts,
     connections: connectionContexts,
-    summary: generateSummary(nodeContexts),
+    summary: telecomContext ? `${summary} | ${telecomContext}` : summary,
   };
 }
 
@@ -83,6 +86,51 @@ function generateSummary(nodes: NodeContext[]): string {
   return `${archType} (총 ${nodes.length}개 노드) | 카테고리: ${categoryParts} | 티어: ${zoneParts}`;
 }
 
+// Telecom/WAN component types for detection
+const TELECOM_NODE_TYPES = new Set([
+  'central-office', 'base-station', 'olt', 'customer-premise', 'idc',
+]);
+
+const WAN_NODE_TYPES = new Set([
+  'pe-router', 'p-router', 'mpls-network', 'dedicated-line', 'metro-ethernet',
+  'corporate-internet', 'vpn-service', 'sd-wan-service', 'private-5g',
+  'core-network', 'upf', 'ring-network',
+]);
+
+// Telecom-related keywords that may appear in user prompts
+export const TELECOM_KEYWORDS = [
+  '전용회선', '국사', '기지국', 'MPLS', 'mpls', 'VPN', 'vpn',
+  'IDC', 'idc', '메트로이더넷', 'metro ethernet', '5G 특화망', 'private 5g',
+  'KORNET', 'kornet', '이중화', '링', '백본', 'backbone',
+  'WAN', 'wan', '통신망', '네트워크 토폴로지', 'telecom',
+  'OLT', 'olt', 'CPE', 'cpe', 'PE 라우터', 'pe router',
+  'UPF', 'upf', '코어망', 'core network', 'SD-WAN', 'sd-wan',
+];
+
+/**
+ * Detect if a prompt contains telecom-related keywords
+ */
+export function containsTelecomKeywords(prompt: string): boolean {
+  const lower = prompt.toLowerCase();
+  return TELECOM_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+}
+
+/**
+ * Detect telecom context from existing nodes
+ * Returns a context string if telecom/wan nodes are present, null otherwise
+ */
+function detectTelecomContext(nodes: NodeContext[]): string | null {
+  const types = new Set(nodes.map((n) => n.type));
+
+  const hasTelecom = [...types].some((t) => TELECOM_NODE_TYPES.has(t));
+  const hasWan = [...types].some((t) => WAN_NODE_TYPES.has(t));
+
+  if (hasTelecom || hasWan) {
+    return '통신망 구성이 포함되어 있습니다. 통신 컴포넌트 간의 관계를 고려하세요.';
+  }
+  return null;
+}
+
 /**
  * Detect the architecture type based on nodes
  */
@@ -99,7 +147,24 @@ function detectArchitectureType(nodes: NodeContext[]): string {
   const hasKubernetes = types.has('kubernetes');
   const hasContainer = types.has('container');
 
-  // Detect patterns
+  // Check for telecom/WAN patterns
+  const hasTelecom = [...types].some((t) => TELECOM_NODE_TYPES.has(t));
+  const hasWan = [...types].some((t) => WAN_NODE_TYPES.has(t));
+
+  // Telecom network patterns (check first for more specific detection)
+  if (hasTelecom && hasWan) {
+    return '통신망 토폴로지';
+  }
+
+  if (hasWan) {
+    return 'WAN 네트워크 아키텍처';
+  }
+
+  if (hasTelecom) {
+    return '통신 인프라 아키텍처';
+  }
+
+  // Detect standard patterns
   if (hasWebServer && hasAppServer && hasDBServer) {
     return '3티어 웹 아키텍처';
   }

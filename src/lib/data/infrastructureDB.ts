@@ -21,6 +21,8 @@ import {
   storageComponents,
   authComponents,
   externalComponents,
+  telecomComponents,
+  wanComponents,
   categoryLabels,
   tierLabels,
   getComponentsByCategory,
@@ -42,6 +44,8 @@ export {
   storageComponents,
   authComponents,
   externalComponents,
+  telecomComponents,
+  wanComponents,
 };
 
 // Re-export utility functions and labels
@@ -61,6 +65,8 @@ export const categoryIcons: Record<string, string> = {
   storage: 'M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4',
   auth: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z',
   external: 'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z',
+  telecom: 'M2 12l5-5v3h6V7l5 5-5 5v-3H7v3z',
+  wan: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12h16M12 4c2.5 3 4 6 4 8s-1.5 5-4 8c-2.5-3-4-6-4-8s1.5-5 4-8z',
 };
 
 // Tier order for layout

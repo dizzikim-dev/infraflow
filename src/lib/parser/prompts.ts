@@ -13,6 +13,10 @@ export const AVAILABLE_COMPONENTS: Record<string, InfraNodeType[]> = {
   storage: ['san-nas', 'object-storage', 'cache', 'backup'],
   auth: ['ldap-ad', 'sso', 'mfa', 'iam'],
   external: ['user', 'internet'],
+  telecom: ['central-office', 'base-station', 'olt', 'customer-premise', 'idc'],
+  wan: ['pe-router', 'p-router', 'mpls-network', 'dedicated-line', 'metro-ethernet',
+       'corporate-internet', 'vpn-service', 'sd-wan-service', 'private-5g',
+       'core-network', 'upf', 'ring-network'],
 };
 
 // Format available components for prompt
@@ -34,6 +38,23 @@ export const SYSTEM_PROMPT = `당신은 인프라 아키텍처 수정 전문가�
 
 ## 사용 가능한 컴포넌트 타입
 ${formatAvailableComponents()}
+
+## 통신망/네트워크 토폴로지 모드
+사용자가 다음 키워드를 사용하면 통신 인프라 컴포넌트를 활용하세요:
+- 전용회선, 국사, 기지국, MPLS, VPN, IDC, 메트로이더넷, 5G 특화망, KORNET, 이중화, 링, 백본
+
+### 통신망 구성 원칙
+1. 고객 구내(CPE) → 전용회선/인터넷 → 국사(CO) → 백본(MPLS) → IDC 순서
+2. 이중화 요청 시: 2개의 국사, 2개의 전용회선, 링 네트워크 사용
+3. 무선 경로: 기지국 → 코어망 → UPF → IDC/서버
+4. WAN 구간 엣지는 'wan-link' flowType 사용
+5. 무선 구간 엣지는 'wireless' flowType 사용
+6. VPN/MPLS 터널은 'tunnel' flowType 사용
+7. 보안 경계(PE↔내부망)에는 반드시 firewall 배치
+
+### 통신망을 사용하지 않을 때
+- 단순 인프라 구성 요청 (예: "3티어 아키텍처")은 기존 컴포넌트만 사용
+- 사용자가 WAN/망 구성을 명시적으로 언급하지 않으면 telecom/wan 컴포넌트 미사용
 
 ## 지원하는 작업 타입
 1. **replace**: 기존 노드를 다른 타입으로 교체 (연결 유지)
@@ -123,6 +144,16 @@ ${formatAvailableComponents()}
   }
 }
 \`\`\`
+
+flowType 옵션:
+- request: 요청 흐름 (파란색)
+- response: 응답 흐름 (녹색)
+- sync: 동기화/복제 (보라색)
+- blocked: 차단 (빨간색)
+- encrypted: 암호화 연결 (황색, TLS)
+- wan-link: WAN 전용회선 연결 (청록색)
+- wireless: 무선 구간 (시안색, 점선)
+- tunnel: VPN/MPLS 터널 (인디고, 이중 점선)
 
 ### disconnect
 \`\`\`json

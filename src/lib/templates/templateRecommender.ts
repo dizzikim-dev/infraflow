@@ -70,6 +70,30 @@ const TEMPLATE_KEYWORDS: Record<string, string[]> = {
     '하이브리드 vdi', 'hybrid vdi', '클라우드 vdi', '온프레미스 vdi',
     'site-to-site', 's2s vpn',
   ],
+  'dedicated-line': [
+    '전용회선', 'dedicated line', 'leased line', '전용선', '국사',
+    '본사 지사', '점대점', 'cpe', 'b2b',
+  ],
+  'dedicated-line-dual': [
+    '전용회선 이중화', '회선 이중화', 'dual line', 'dual homing',
+    '이중 회선', '이중 국사',
+  ],
+  'mpls-vpn': [
+    'mpls', 'mpls vpn', '엠피엘에스', 'hub spoke', '다지점',
+    '본사 지사 vpn', 'lsp', 'pe 라우터',
+  ],
+  'hybrid-wan': [
+    '하이브리드 wan', 'hybrid wan', 'sd-wan', 'sdwan', 'kornet',
+    '기업인터넷', '전용회선 인터넷',
+  ],
+  '5g-private': [
+    '5g 특화', 'private 5g', '사설 5g', '5g 특화망', '기지국', 'gnb',
+    'upf', '5gc', '스마트팩토리',
+  ],
+  'idc-dual': [
+    'idc 이중화', 'idc 이중', 'dual idc', '데이터센터 이중화',
+    'idc dr', '센터 이중화',
+  ],
 };
 
 // Additional context keywords
@@ -170,7 +194,7 @@ function generateReason(template: Template, matchedKeywords: string[]): string {
  * Get template suggestions for empty state
  */
 export function getPopularTemplates(): Template[] {
-  const popularIds = ['3tier', 'vdi-openclaw', 'k8s', 'microservices', 'zero-trust'];
+  const popularIds = ['3tier', 'vdi-openclaw', 'k8s', 'microservices', 'zero-trust', 'dedicated-line'];
   return builtInTemplates.filter((t) => popularIds.includes(t.id));
 }
 
@@ -184,6 +208,9 @@ export function getTemplatesByUseCase(useCase: string): Template[] {
     cloud: ['hybrid', 'hybrid-vdi', 'k8s'],
     vdi: ['vdi-openclaw', 'assembly-vdi', 'hybrid-vdi'],
     ai: ['vdi-openclaw', 'network-separation-llm'],
+    telecom: ['dedicated-line', 'dedicated-line-dual', 'mpls-vpn', 'hybrid-wan', '5g-private', 'idc-dual'],
+    wan: ['dedicated-line', 'mpls-vpn', 'hybrid-wan'],
+    '5g': ['5g-private'],
   };
 
   const templateIds = useCaseKeywords[useCase.toLowerCase()] || [];

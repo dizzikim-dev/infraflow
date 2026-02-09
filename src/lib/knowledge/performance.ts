@@ -34,6 +34,12 @@ import {
   OWASP_TOP10,
   SANS_CIS_TOP20,
   CNCF_SECURITY,
+  RFC_3031,
+  RFC_4364,
+  THREEGPP_38401,
+  THREEGPP_23002,
+  MEF_4,
+  ITU_G984,
 } from './sourceRegistry';
 
 // ---------------------------------------------------------------------------
@@ -977,6 +983,282 @@ const AUTH_PROFILES: PerformanceProfile[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Telecom Performance — PERF-TEL
+// ---------------------------------------------------------------------------
+
+const TELECOM_PROFILES: PerformanceProfile[] = [
+  {
+    id: 'PERF-TEL-001',
+    type: 'performance',
+    component: 'dedicated-line',
+    nameKo: '전용회선 성능 프로파일',
+    latencyRange: { min: 1, max: 5, unit: 'ms' },
+    throughputRange: { typical: '100 Mbps~10 Gbps', max: '100 Gbps' },
+    scalingStrategy: 'vertical',
+    bottleneckIndicators: [
+      'Bandwidth utilization exceeding 80% causing queueing delay',
+      'Physical layer errors (CRC, frame errors) indicating cable degradation',
+    ],
+    bottleneckIndicatorsKo: [
+      '대역폭 사용률 80% 초과로 인한 큐잉 지연 발생',
+      '물리 계층 오류(CRC, 프레임 오류)로 케이블 열화 징후',
+    ],
+    optimizationTipsKo: [
+      'QoS 정책을 적용하여 핵심 트래픽 우선순위를 보장',
+      '대역폭 부족 시 회선 증속 또는 Link Aggregation 적용',
+      '정기적인 회선 품질 측정으로 열화를 사전 감지',
+    ],
+    tags: ['telecom', 'dedicated-line', 'performance', 'wan'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(RFC_4364, 'Section 4 - CE-PE Connection'),
+        withSection(MEF_4, 'Metro Ethernet Network Architecture'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'PERF-TEL-002',
+    type: 'performance',
+    component: 'pe-router',
+    nameKo: 'PE 라우터 성능 프로파일',
+    latencyRange: { min: 0.1, max: 1, unit: 'ms' },
+    throughputRange: { typical: '10~100 Gbps', max: '400 Gbps' },
+    scalingStrategy: 'vertical',
+    bottleneckIndicators: [
+      'VRF table size causing control plane CPU >70% during route updates',
+      'MPLS label stack depth exceeding hardware forwarding capacity',
+      'BGP session flapping from excessive route advertisements',
+    ],
+    bottleneckIndicatorsKo: [
+      'VRF 테이블 크기로 경로 업데이트 시 컨트롤 플레인 CPU 70% 초과',
+      'MPLS 레이블 스택 깊이가 하드웨어 포워딩 용량 초과',
+      '과도한 경로 광고로 인한 BGP 세션 플래핑',
+    ],
+    optimizationTipsKo: [
+      'Route reflector를 사용하여 BGP 피어링 수를 줄이고 컨트롤 플레인 부하 감소',
+      'VRF별 경로 제한(maximum routes)을 설정하여 테이블 폭증 방지',
+      '하드웨어 ASIC 기반 MPLS 포워딩을 사용하여 소프트웨어 처리 최소화',
+    ],
+    tags: ['telecom', 'pe-router', 'performance', 'mpls', 'bgp'],
+    trust: {
+      confidence: 0.95,
+      sources: [
+        withSection(RFC_4364, 'Section 4.3 - VRF'),
+        withSection(RFC_3031, 'Section 2.2 - Label Switching'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'PERF-TEL-003',
+    type: 'performance',
+    component: 'p-router',
+    nameKo: 'P 라우터 성능 프로파일',
+    latencyRange: { min: 0.05, max: 0.5, unit: 'ms' },
+    throughputRange: { typical: '100 Gbps~1 Tbps', max: '10 Tbps' },
+    scalingStrategy: 'vertical',
+    bottleneckIndicators: [
+      'Line card buffer overflow during micro-burst traffic patterns',
+      'ECMP hash imbalance causing uneven link utilization across backbone paths',
+    ],
+    bottleneckIndicatorsKo: [
+      '마이크로 버스트 트래픽 패턴에서 라인 카드 버퍼 오버플로',
+      'ECMP 해시 불균형으로 백본 경로 간 링크 사용률 불균등',
+    ],
+    optimizationTipsKo: [
+      '대용량 버퍼 라인 카드(Deep Buffer)를 사용하여 마이크로 버스트 흡수',
+      'ECMP 해시 알고리즘을 5-tuple 기반으로 최적화하여 부하 균등 분산',
+      'Segment Routing(SR) 도입으로 LDP 대비 라벨 관리 단순화',
+    ],
+    tags: ['telecom', 'p-router', 'performance', 'mpls', 'backbone'],
+    trust: {
+      confidence: 0.95,
+      sources: [
+        withSection(RFC_3031, 'Section 2.2 - Label Switching'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'PERF-TEL-004',
+    type: 'performance',
+    component: 'base-station',
+    nameKo: '기지국 성능 프로파일',
+    latencyRange: { min: 1, max: 10, unit: 'ms' },
+    throughputRange: { typical: '1~20 Gbps', max: '100 Gbps' },
+    scalingStrategy: 'horizontal',
+    bottleneckIndicators: [
+      'Cell throughput degradation when connected UE count exceeds capacity',
+      'Interference from adjacent cells reducing SINR below acceptable threshold',
+      'Backhaul bandwidth insufficient for fronthaul traffic during peak hours',
+    ],
+    bottleneckIndicatorsKo: [
+      '접속 단말 수가 용량 초과 시 셀 처리량 저하',
+      '인접 셀 간섭으로 SINR이 허용 임계값 이하로 감소',
+      '피크 시간 프론트홀 트래픽에 비해 백홀 대역폭 부족',
+    ],
+    optimizationTipsKo: [
+      '셀 분할(Cell Split)로 셀당 단말 수를 줄이고 용량 증대',
+      'Massive MIMO 및 빔포밍 기술 적용으로 주파수 효율 향상',
+      '백홀 링크를 10GE 이상으로 증속하여 프론트홀 트래픽 수용',
+    ],
+    tags: ['telecom', 'base-station', 'performance', '5g', 'radio'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(THREEGPP_38401, 'Section 6 - NG-RAN Architecture'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'PERF-TEL-005',
+    type: 'performance',
+    component: 'central-office',
+    nameKo: '국사 성능 프로파일',
+    latencyRange: { min: 0.5, max: 2, unit: 'ms' },
+    throughputRange: { typical: '100 Gbps+', max: '10 Tbps' },
+    scalingStrategy: 'vertical',
+    bottleneckIndicators: [
+      'Cross-connect capacity exhaustion limiting new circuit provisioning',
+      'Power/cooling capacity constraining equipment expansion',
+    ],
+    bottleneckIndicatorsKo: [
+      '교차 연결(Cross-connect) 용량 소진으로 신규 회선 프로비저닝 제한',
+      '전력/냉각 용량 제약으로 장비 확장 불가',
+    ],
+    optimizationTipsKo: [
+      'ODF(광 분배 프레임) 관리를 자동화하여 교차 연결 효율 향상',
+      '고밀도 장비로 교체하여 물리 공간 대비 용량 극대화',
+      '전력 효율 높은 장비 도입으로 전력/냉각 제약 완화',
+    ],
+    tags: ['telecom', 'central-office', 'performance', 'facility'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(MEF_4, 'Metro Ethernet Network Architecture'),
+        withSection(ITU_G984, 'GPON Architecture'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'PERF-TEL-006',
+    type: 'performance',
+    component: 'upf',
+    nameKo: 'UPF 성능 프로파일',
+    latencyRange: { min: 0.1, max: 1, unit: 'ms' },
+    throughputRange: { typical: '10~100 Gbps', max: '400 Gbps' },
+    scalingStrategy: 'horizontal',
+    bottleneckIndicators: [
+      'PDU session count exceeding per-UPF capacity causing session setup failures',
+      'GTP-U tunnel encapsulation/decapsulation CPU saturation',
+    ],
+    bottleneckIndicatorsKo: [
+      'PDU 세션 수가 UPF당 용량 초과로 세션 수립 실패 발생',
+      'GTP-U 터널 캡슐화/역캡슐화 CPU 포화',
+    ],
+    optimizationTipsKo: [
+      'UPF 인스턴스를 수평 확장하고 SMF에서 부하 분산',
+      'DPDK/SR-IOV 사용으로 패킷 처리 가속',
+      'UL CL(Uplink Classifier) 기반 로컬 브레이크아웃으로 코어 트래픽 감소',
+    ],
+    tags: ['telecom', 'upf', 'performance', '5g', 'user-plane'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(THREEGPP_23002, 'Section 4 - Network Architecture'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'PERF-TEL-007',
+    type: 'performance',
+    component: 'core-network',
+    nameKo: '코어 네트워크 성능 프로파일',
+    latencyRange: { min: 1, max: 5, unit: 'ms' },
+    throughputRange: { typical: '100 Gbps+', max: '1 Tbps' },
+    scalingStrategy: 'both',
+    bottleneckIndicators: [
+      'AMF/SMF processing delay exceeding 50ms during session storm events',
+      'NRF service discovery latency impacting inter-NF communication',
+      'Database backend (UDR) query latency increasing under subscriber load',
+    ],
+    bottleneckIndicatorsKo: [
+      '세션 폭증 이벤트 시 AMF/SMF 처리 지연 50ms 초과',
+      'NRF 서비스 디스커버리 지연으로 NF 간 통신 영향',
+      '가입자 부하에서 데이터베이스 백엔드(UDR) 쿼리 지연 증가',
+    ],
+    optimizationTipsKo: [
+      '코어 NF를 클라우드 네이티브(CNF)로 구성하여 탄력적 확장',
+      'NRF 캐싱을 적용하여 서비스 디스커버리 지연 제거',
+      'UDR을 인메모리 데이터베이스로 구성하여 쿼리 지연 최소화',
+    ],
+    tags: ['telecom', 'core-network', 'performance', '5g', 'control-plane'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(THREEGPP_23002, 'Section 4 - Network Architecture'),
+        withSection(THREEGPP_38401, 'Section 6 - NG-RAN Architecture'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'PERF-TEL-008',
+    type: 'performance',
+    component: 'mpls-network',
+    nameKo: 'MPLS 네트워크 성능 프로파일',
+    latencyRange: { min: 2, max: 10, unit: 'ms' },
+    throughputRange: { typical: '100 Gbps+', max: '10 Tbps' },
+    scalingStrategy: 'vertical',
+    bottleneckIndicators: [
+      'LSP path calculation overhead during topology change events',
+      'Label space exhaustion on high-density PE routers (>100K labels)',
+      'Traffic engineering tunnel sub-optimal path selection after link failure',
+    ],
+    bottleneckIndicatorsKo: [
+      '토폴로지 변경 이벤트 시 LSP 경로 계산 오버헤드',
+      '고밀도 PE 라우터에서 레이블 공간 고갈 (10만 레이블 초과)',
+      '링크 장애 후 트래픽 엔지니어링 터널의 비최적 경로 선택',
+    ],
+    optimizationTipsKo: [
+      'Segment Routing 도입으로 LDP 대비 상태 관리 부하를 대폭 감소',
+      'TE 터널에 CSPF(Constrained SPF)를 적용하여 최적 경로 유지',
+      'FRR(Fast ReRoute)를 모든 LSP에 설정하여 50ms 이내 경로 전환 보장',
+    ],
+    tags: ['telecom', 'mpls-network', 'performance', 'backbone', 'lsp'],
+    trust: {
+      confidence: 0.95,
+      sources: [
+        withSection(RFC_3031, 'Section 2.2 - Label Switching'),
+        withSection(RFC_4364, 'Section 2 - BGP/MPLS VPN'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Aggregated export
 // ---------------------------------------------------------------------------
 
@@ -986,6 +1268,7 @@ export const PERFORMANCE_PROFILES: readonly PerformanceProfile[] = Object.freeze
   ...COMPUTE_PROFILES,
   ...STORAGE_PROFILES,
   ...AUTH_PROFILES,
+  ...TELECOM_PROFILES,
 ]);
 
 /** Alias for convenience */

@@ -25,6 +25,8 @@ import {
   NIST_800_125,
   RFC_7230,
   RFC_7540,
+  RFC_3031,
+  RFC_4364,
   CIS_V8,
   CIS_V8_12,
   CIS_V8_13,
@@ -37,6 +39,9 @@ import {
   CNCF_SECURITY,
   SANS_CIS_TOP20,
   SANS_FIREWALL,
+  MEF_4,
+  THREEGPP_23002,
+  THREEGPP_38401,
   withSection,
 } from './sourceRegistry';
 
@@ -926,18 +931,309 @@ const cloudPatterns: ArchitecturePattern[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Telecom Patterns (PAT-TEL-001 ~ PAT-TEL-006)
+// ---------------------------------------------------------------------------
+
+const telecomPatterns: ArchitecturePattern[] = [
+  {
+    id: 'PAT-TEL-001',
+    type: 'pattern',
+    name: 'Enterprise Dedicated Line Single Access',
+    nameKo: '기업 전용회선 단일 접속',
+    description:
+      'Basic enterprise connectivity using a single dedicated line from customer premise through a central office to the carrier PE router, with firewall security at the enterprise boundary.',
+    descriptionKo:
+      '고객 구내에서 국사를 거쳐 캐리어 PE 라우터까지 단일 전용회선으로 연결하고, 기업 경계에 방화벽을 배치하는 기본 기업 접속 아키텍처입니다.',
+    requiredComponents: [
+      { type: 'customer-premise', minCount: 1 },
+      { type: 'dedicated-line', minCount: 1 },
+      { type: 'central-office', minCount: 1 },
+      { type: 'pe-router', minCount: 1 },
+      { type: 'firewall', minCount: 1 },
+    ],
+    optionalComponents: [
+      { type: 'router', benefit: 'Customer premise routing for multi-subnet environments', benefitKo: '다중 서브넷 환경의 고객 구내 라우팅' },
+      { type: 'switch-l3', benefit: 'Internal VLAN routing at customer site', benefitKo: '고객 사이트 내부 VLAN 라우팅' },
+    ],
+    scalability: 'low',
+    complexity: 2,
+    bestForKo: [
+      '중소기업 단일 사업장',
+      '기본적인 WAN 연결이 필요한 환경',
+      '비용 효율적인 전용회선 접속',
+      '낮은 대역폭 요구사항',
+    ],
+    notSuitableForKo: [
+      '고가용성 요구사항',
+      '다지점 연결',
+      '실시간 서비스 운영',
+    ],
+    evolvesTo: ['PAT-TEL-002'],
+    evolvesFrom: [],
+    tags: ['telecom', 'dedicated-line', 'single-access', 'enterprise', 'wan'],
+    trust: {
+      confidence: 0.95,
+      sources: [
+        withSection(RFC_4364, 'Section 4 - CE-PE Connection'),
+        withSection(NIST_800_41, 'Section 2.1 - Network Segmentation'),
+      ],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'PAT-TEL-002',
+    type: 'pattern',
+    name: 'Enterprise Dedicated Line Dual Access',
+    nameKo: '기업 전용회선 이중화',
+    description:
+      'Redundant enterprise connectivity with dual dedicated lines to two separate central offices and PE routers, providing resilience against single link or CO failure.',
+    descriptionKo:
+      '두 개의 서로 다른 국사 및 PE 라우터로 이중 전용회선을 구성하여 단일 회선 또는 국사 장애에 대한 복원력을 제공하는 이중화 접속 아키텍처입니다.',
+    requiredComponents: [
+      { type: 'customer-premise', minCount: 1 },
+      { type: 'dedicated-line', minCount: 2 },
+      { type: 'central-office', minCount: 2 },
+      { type: 'pe-router', minCount: 2 },
+      { type: 'firewall', minCount: 1 },
+    ],
+    optionalComponents: [
+      { type: 'router', benefit: 'Dynamic routing (BGP/OSPF) for automatic failover', benefitKo: '자동 페일오버를 위한 동적 라우팅(BGP/OSPF)' },
+      { type: 'load-balancer', benefit: 'Traffic distribution across dual links', benefitKo: '이중 회선 간 트래픽 분산' },
+    ],
+    scalability: 'medium',
+    complexity: 3,
+    bestForKo: [
+      '고가용성이 필요한 기업',
+      'SLA 99.9% 이상 요구',
+      '미션 크리티컬 업무 환경',
+      '중견기업 본사',
+    ],
+    notSuitableForKo: [
+      '비용 민감 환경',
+      '소규모 사업장',
+      '임시/이벤트성 접속',
+    ],
+    evolvesTo: ['PAT-TEL-004'],
+    evolvesFrom: ['PAT-TEL-001'],
+    tags: ['telecom', 'dedicated-line', 'dual-access', 'redundancy', 'enterprise'],
+    trust: {
+      confidence: 0.95,
+      sources: [
+        withSection(RFC_4364, 'Section 4 - CE-PE Connection'),
+        withSection(NIST_800_41, 'Section 4.2 - Dual-Firewall DMZ'),
+      ],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'PAT-TEL-003',
+    type: 'pattern',
+    name: 'MPLS VPN Hub-Spoke',
+    nameKo: 'MPLS VPN 다지점 (Hub-Spoke)',
+    description:
+      'Multi-site enterprise network using MPLS VPN with hub-spoke topology, where PE routers at each site connect through P router backbone with VPN service overlay.',
+    descriptionKo:
+      'Hub-Spoke 토폴로지의 MPLS VPN을 사용하여 각 사이트의 PE 라우터가 P 라우터 백본을 통해 VPN 서비스 오버레이로 연결되는 다지점 기업 네트워크입니다.',
+    requiredComponents: [
+      { type: 'pe-router', minCount: 2 },
+      { type: 'p-router', minCount: 1 },
+      { type: 'mpls-network', minCount: 1 },
+      { type: 'vpn-service', minCount: 1 },
+      { type: 'firewall', minCount: 1 },
+    ],
+    optionalComponents: [
+      { type: 'router', benefit: 'CE routing at branch sites', benefitKo: '지사 CE 라우팅' },
+      { type: 'ids-ips', benefit: 'WAN traffic inspection for threat detection', benefitKo: 'WAN 트래픽 검사를 통한 위협 탐지' },
+    ],
+    scalability: 'high',
+    complexity: 3,
+    bestForKo: [
+      '다지점 기업 네트워크',
+      '지사 간 안전한 통신',
+      'QoS 보장이 필요한 환경',
+      '대기업 WAN 백본',
+    ],
+    notSuitableForKo: [
+      '단일 사이트',
+      '비용 절감 최우선',
+      '인터넷 기반 연결로 충분한 환경',
+    ],
+    evolvesTo: ['PAT-TEL-004'],
+    evolvesFrom: [],
+    tags: ['telecom', 'mpls', 'vpn', 'hub-spoke', 'multi-site', 'enterprise'],
+    trust: {
+      confidence: 0.95,
+      sources: [
+        withSection(RFC_4364, 'Section 2 - BGP/MPLS VPN'),
+        withSection(RFC_3031, 'Section 2 - MPLS Architecture'),
+      ],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'PAT-TEL-004',
+    type: 'pattern',
+    name: 'Hybrid WAN',
+    nameKo: '하이브리드 WAN',
+    description:
+      'Architecture combining dedicated line WAN with corporate internet and SD-WAN overlay for cost-effective, flexible multi-path connectivity with centralized policy management.',
+    descriptionKo:
+      '전용회선 WAN과 기업인터넷을 SD-WAN 오버레이로 결합하여 비용 효율적이고 유연한 다중 경로 연결과 중앙 집중식 정책 관리를 제공하는 아키텍처입니다.',
+    requiredComponents: [
+      { type: 'dedicated-line', minCount: 1 },
+      { type: 'corporate-internet', minCount: 1 },
+      { type: 'sd-wan-service', minCount: 1 },
+      { type: 'firewall', minCount: 1 },
+    ],
+    optionalComponents: [
+      { type: 'pe-router', benefit: 'Dedicated line termination at carrier edge', benefitKo: '캐리어 엣지에서 전용회선 종단' },
+      { type: 'waf', benefit: 'Web application protection for internet-facing services', benefitKo: '인터넷 노출 서비스의 웹 애플리케이션 보호' },
+      { type: 'ids-ips', benefit: 'Multi-path traffic inspection', benefitKo: '다중 경로 트래픽 검사' },
+    ],
+    scalability: 'high',
+    complexity: 4,
+    bestForKo: [
+      '비용 최적화가 필요한 다지점 기업',
+      'SaaS/클라우드 트래픽 증가 환경',
+      '유연한 대역폭 확장 요구',
+      '기존 전용회선에서 마이그레이션',
+    ],
+    notSuitableForKo: [
+      '인터넷 품질이 불안정한 지역',
+      '극도의 저지연 요구',
+      '규제로 인터넷 사용 불가',
+    ],
+    evolvesTo: [],
+    evolvesFrom: ['PAT-TEL-002', 'PAT-TEL-003'],
+    tags: ['telecom', 'hybrid-wan', 'sd-wan', 'dedicated-line', 'internet', 'multi-path'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(MEF_4, 'Metro Ethernet Network Architecture'),
+        withSection(NIST_800_41, 'Section 2.1 - Network Segmentation'),
+      ],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'PAT-TEL-005',
+    type: 'pattern',
+    name: 'Private 5G Network',
+    nameKo: '5G 특화망 구성',
+    description:
+      'Private 5G network architecture with dedicated base station, core network, local UPF for on-premise data routing, connected to an IDC with firewall security.',
+    descriptionKo:
+      '전용 기지국, 코어 네트워크, 온프레미스 데이터 라우팅을 위한 로컬 UPF를 갖추고 IDC와 방화벽으로 보안을 적용하는 5G 특화망 아키텍처입니다.',
+    requiredComponents: [
+      { type: 'base-station', minCount: 1 },
+      { type: 'core-network', minCount: 1 },
+      { type: 'upf', minCount: 1 },
+      { type: 'private-5g', minCount: 1 },
+      { type: 'idc', minCount: 1 },
+      { type: 'firewall', minCount: 1 },
+    ],
+    optionalComponents: [
+      { type: 'ids-ips', benefit: 'Wireless-to-wired transition security monitoring', benefitKo: '무선-유선 전환 보안 모니터링' },
+      { type: 'load-balancer', benefit: 'Application traffic distribution at IDC', benefitKo: 'IDC 애플리케이션 트래픽 분산' },
+    ],
+    scalability: 'high',
+    complexity: 4,
+    bestForKo: [
+      '스마트 팩토리',
+      '대규모 물류센터',
+      '항만/공항 운영',
+      '초저지연 IoT 환경',
+    ],
+    notSuitableForKo: [
+      '소규모 사업장',
+      'Wi-Fi로 충분한 환경',
+      '초기 투자 비용 제약',
+    ],
+    evolvesTo: [],
+    evolvesFrom: [],
+    tags: ['telecom', '5g', 'private-5g', 'iot', 'smart-factory', 'low-latency'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(THREEGPP_23002, 'Section 4 - Network Architecture'),
+        withSection(THREEGPP_38401, 'Section 6 - NG-RAN Architecture'),
+      ],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'PAT-TEL-006',
+    type: 'pattern',
+    name: 'IDC Dual Homing',
+    nameKo: 'IDC 이중화 접속',
+    description:
+      'IDC connected via ring network to two separate central offices and PE routers for redundant carrier access, with firewall protection at the IDC boundary.',
+    descriptionKo:
+      'IDC를 링 네트워크를 통해 두 개의 서로 다른 국사 및 PE 라우터에 연결하여 이중화된 캐리어 접속을 구성하고, IDC 경계에 방화벽을 배치하는 아키텍처입니다.',
+    requiredComponents: [
+      { type: 'idc', minCount: 1 },
+      { type: 'ring-network', minCount: 1 },
+      { type: 'central-office', minCount: 2 },
+      { type: 'pe-router', minCount: 2 },
+      { type: 'firewall', minCount: 1 },
+    ],
+    optionalComponents: [
+      { type: 'load-balancer', benefit: 'Multi-path traffic distribution', benefitKo: '다중 경로 트래픽 분산' },
+      { type: 'ids-ips', benefit: 'Dual-path traffic inspection', benefitKo: '이중 경로 트래픽 검사' },
+    ],
+    scalability: 'high',
+    complexity: 3,
+    bestForKo: [
+      'IDC/데이터센터 운영',
+      '호스팅 서비스 제공',
+      '99.99% 가용성 요구',
+      '대규모 기업 데이터센터',
+    ],
+    notSuitableForKo: [
+      '소규모 서버룸',
+      '단일 접속으로 충분한 환경',
+      '비용 제약이 큰 환경',
+    ],
+    evolvesTo: [],
+    evolvesFrom: [],
+    tags: ['telecom', 'idc', 'dual-homing', 'ring-network', 'redundancy', 'high-availability'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(MEF_4, 'Metro Ethernet Network Architecture'),
+        withSection(NIST_800_41, 'Section 4.2 - Dual-Firewall DMZ'),
+      ],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Aggregated data
 // ---------------------------------------------------------------------------
 
 /**
  * All architecture patterns — frozen readonly array.
- * 18 patterns across 4 categories: Basic, Extended, Security, Cloud.
+ * 24 patterns across 5 categories: Basic, Extended, Security, Cloud, Telecom.
  */
 export const ARCHITECTURE_PATTERNS: readonly ArchitecturePattern[] = Object.freeze([
   ...basicPatterns,
   ...extendedPatterns,
   ...securityPatterns,
   ...cloudPatterns,
+  ...telecomPatterns,
 ]);
 
 /** Alias for index.ts compatibility */
