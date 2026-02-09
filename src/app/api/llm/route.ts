@@ -34,6 +34,7 @@ import { addRateLimitHeaders } from '@/lib/llm/rateLimitHeaders';
 import { getProviderStatus } from '@/lib/llm/providers';
 import { parseJSONFromLLMResponse } from '@/lib/llm/jsonParser';
 import { matchFallbackTemplate } from '@/lib/llm/fallbackTemplates';
+import { LLMRequestSchema } from '@/lib/validations/api';
 
 const log = createLogger('LLM');
 
@@ -312,15 +313,17 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
   }
 
   try {
-    const body: LLMRequestBody = await request.json();
-    const { prompt, provider, model, useFallback = true } = body;
+    const rawBody = await request.json();
+    const parsed = LLMRequestSchema.safeParse(rawBody);
 
-    if (!prompt || typeof prompt !== 'string') {
+    if (!parsed.success) {
       return NextResponse.json(
-        { success: false, error: 'Invalid prompt' },
+        { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid request' },
         { status: 400 }
       );
     }
+
+    const { prompt, provider, model, useFallback } = parsed.data;
 
     // Get API key from server-side environment variables (not NEXT_PUBLIC_)
     let apiKey: string | undefined;

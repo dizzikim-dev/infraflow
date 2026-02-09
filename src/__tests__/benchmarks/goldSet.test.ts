@@ -21,7 +21,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parsePrompt } from '@/lib/parser/unifiedParser';
+import { parsePromptLocal as parsePrompt } from '@/lib/parser/templateMatcher';
 import type { InfraNodeType } from '@/types';
 
 // ============================================================

@@ -93,7 +93,7 @@ export interface ApplyResult {
  */
 export function applyOperations(currentSpec: InfraSpec, operations: Operation[]): ApplyResult {
   // Deep clone the spec
-  let spec: InfraSpec = JSON.parse(JSON.stringify(currentSpec));
+  let spec: InfraSpec = structuredClone(currentSpec);
   const errors: string[] = [];
   let appliedOps = 0;
   const nodeIdMappings = new Map<string, string>();

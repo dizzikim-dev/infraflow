@@ -274,7 +274,7 @@ describe('PluginManager', () => {
       render(<PluginManager />);
 
       // Find the deactivate button for Core Plugin
-      const corePluginCard = screen.getByText('Core Plugin').closest('.bg-white');
+      const corePluginCard = screen.getByText('Core Plugin').closest('.bg-zinc-800');
       const button = corePluginCard?.querySelector('button');
 
       expect(button).toBeDisabled();
@@ -283,7 +283,7 @@ describe('PluginManager', () => {
     it('should show activate button for inactive plugins', () => {
       render(<PluginManager />);
 
-      const customNodesCard = screen.getByText('Custom Nodes').closest('.bg-white');
+      const customNodesCard = screen.getByText('Custom Nodes').closest('.bg-zinc-800');
       const button = customNodesCard?.querySelector('button:not(:disabled)');
 
       expect(button).toHaveTextContent('활성화');
@@ -293,7 +293,7 @@ describe('PluginManager', () => {
       const user = userEvent.setup();
       render(<PluginManager />);
 
-      const customNodesCard = screen.getByText('Custom Nodes').closest('.bg-white');
+      const customNodesCard = screen.getByText('Custom Nodes').closest('.bg-zinc-800');
       const activateButton = customNodesCard?.querySelector('button:not(:disabled)');
 
       if (activateButton) {

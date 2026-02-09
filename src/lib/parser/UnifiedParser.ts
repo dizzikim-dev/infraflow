@@ -184,20 +184,8 @@ export class UnifiedParser {
 }
 
 // ============================================================
-// Backwards Compatibility Exports
+// Standalone Functions
 // ============================================================
-
-/**
- * Simple parse function (backwards compatible).
- *
- * @deprecated Use `parsePromptLocal()` from `templateMatcher.ts` directly,
- *   or `UnifiedParser.parseSimple()` for instance-based usage.
- * @see {@link parsePromptLocal} for the actual implementation
- * @see {@link UnifiedParser.parseSimple} for instance-based equivalent
- */
-export function parsePrompt(prompt: string): ParseResult {
-  return parsePromptLocal(prompt);
-}
 
 /**
  * Context-aware parse using UnifiedParser.

@@ -284,31 +284,3 @@ export class AnimationEngine {
   }
 }
 
-/**
- * @deprecated Use AnimationProvider and useAnimationEngine hook instead.
- * This singleton pattern is kept for backward compatibility only.
- * Will be removed in a future version.
- */
-let engineInstance: AnimationEngine | null = null;
-
-/**
- * @deprecated Use AnimationProvider and useAnimationEngine hook instead.
- * This singleton getter is kept for backward compatibility only.
- */
-export function getAnimationEngine(): AnimationEngine {
-  if (!engineInstance) {
-    engineInstance = new AnimationEngine();
-  }
-  return engineInstance;
-}
-
-/**
- * @deprecated For testing purposes only.
- * Resets the singleton instance.
- */
-export function resetAnimationEngine(): void {
-  if (engineInstance) {
-    engineInstance.destroy();
-    engineInstance = null;
-  }
-}

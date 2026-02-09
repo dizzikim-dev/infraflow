@@ -1,36 +1,37 @@
 import { describe, it, expect } from 'vitest';
-import { parsePrompt, getAvailableTemplates, getTemplate } from '@/lib/parser/UnifiedParser';
+import { getAvailableTemplates, getTemplate } from '@/lib/parser/UnifiedParser';
+import { parsePromptLocal } from '@/lib/parser/templateMatcher';
 
-describe('UnifiedParser (parsePrompt)', () => {
-  describe('parsePrompt', () => {
+describe('UnifiedParser (parsePromptLocal)', () => {
+  describe('parsePromptLocal', () => {
     it('should match 3-tier template with Korean keyword', () => {
-      const result = parsePrompt('3티어 웹 아키텍처 보여줘');
+      const result = parsePromptLocal('3티어 웹 아키텍처 보여줘');
       expect(result.success).toBe(true);
       expect(result.templateUsed).toBe('3tier');
       expect(result.confidence).toBeGreaterThanOrEqual(0.8);
     });
 
     it('should match 3-tier template with English keyword', () => {
-      const result = parsePrompt('show me 3-tier architecture');
+      const result = parsePromptLocal('show me 3-tier architecture');
       expect(result.success).toBe(true);
       expect(result.templateUsed).toBe('3tier');
     });
 
     it('should match VPN template with keyword', () => {
-      const result = parsePrompt('VPN 내부망 아키텍처 보여줘');
+      const result = parsePromptLocal('VPN 내부망 아키텍처 보여줘');
       expect(result.success).toBe(true);
       expect(result.templateUsed).toBe('vpn');
     });
 
     it('should match microservices template', () => {
-      const result = parsePrompt('마이크로서비스 아키텍처 설계해줘');
+      const result = parsePromptLocal('마이크로서비스 아키텍처 설계해줘');
       expect(result.success).toBe(true);
       expect(result.templateUsed).toBe('microservices');
     });
 
     it('should detect custom components from prompt', () => {
       // Using VPN which doesn't have a template keyword match
-      const result = parsePrompt('VPN과 라우터 그리고 스위치로 구성해줘');
+      const result = parsePromptLocal('VPN과 라우터 그리고 스위치로 구성해줘');
       expect(result.success).toBe(true);
       expect(result.spec).toBeDefined();
       if (result.spec) {
@@ -42,7 +43,7 @@ describe('UnifiedParser (parsePrompt)', () => {
     });
 
     it('should auto-add user node if not present', () => {
-      const result = parsePrompt('CDN과 캐시 서버 연결해줘');
+      const result = parsePromptLocal('CDN과 캐시 서버 연결해줘');
       expect(result.success).toBe(true);
       expect(result.spec).toBeDefined();
       if (result.spec) {
@@ -52,7 +53,7 @@ describe('UnifiedParser (parsePrompt)', () => {
     });
 
     it('should create connections between detected nodes', () => {
-      const result = parsePrompt('방화벽 -> WAF -> 웹서버 아키텍처');
+      const result = parsePromptLocal('방화벽 -> WAF -> 웹서버 아키텍처');
       expect(result.success).toBe(true);
       expect(result.spec).toBeDefined();
       if (result.spec) {
@@ -61,22 +62,22 @@ describe('UnifiedParser (parsePrompt)', () => {
     });
 
     it('should fallback to simple-waf template when no match', () => {
-      const result = parsePrompt('asdfghjkl random text');
+      const result = parsePromptLocal('asdfghjkl random text');
       expect(result.success).toBe(true);
       expect(result.templateUsed).toBe('simple-waf');
       expect(result.confidence).toBe(0.3);
     });
 
     it('should handle empty prompt gracefully', () => {
-      const result = parsePrompt('');
+      const result = parsePromptLocal('');
       expect(result.success).toBe(true);
       expect(result.confidence).toBeLessThanOrEqual(0.5);
     });
 
     it('should be case insensitive', () => {
-      const result1 = parsePrompt('FIREWALL');
-      const result2 = parsePrompt('firewall');
-      const result3 = parsePrompt('Firewall');
+      const result1 = parsePromptLocal('FIREWALL');
+      const result2 = parsePromptLocal('firewall');
+      const result3 = parsePromptLocal('Firewall');
 
       if (result1.spec && result2.spec && result3.spec) {
         const hasFirewall1 = result1.spec.nodes.some(n => n.type === 'firewall');

@@ -17,7 +17,6 @@
  *         → detectAllNodeTypes(prompt)    [componentDetector.ts / patterns.ts]
  *       → fallback template
  *
- * parsePrompt(prompt)                     [DEPRECATED → parsePromptLocal]
  * ```
  *
  * For LLM-based parsing, see `intelligentParser.ts` (used by `api/parse/route.ts`).
@@ -30,7 +29,6 @@
 export {
   UnifiedParser,
   defaultParser,
-  parsePrompt,
   smartParse,
   createContext,
   updateContext,

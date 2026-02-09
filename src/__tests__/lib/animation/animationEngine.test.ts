@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   AnimationEngine,
-  getAnimationEngine,
-  resetAnimationEngine,
   type AnimationEvent,
   type AnimationState,
 } from '@/lib/animation/animationEngine';
@@ -382,49 +380,3 @@ describe('AnimationEngine', () => {
   });
 });
 
-describe('Singleton Functions', () => {
-  afterEach(() => {
-    resetAnimationEngine();
-  });
-
-  describe('getAnimationEngine', () => {
-    it('should return an AnimationEngine instance', () => {
-      const engine = getAnimationEngine();
-      expect(engine).toBeInstanceOf(AnimationEngine);
-    });
-
-    it('should return the same instance on multiple calls', () => {
-      const engine1 = getAnimationEngine();
-      const engine2 = getAnimationEngine();
-      expect(engine1).toBe(engine2);
-    });
-  });
-
-  describe('resetAnimationEngine', () => {
-    it('should reset the singleton instance', () => {
-      const engine1 = getAnimationEngine();
-      resetAnimationEngine();
-      const engine2 = getAnimationEngine();
-
-      expect(engine1).not.toBe(engine2);
-    });
-
-    it('should destroy the previous instance', () => {
-      const engine = getAnimationEngine();
-      const sequence = {
-        id: 'test',
-        name: 'Test',
-        steps: [{ from: 'a', to: 'b', delay: 0, duration: 100, type: 'request' as const }],
-      };
-
-      engine.loadSequence(sequence);
-      engine.play();
-      expect(engine.getState().isPlaying).toBe(true);
-
-      resetAnimationEngine();
-
-      // After reset, old engine should be stopped
-      expect(engine.getState().isPlaying).toBe(false);
-    });
-  });
-});
