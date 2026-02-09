@@ -26,19 +26,19 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { isInfraSpec } from '@/types/guards';
 import type { InfraSpec } from '@/types';
 import { withRetry, isRetryableError } from '@/lib/utils/retry';
-import { checkRateLimit, LLM_RATE_LIMIT, type RateLimitInfo } from '@/lib/middleware/rateLimiter';
+import { checkRateLimit, LLM_RATE_LIMIT } from '@/lib/middleware/rateLimiter';
+import { createLogger } from '@/lib/utils/logger';
+import { addRateLimitHeaders } from '@/lib/llm/rateLimitHeaders';
+import { getProviderStatus } from '@/lib/llm/providers';
+import { parseJSONFromLLMResponse } from '@/lib/llm/jsonParser';
+import { matchFallbackTemplate } from '@/lib/llm/fallbackTemplates';
+
+const log = createLogger('LLM');
 
 /**
  * Request body for the LLM generation endpoint.
- *
- * @interface LLMRequestBody
- * @property {string} prompt - Natural language description of the infrastructure
- * @property {'claude' | 'openai'} provider - LLM provider to use
- * @property {string} [model] - Specific model ID (e.g., 'claude-3-haiku-20240307', 'gpt-4o-mini')
- * @property {boolean} [useFallback=true] - Whether to use fallback templates on LLM failure
  */
 export interface LLMRequestBody {
   prompt: string;
@@ -50,15 +50,6 @@ export interface LLMRequestBody {
 
 /**
  * Response from the LLM generation endpoint.
- *
- * @interface LLMResponse
- * @property {boolean} success - Whether the generation was successful
- * @property {InfraSpec} [spec] - The generated infrastructure specification
- * @property {string} [error] - Error message if generation failed
- * @property {string} [rawResponse] - Raw LLM response for debugging
- * @property {boolean} [fromFallback] - True if result came from fallback template
- * @property {number} [attempts] - Number of retry attempts made
- * @property {object} [rateLimit] - Rate limit information
  */
 export interface LLMResponse {
   success: boolean;
@@ -119,63 +110,7 @@ Guidelines:
 Only output valid JSON. No explanations.`;
 
 /**
- * Parses JSON from LLM response, handling various formats.
- *
- * LLM responses may contain JSON in different formats:
- * - Direct JSON object
- * - JSON wrapped in markdown code blocks (```json ... ```)
- * - JSON embedded within other text
- *
- * @param {string} content - Raw LLM response content
- * @returns {InfraSpec | null} Parsed infrastructure spec or null if parsing fails
- *
- * @example
- * const spec = parseJSONResponse('```json\n{"nodes": [...], "connections": [...]}\n```');
- */
-function parseJSONResponse(content: string): InfraSpec | null {
-  const tryParse = (jsonStr: string): unknown => {
-    try {
-      return JSON.parse(jsonStr);
-    } catch {
-      return null;
-    }
-  };
-
-  // Try direct parse first
-  let parsed = tryParse(content);
-  if (parsed && isInfraSpec(parsed)) {
-    return parsed;
-  }
-
-  // Try to extract JSON from markdown code block
-  const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (jsonMatch) {
-    parsed = tryParse(jsonMatch[1].trim());
-    if (parsed && isInfraSpec(parsed)) {
-      return parsed;
-    }
-  }
-
-  // Try to find JSON object in response
-  const objectMatch = content.match(/\{[\s\S]*\}/);
-  if (objectMatch) {
-    parsed = tryParse(objectMatch[0]);
-    if (parsed && isInfraSpec(parsed)) {
-      return parsed;
-    }
-  }
-
-  return null;
-}
-
-/**
  * Makes a single API call to Claude for infrastructure generation.
- *
- * @param {string} prompt - The infrastructure description prompt
- * @param {string} apiKey - Anthropic API key
- * @param {string} [model='claude-3-haiku-20240307'] - Claude model to use
- * @returns {Promise<LLMResponse>} Response with generated spec or error
- * @throws {Error} When API call fails
  */
 async function callClaudeOnce(
   prompt: string,
@@ -214,7 +149,7 @@ async function callClaudeOnce(
     throw new Error('No response from API');
   }
 
-  const spec = parseJSONResponse(content);
+  const spec = parseJSONFromLLMResponse(content);
 
   if (!spec) {
     return {
@@ -233,14 +168,6 @@ async function callClaudeOnce(
 
 /**
  * Calls Claude API with automatic retry logic.
- *
- * Implements exponential backoff retry for transient failures.
- * Retries on network errors, rate limits, and parse failures.
- *
- * @param {string} prompt - The infrastructure description prompt
- * @param {string} apiKey - Anthropic API key
- * @param {string} [model='claude-3-haiku-20240307'] - Claude model to use
- * @returns {Promise<LLMResponse>} Response with generated spec, retry count, or error
  */
 async function callClaude(
   prompt: string,
@@ -254,14 +181,13 @@ async function callClaude(
       timeoutMs: LLM_CONFIG.timeoutMs,
       initialDelayMs: LLM_CONFIG.initialDelayMs,
       isRetryable: (error) => {
-        // Also retry on parse failures that might be transient
         if (error instanceof Error && error.message.includes('parse')) {
           return true;
         }
         return isRetryableError(error);
       },
       onRetry: (attempt, error) => {
-        console.log(`[LLM] Claude retry attempt ${attempt}:`, error);
+        log.warn(`Claude retry attempt ${attempt}`, { error: String(error) });
       },
     }
   );
@@ -279,12 +205,6 @@ async function callClaude(
 
 /**
  * Makes a single API call to OpenAI for infrastructure generation.
- *
- * @param {string} prompt - The infrastructure description prompt
- * @param {string} apiKey - OpenAI API key
- * @param {string} [model='gpt-4o-mini'] - OpenAI model to use
- * @returns {Promise<LLMResponse>} Response with generated spec or error
- * @throws {Error} When API call fails
  */
 async function callOpenAIOnce(
   prompt: string,
@@ -323,7 +243,7 @@ async function callOpenAIOnce(
     throw new Error('No response from API');
   }
 
-  const spec = parseJSONResponse(content);
+  const spec = parseJSONFromLLMResponse(content);
 
   if (!spec) {
     return {
@@ -342,14 +262,6 @@ async function callOpenAIOnce(
 
 /**
  * Calls OpenAI API with automatic retry logic.
- *
- * Implements exponential backoff retry for transient failures.
- * Retries on network errors, rate limits, and parse failures.
- *
- * @param {string} prompt - The infrastructure description prompt
- * @param {string} apiKey - OpenAI API key
- * @param {string} [model='gpt-4o-mini'] - OpenAI model to use
- * @returns {Promise<LLMResponse>} Response with generated spec, retry count, or error
  */
 async function callOpenAI(
   prompt: string,
@@ -369,7 +281,7 @@ async function callOpenAI(
         return isRetryableError(error);
       },
       onRetry: (attempt, error) => {
-        console.log(`[LLM] OpenAI retry attempt ${attempt}:`, error);
+        log.warn(`OpenAI retry attempt ${attempt}`, { error: String(error) });
       },
     }
   );
@@ -386,206 +298,7 @@ async function callOpenAI(
 }
 
 /**
- * Fallback templates for common architecture patterns.
- *
- * These templates are used when LLM is unavailable or fails.
- * Each template provides a complete infrastructure specification
- * for commonly requested architecture patterns.
- *
- * @constant
- * @type {Record<string, InfraSpec>}
- *
- * Available templates:
- * - `3tier`: Standard 3-tier web architecture with LB, web, app, and DB layers
- * - `web-secure`: Secure web architecture with firewall and WAF
- * - `vdi`: Virtual Desktop Infrastructure with VPN and AD
- * - `default`: Basic firewall-protected server setup
- */
-const FALLBACK_TEMPLATES: Record<string, InfraSpec> = {
-  '3tier': {
-    nodes: [
-      { id: 'user', type: 'user', label: 'User' },
-      { id: 'lb', type: 'load-balancer', label: 'Load Balancer', zone: 'dmz' },
-      { id: 'web', type: 'web-server', label: 'Web Server', zone: 'internal' },
-      { id: 'app', type: 'app-server', label: 'App Server', zone: 'internal' },
-      { id: 'db', type: 'db-server', label: 'DB Server', zone: 'data' },
-    ],
-    connections: [
-      { source: 'user', target: 'lb' },
-      { source: 'lb', target: 'web' },
-      { source: 'web', target: 'app' },
-      { source: 'app', target: 'db' },
-    ],
-  },
-  'web-secure': {
-    nodes: [
-      { id: 'user', type: 'user', label: 'User' },
-      { id: 'fw', type: 'firewall', label: 'Firewall', zone: 'dmz' },
-      { id: 'waf', type: 'waf', label: 'WAF', zone: 'dmz' },
-      { id: 'lb', type: 'load-balancer', label: 'Load Balancer', zone: 'dmz' },
-      { id: 'web', type: 'web-server', label: 'Web Server', zone: 'internal' },
-      { id: 'db', type: 'db-server', label: 'DB Server', zone: 'data' },
-    ],
-    connections: [
-      { source: 'user', target: 'fw' },
-      { source: 'fw', target: 'waf' },
-      { source: 'waf', target: 'lb' },
-      { source: 'lb', target: 'web' },
-      { source: 'web', target: 'db' },
-    ],
-  },
-  'vdi': {
-    nodes: [
-      { id: 'user', type: 'user', label: 'User' },
-      { id: 'vpn', type: 'vpn-gateway', label: 'VPN Gateway', zone: 'dmz' },
-      { id: 'fw', type: 'firewall', label: 'Firewall', zone: 'internal' },
-      { id: 'vdi', type: 'vm', label: 'VDI Server', zone: 'internal' },
-      { id: 'ad', type: 'ldap-ad', label: 'Active Directory', zone: 'internal' },
-      { id: 'storage', type: 'storage', label: 'Storage', zone: 'data' },
-    ],
-    connections: [
-      { source: 'user', target: 'vpn' },
-      { source: 'vpn', target: 'fw' },
-      { source: 'fw', target: 'vdi' },
-      { source: 'vdi', target: 'ad' },
-      { source: 'vdi', target: 'storage' },
-    ],
-  },
-  'default': {
-    nodes: [
-      { id: 'user', type: 'user', label: 'User' },
-      { id: 'fw', type: 'firewall', label: 'Firewall', zone: 'dmz' },
-      { id: 'server', type: 'web-server', label: 'Server', zone: 'internal' },
-    ],
-    connections: [
-      { source: 'user', target: 'fw' },
-      { source: 'fw', target: 'server' },
-    ],
-  },
-};
-
-/**
- * Matches a prompt to the most appropriate fallback template.
- *
- * Uses keyword matching to determine which template best fits
- * the user's request when LLM is unavailable.
- *
- * @param {string} prompt - The user's infrastructure description
- * @returns {InfraSpec} The matching template specification
- *
- * @example
- * const spec = matchFallbackTemplate('VDI with VPN');
- * // Returns the 'vdi' template
- *
- * @example
- * const spec = matchFallbackTemplate('3-tier web application');
- * // Returns the '3tier' template
- */
-function matchFallbackTemplate(prompt: string): InfraSpec {
-  const lowerPrompt = prompt.toLowerCase();
-
-  if (lowerPrompt.includes('vdi') || lowerPrompt.includes('가상데스크톱')) {
-    return FALLBACK_TEMPLATES['vdi'];
-  }
-
-  if (
-    lowerPrompt.includes('3티어') ||
-    lowerPrompt.includes('3-tier') ||
-    lowerPrompt.includes('three tier')
-  ) {
-    return FALLBACK_TEMPLATES['3tier'];
-  }
-
-  if (
-    lowerPrompt.includes('waf') ||
-    lowerPrompt.includes('보안') ||
-    lowerPrompt.includes('secure')
-  ) {
-    return FALLBACK_TEMPLATES['web-secure'];
-  }
-
-  return FALLBACK_TEMPLATES['default'];
-}
-
-/**
- * Adds rate limit headers to the response.
- *
- * Sets standard X-RateLimit-* headers to inform clients about
- * their current rate limit status.
- *
- * @template T
- * @param {NextResponse<T>} response - The response to add headers to
- * @param {RateLimitInfo} info - Rate limit information
- * @returns {NextResponse<T>} The response with rate limit headers added
- *
- * Headers added:
- * - X-RateLimit-Limit: Maximum requests per window
- * - X-RateLimit-Remaining: Requests remaining in current window
- * - X-RateLimit-Reset: Unix timestamp when the window resets
- * - X-RateLimit-Daily-Limit: Maximum daily requests (if applicable)
- * - X-RateLimit-Daily-Remaining: Daily requests remaining (if applicable)
- */
-function addRateLimitHeaders<T>(
-  response: NextResponse<T>,
-  info: RateLimitInfo
-): NextResponse<T> {
-  response.headers.set('X-RateLimit-Limit', info.limit.toString());
-  response.headers.set('X-RateLimit-Remaining', info.remaining.toString());
-  response.headers.set(
-    'X-RateLimit-Reset',
-    Math.ceil((Date.now() + info.resetIn) / 1000).toString()
-  );
-
-  if (info.dailyLimit) {
-    response.headers.set('X-RateLimit-Daily-Limit', info.dailyLimit.toString());
-    response.headers.set(
-      'X-RateLimit-Daily-Remaining',
-      Math.max(0, info.dailyLimit - (info.dailyUsage || 0)).toString()
-    );
-  }
-
-  return response;
-}
-
-/**
  * POST /api/llm - LLM Infrastructure Generation Endpoint
- *
- * Generates infrastructure specifications from natural language prompts
- * using LLM (Claude or OpenAI) with retry logic, fallback templates,
- * and rate limiting.
- *
- * @route POST /api/llm
- * @param {NextRequest} request - The incoming request containing LLMRequestBody
- * @returns {Promise<NextResponse<LLMResponse>>} JSON response with generated spec
- *
- * @throws {400} Invalid prompt - When prompt is missing or not a string
- * @throws {400} Unknown provider - When provider is invalid
- * @throws {429} Rate limit exceeded - When too many requests
- * @throws {500} Server error - When an unexpected error occurs
- *
- * @example
- * // Request
- * POST /api/llm
- * {
- *   "prompt": "3-tier web architecture with WAF and CDN",
- *   "provider": "claude",
- *   "useFallback": true
- * }
- *
- * // Success Response
- * {
- *   "success": true,
- *   "spec": { "nodes": [...], "connections": [...] },
- *   "attempts": 1,
- *   "rateLimit": { "limit": 10, "remaining": 9 }
- * }
- *
- * // Fallback Response (when LLM unavailable)
- * {
- *   "success": true,
- *   "spec": { "nodes": [...], "connections": [...] },
- *   "fromFallback": true
- * }
  */
 export async function POST(request: NextRequest): Promise<NextResponse<LLMResponse>> {
   // Check rate limit first
@@ -616,9 +329,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
     if (provider === 'claude') {
       apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) {
-        // Try fallback if no API key
         if (useFallback) {
-          console.log('[LLM] No Claude API key, using fallback template');
+          log.info('No Claude API key, using fallback template');
           return NextResponse.json({
             success: true,
             spec: matchFallbackTemplate(prompt),
@@ -634,9 +346,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
     } else if (provider === 'openai') {
       apiKey = process.env.OPENAI_API_KEY;
       if (!apiKey) {
-        // Try fallback if no API key
         if (useFallback) {
-          console.log('[LLM] No OpenAI API key, using fallback template');
+          log.info('No OpenAI API key, using fallback template');
           return NextResponse.json({
             success: true,
             spec: matchFallbackTemplate(prompt),
@@ -666,7 +377,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
 
     // If LLM call failed and fallback is enabled, use template
     if (!result.success && useFallback) {
-      console.log('[LLM] LLM call failed, using fallback template:', result.error);
+      log.warn('LLM call failed, using fallback template', { error: result.error });
       const response = NextResponse.json({
         success: true,
         spec: matchFallbackTemplate(prompt),
@@ -697,32 +408,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
 
 /**
  * GET /api/llm - Check LLM Configuration Status
- *
- * Returns information about which LLM providers are configured
- * and available for use.
- *
- * @route GET /api/llm
- * @returns {Promise<NextResponse>} JSON response with configuration status
- *
- * @example
- * // Response when Claude is configured
- * {
- *   "configured": true,
- *   "providers": {
- *     "claude": true,
- *     "openai": false
- *   }
- * }
  */
 export async function GET(): Promise<NextResponse> {
-  const claudeConfigured = !!process.env.ANTHROPIC_API_KEY;
-  const openaiConfigured = !!process.env.OPENAI_API_KEY;
+  const providers = getProviderStatus();
 
   return NextResponse.json({
-    configured: claudeConfigured || openaiConfigured,
-    providers: {
-      claude: claudeConfigured,
-      openai: openaiConfigured,
-    },
+    configured: providers.claude || providers.openai,
+    providers,
   });
 }

@@ -45,7 +45,7 @@ export const computeComponents: Record<string, InfraComponent> = {
       { name: 'Access Logging', nameKo: '접근 로깅', description: 'Enable comprehensive access logging', priority: 'high', category: 'monitoring' },
       { name: 'Rate Limiting', nameKo: '요청 제한', description: 'Limit requests per IP', priority: 'medium', category: 'security' },
     ],
-    tier: 'dmz',
+    tier: 'internal',
     ports: ['80', '443'],
     protocols: ['HTTP/1.1', 'HTTP/2', 'HTTP/3'],
     vendors: ['NGINX', 'Apache', 'IIS', 'Caddy', 'LiteSpeed'],

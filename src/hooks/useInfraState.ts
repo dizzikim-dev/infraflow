@@ -2,7 +2,7 @@
 
 import { useRef, useCallback, useState } from 'react';
 import { Node, Edge, XYPosition } from '@xyflow/react';
-import { InfraSpec, InfraNodeType } from '@/types';
+import { InfraSpec, InfraNodeType, InfraNodeData } from '@/types';
 
 // Import specialized hooks
 import { useNodes, ComponentData } from './useNodes';
@@ -77,13 +77,23 @@ export function useInfraState() {
   // Prompt parser hook
   const parserHook = usePromptParser({
     currentSpec,
+    currentNodes: nodes as Node<InfraNodeData>[],
+    currentEdges: edges,
     onNodesUpdate: setNodes,
     onEdgesUpdate: setEdges,
     onSpecUpdate: setCurrentSpec,
     onAnimationReset: resetAnimation,
     onPolicyReset: () => setSelectedNodePolicy(null),
   });
-  const { isLoading, lastResult, handlePromptSubmit, handleTemplateSelect, setLastResult } = parserHook;
+  const {
+    isLoading,
+    lastResult,
+    handlePromptSubmit,
+    handleTemplateSelect,
+    setLastResult,
+    handleLLMModify,
+    llmAvailable,
+  } = parserHook;
 
   /**
    * Update node data and sync selection state
@@ -154,6 +164,10 @@ export function useInfraState() {
     handleNodeClick,
     clearDiagram,
     updateNodeData,
+
+    // LLM Modification
+    handleLLMModify,
+    llmAvailable,
 
     // CRUD operations
     addNode,

@@ -8,6 +8,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { SearchQuerySchema } from '@/lib/validations/component';
 import { Prisma } from '@/generated/prisma';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('ComponentSearchAPI');
 
 /**
  * GET /api/components/search
@@ -90,7 +93,7 @@ export async function GET(request: NextRequest) {
       results,
     });
   } catch (error) {
-    console.error('컴포넌트 검색 실패:', error);
+    log.error('컴포넌트 검색 실패', error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: '컴포넌트 검색에 실패했습니다' },
       { status: 500 }

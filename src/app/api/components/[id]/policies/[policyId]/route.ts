@@ -8,6 +8,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { UpdatePolicySchema } from '@/lib/validations/component';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('PolicyAPI');
 
 interface RouteContext {
   params: Promise<{ id: string; policyId: string }>;
@@ -66,7 +69,7 @@ export async function PUT(
 
     return NextResponse.json(policy);
   } catch (error) {
-    console.error('정책 수정 실패:', error);
+    log.error('정책 수정 실패', error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: '정책 수정에 실패했습니다' },
       { status: 500 }
@@ -107,7 +110,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: '정책이 삭제되었습니다' });
   } catch (error) {
-    console.error('정책 삭제 실패:', error);
+    log.error('정책 삭제 실패', error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: '정책 삭제에 실패했습니다' },
       { status: 500 }

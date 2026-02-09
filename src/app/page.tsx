@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { AnimatePresence } from 'framer-motion';
 import { XYPosition } from '@xyflow/react';
@@ -15,6 +15,7 @@ import {
 } from '@/components/contextMenu';
 import { useInfraState, useModalManager, useContextMenu, useComparisonMode, type ComponentData } from '@/hooks';
 import { InfraNodeType } from '@/types';
+import { isInfraNodeData } from '@/types/guards';
 
 // Dynamic imports for conditionally rendered heavy components
 const AnimationControlPanel = dynamic(
@@ -84,7 +85,13 @@ export default function Home() {
     insertNodeBetween,
     deleteEdge,
     reverseEdge,
+    // LLM Modification
+    handleLLMModify,
+    llmAvailable,
   } = useInfraState();
+
+  // Ref for prompt textarea focus
+  const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Context menu state management
   const {
@@ -128,10 +135,9 @@ export default function Home() {
     closeModal('animationControls');
   }, [handleTemplateSelect, closeModal]);
 
-  // Focus prompt input
+  // Focus prompt input via ref
   const focusPromptInput = useCallback(() => {
-    const input = document.querySelector('input[type="text"]') as HTMLInputElement;
-    if (input) input.focus();
+    promptTextareaRef.current?.focus();
   }, []);
 
   // Context menu handlers
@@ -157,26 +163,22 @@ export default function Home() {
   );
 
   // Node action handlers for context menu
-  const handleEditNode = useCallback((nodeId: string) => {
-    // Trigger inline editing - find the node and set edit mode
-    // This is handled by double-click, but we can focus the node
-    const nodeElement = document.querySelector(`[data-id="${nodeId}"]`);
-    if (nodeElement) {
-      (nodeElement as HTMLElement).focus();
-    }
+  const handleEditNode = useCallback((_nodeId: string) => {
+    // TODO: Implement ref-based or React Flow API node editing.
+    // Inline editing is currently triggered via double-click on the node.
+    // React Flow manages the DOM for nodes, so direct DOM access is avoided.
   }, []);
 
   const handleViewNodeDetails = useCallback((nodeId: string) => {
     const node = nodes.find((n) => n.id === nodeId);
-    if (node && node.data) {
-      const data = node.data as Record<string, unknown>;
+    if (node && isInfraNodeData(node.data)) {
       setSelectedNodeDetail({
         id: node.id,
-        name: String(data.label || nodeId),
-        nodeType: String(data.nodeType || 'unknown'),
-        tier: String(data.tier || 'unknown'),
-        zone: data.zone as string | undefined,
-        description: data.description as string | undefined,
+        name: node.data.label || nodeId,
+        nodeType: node.data.nodeType || 'unknown',
+        tier: node.data.tier || 'unknown',
+        zone: node.data.zone,
+        description: node.data.description,
       });
     }
   }, [nodes, setSelectedNodeDetail]);
@@ -211,6 +213,29 @@ export default function Home() {
   const handleEnterComparisonMode = useCallback(() => {
     comparison.enterComparisonMode(currentSpec, nodes, edges);
   }, [comparison, currentSpec, nodes, edges]);
+
+  // Pre-compute context menu data to avoid IIFE in JSX
+  const nodeMenuName = (() => {
+    if (menuState.type === 'node' && menuState.targetId) {
+      const node = nodes.find((n) => n.id === menuState.targetId);
+      if (node && isInfraNodeData(node.data)) {
+        return node.data.label || '';
+      }
+    }
+    return '';
+  })();
+
+  const edgeMenuData = (() => {
+    if (menuState.type === 'edge' && menuState.targetId) {
+      const edge = edges.find((e) => e.id === menuState.targetId);
+      const sourceNode = edge ? nodes.find((n) => n.id === edge.source) : undefined;
+      const targetNode = edge ? nodes.find((n) => n.id === edge.target) : undefined;
+      const sourceLabel = sourceNode && isInfraNodeData(sourceNode.data) ? sourceNode.data.label : '';
+      const targetLabel = targetNode && isInfraNodeData(targetNode.data) ? targetNode.data.label : '';
+      return { sourceNodeName: sourceLabel || '', targetNodeName: targetLabel || '' };
+    }
+    return null;
+  })();
 
   const hasNodes = nodes.length > 0;
 
@@ -336,7 +361,16 @@ export default function Home() {
       </AnimatePresence>
 
       {/* Prompt Panel */}
-      <PromptPanel onSubmit={handlePromptSubmit} isLoading={isLoading} />
+      <PromptPanel
+        onSubmit={handlePromptSubmit}
+        onModify={handleLLMModify}
+        isLoading={isLoading}
+        hasExistingDiagram={hasNodes}
+        lastReasoning={lastResult?.reasoning}
+        lastOperations={lastResult?.operations}
+        llmAvailable={llmAvailable}
+        textareaRef={promptTextareaRef}
+      />
 
       {/* Comparison View */}
       <ComparisonView
@@ -375,7 +409,7 @@ export default function Home() {
           isOpen={menuState.isOpen}
           position={menuState.position}
           nodeId={menuState.targetId}
-          nodeName={String((nodes.find((n) => n.id === menuState.targetId)?.data as Record<string, unknown>)?.label || '')}
+          nodeName={nodeMenuName}
           onClose={closeMenu}
           onEdit={handleEditNode}
           onDuplicate={duplicateNode}
@@ -384,24 +418,19 @@ export default function Home() {
         />
       )}
 
-      {menuState.type === 'edge' && menuState.targetId && (() => {
-        const edge = edges.find((e) => e.id === menuState.targetId);
-        const sourceNode = edge ? nodes.find((n) => n.id === edge.source) : undefined;
-        const targetNode = edge ? nodes.find((n) => n.id === edge.target) : undefined;
-        return (
-          <EdgeContextMenu
-            isOpen={menuState.isOpen}
-            position={menuState.position}
-            edgeId={menuState.targetId}
-            sourceNodeName={String((sourceNode?.data as Record<string, unknown>)?.label || '')}
-            targetNodeName={String((targetNode?.data as Record<string, unknown>)?.label || '')}
-            onClose={closeMenu}
-            onInsertNode={handleInsertNodeOnEdge}
-            onDelete={deleteEdge}
-            onReverse={reverseEdge}
-          />
-        );
-      })()}
+      {menuState.type === 'edge' && menuState.targetId && edgeMenuData && (
+        <EdgeContextMenu
+          isOpen={menuState.isOpen}
+          position={menuState.position}
+          edgeId={menuState.targetId}
+          sourceNodeName={edgeMenuData.sourceNodeName}
+          targetNodeName={edgeMenuData.targetNodeName}
+          onClose={closeMenu}
+          onInsertNode={handleInsertNodeOnEdge}
+          onDelete={deleteEdge}
+          onReverse={reverseEdge}
+        />
+      )}
 
       {/* Component Picker for inserting node on edge */}
       {insertEdgeId && insertPosition && (

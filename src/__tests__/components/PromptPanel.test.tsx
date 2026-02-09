@@ -12,6 +12,7 @@ vi.mock('framer-motion', () => ({
       </div>
     ),
   },
+  AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 
 describe('PromptPanel', () => {

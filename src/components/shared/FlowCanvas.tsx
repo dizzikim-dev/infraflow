@@ -25,6 +25,9 @@ import { nodeTypes } from '../nodes';
 import { edgeTypes } from '../edges';
 import { NodeEditingProvider } from '@/hooks/useNodeEditing';
 import { useHistory } from '@/hooks/useHistory';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('FlowCanvas');
 
 interface FlowCanvasProps {
   initialNodes?: Node[];
@@ -71,10 +74,10 @@ const FlowCanvasInner = memo(function FlowCanvasInner({
 
   const onConnect = useCallback(
     (params: Connection) => {
-      console.log('onConnect called:', params);
+      log.debug('onConnect called', { source: params.source, target: params.target });
       setEdges((eds) => {
         const newEdges = addEdge({ ...params, type: 'animated' }, eds);
-        console.log('New edges:', newEdges);
+        log.debug('Edges updated', { count: newEdges.length });
         return newEdges;
       });
     },

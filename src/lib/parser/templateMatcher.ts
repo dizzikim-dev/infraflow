@@ -27,11 +27,17 @@ export interface ParseLocalOptions {
 }
 
 /**
- * Parse prompt using local logic (no LLM)
+ * Parse prompt using local logic (no LLM).
  *
- * Plugin support:
- * - Searches plugin templates first
- * - Uses plugin patterns for component detection
+ * This is the core rule-based parser. Pipeline:
+ * 1. Template keyword matching (via `infraTemplates` or plugin templates)
+ * 2. Template ID matching
+ * 3. Component detection (via `parseCustomPrompt()`)
+ * 4. Fallback to default template
+ *
+ * @see {@link parseCustomPrompt} for the component detection step
+ * @see {@link UnifiedParser.parse} which calls this for 'create' commands
+ * @see {@link smartParse} which creates a UnifiedParser and delegates here
  */
 export function parsePromptLocal(
   prompt: string,

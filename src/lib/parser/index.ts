@@ -1,8 +1,27 @@
 /**
  * Parser Module Index
  *
- * Exports all parser functionality.
- * New code should use UnifiedParser directly.
+ * Exports all parser functionality. New code should use UnifiedParser directly.
+ *
+ * ## Parser Pipeline
+ *
+ * ```
+ * smartParse(prompt, context)
+ *   → UnifiedParser.parse(prompt)
+ *     → detectCommandType(prompt)         [patterns.ts]
+ *     → route to handler (create/add/remove/modify/connect/disconnect/query)
+ *     → parsePromptLocal(prompt)           [templateMatcher.ts]
+ *       → matchTemplateByKeywords()        [templateMatcher.ts]
+ *       → matchTemplateById()             [templateMatcher.ts]
+ *       → parseCustomPrompt(prompt)       [componentDetector.ts]
+ *         → detectAllNodeTypes(prompt)    [componentDetector.ts / patterns.ts]
+ *       → fallback template
+ *
+ * parsePrompt(prompt)                     [DEPRECATED → parsePromptLocal]
+ * ```
+ *
+ * For LLM-based parsing, see `intelligentParser.ts` (used by `api/parse/route.ts`).
+ * For LLM-based modification, see `contextBuilder.ts` + `prompts.ts` + `responseValidator.ts` + `diffApplier.ts`.
  */
 
 // ============================================================

@@ -27,6 +27,8 @@ async function getStats() {
       categoryStats,
       tierStats,
       totalPolicies,
+      totalUsers,
+      totalDiagrams,
     ] = await Promise.all([
       prisma.infraComponent.count(),
       prisma.infraComponent.count({ where: { isActive: true } }),
@@ -41,6 +43,8 @@ async function getStats() {
         where: { isActive: true },
       }),
       prisma.policyRecommendation.count(),
+      prisma.user.count(),
+      prisma.diagram.count(),
     ]);
 
     return {
@@ -50,6 +54,8 @@ async function getStats() {
       categoryStats,
       tierStats,
       totalPolicies,
+      totalUsers,
+      totalDiagrams,
     };
   } catch (error) {
     // DB 연결 실패 시 기본값 반환
@@ -63,6 +69,8 @@ async function getStats() {
       categoryStats: [],
       tierStats: [],
       totalPolicies: 0,
+      totalUsers: 0,
+      totalDiagrams: 0,
     };
   }
 }
@@ -185,6 +193,36 @@ export default async function AdminDashboard() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">권장 정책</p>
               <p className="text-2xl font-semibold text-gray-900">{stats.totalPolicies}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 총 사용자 */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-indigo-100 text-indigo-600">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">총 사용자</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats.totalUsers}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 총 다이어그램 */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-teal-100 text-teal-600">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+              </svg>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">총 다이어그램</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats.totalDiagrams}</p>
             </div>
           </div>
         </div>

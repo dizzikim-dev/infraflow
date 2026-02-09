@@ -2,7 +2,7 @@
  * Unified Parser
  *
  * Single entry point for all parsing operations.
- * Consolidates promptParser, smartParser, and intelligentParser into one module.
+ * Unified parser module for all parsing functionality.
  *
  * Plugin support:
  * - Dynamic pattern/template loading from plugin registry
@@ -148,7 +148,7 @@ export class UnifiedParser {
   }
 
   /**
-   * Simple parse without context (backwards compatible with promptParser)
+   * Simple parse without context
    */
   parseSimple(prompt: string): ParseResult {
     return parsePromptLocal(prompt);
@@ -188,14 +188,24 @@ export class UnifiedParser {
 // ============================================================
 
 /**
- * Simple parse function (backwards compatible with parsePrompt)
+ * Simple parse function (backwards compatible).
+ *
+ * @deprecated Use `parsePromptLocal()` from `templateMatcher.ts` directly,
+ *   or `UnifiedParser.parseSimple()` for instance-based usage.
+ * @see {@link parsePromptLocal} for the actual implementation
+ * @see {@link UnifiedParser.parseSimple} for instance-based equivalent
  */
 export function parsePrompt(prompt: string): ParseResult {
   return parsePromptLocal(prompt);
 }
 
 /**
- * Smart parse function (backwards compatible with smartParse)
+ * Context-aware parse using UnifiedParser.
+ *
+ * Pipeline: `smartParse()` → `UnifiedParser.parse()` → command routing → `parsePromptLocal()`
+ *
+ * @see {@link UnifiedParser.parse} for the core parsing logic
+ * @see {@link parsePromptLocal} for the template/component detection step
  */
 export function smartParse(
   prompt: string,
@@ -208,5 +218,9 @@ export function smartParse(
 // Re-export utility functions
 export { createContext, updateContext, getAvailableTemplates, getTemplate };
 
-// Default parser instance
+/**
+ * Pre-initialized UnifiedParser instance for stateless usage.
+ *
+ * @see {@link UnifiedParser} for the class definition
+ */
 export const defaultParser = new UnifiedParser();

@@ -33,7 +33,7 @@ import {
   applyIntentToSpec,
   IntentAnalysis,
 } from '@/lib/parser/intelligentParser';
-import { ConversationContext, SmartParseResult } from '@/lib/parser/smartParser';
+import { ConversationContext, SmartParseResult } from '@/lib/parser/UnifiedParser';
 
 /**
  * Request body for the smart parse endpoint.

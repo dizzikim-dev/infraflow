@@ -15,6 +15,11 @@ datasource db {
 // ENUMS
 // ============================================
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 enum ComponentCategory {
   security
   network
@@ -45,6 +50,114 @@ enum PolicyCategory {
   monitoring
   compliance
   performance
+}
+
+// ============================================
+// AUTH MODELS (NextAuth.js v5)
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role          UserRole  @default(USER)
+
+  accounts      Account[]
+  sessions      Session[]
+  diagrams      Diagram[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================
+// DIAGRAM MODELS
+// ============================================
+
+model Diagram {
+  id          String   @id @default(cuid())
+  title       String   @default("Untitled Diagram")
+  description String?  @db.Text
+  spec        Json
+  nodesJson   Json?
+  edgesJson   Json?
+  thumbnail   String?  @db.Text
+  isPublic    Boolean  @default(false)
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  versions    DiagramVersion[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@map("diagrams")
+}
+
+model DiagramVersion {
+  id         String   @id @default(cuid())
+  diagramId  String
+  diagram    Diagram  @relation(fields: [diagramId], references: [id], onDelete: Cascade)
+  spec       Json
+  message    String?
+
+  createdAt  DateTime @default(now())
+
+  @@index([diagramId])
+  @@map("diagram_versions")
 }
 
 // ============================================

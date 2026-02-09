@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { parsePrompt, getAvailableTemplates, getTemplate } from '@/lib/parser/promptParser';
+import { parsePrompt, getAvailableTemplates, getTemplate } from '@/lib/parser/UnifiedParser';
 
-describe('promptParser', () => {
+describe('UnifiedParser (parsePrompt)', () => {
   describe('parsePrompt', () => {
     it('should match 3-tier template with Korean keyword', () => {
       const result = parsePrompt('3티어 웹 아키텍처 보여줘');

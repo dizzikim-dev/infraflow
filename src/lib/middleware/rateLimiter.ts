@@ -57,14 +57,11 @@ interface RateLimitEntry {
  */
 class RateLimitStore {
   private store: Map<string, RateLimitEntry> = new Map();
-  private cleanupInterval: NodeJS.Timeout | null = null;
-
-  constructor() {
-    // Cleanup expired entries every minute
-    this.cleanupInterval = setInterval(() => this.cleanup(), 60000);
-  }
+  private lastCleanup: number = Date.now();
+  private readonly cleanupIntervalMs = 60000;
 
   get(key: string): RateLimitEntry | undefined {
+    this.lazyCleanup();
     return this.store.get(key);
   }
 
@@ -74,6 +71,18 @@ class RateLimitStore {
 
   delete(key: string): boolean {
     return this.store.delete(key);
+  }
+
+  /**
+   * Lazy cleanup: check if enough time has passed and clean if needed.
+   * This avoids setInterval which is incompatible with serverless environments.
+   */
+  private lazyCleanup(): void {
+    const now = Date.now();
+    if (now - this.lastCleanup >= this.cleanupIntervalMs) {
+      this.cleanup();
+      this.lastCleanup = now;
+    }
   }
 
   /**
@@ -112,10 +121,6 @@ class RateLimitStore {
    * Cleanup resources
    */
   destroy(): void {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval);
-      this.cleanupInterval = null;
-    }
     this.store.clear();
   }
 }
@@ -192,18 +197,18 @@ function createRateLimitResponse(info: RateLimitInfo): NextResponse {
  * Default configuration
  */
 export const DEFAULT_RATE_LIMIT: RateLimitConfig = {
-  maxRequests: 10,
-  windowMs: 60000, // 1 minute
-  dailyLimit: 100,
+  maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '10', 10),
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10),
+  dailyLimit: parseInt(process.env.RATE_LIMIT_DAILY || '100', 10),
 };
 
 /**
  * LLM-specific configuration (more restrictive)
  */
 export const LLM_RATE_LIMIT: RateLimitConfig = {
-  maxRequests: 10,
-  windowMs: 60000, // 10 requests per minute
-  dailyLimit: 100, // 100 requests per day
+  maxRequests: parseInt(process.env.LLM_RATE_LIMIT_MAX || '10', 10),
+  windowMs: parseInt(process.env.LLM_RATE_LIMIT_WINDOW_MS || '60000', 10),
+  dailyLimit: parseInt(process.env.LLM_RATE_LIMIT_DAILY || '100', 10),
 };
 
 /**
@@ -325,6 +330,18 @@ export function withRateLimit<T>(
     }
 
     return result;
+  };
+}
+
+/**
+ * Create a key generator that uses userId when authenticated, IP otherwise.
+ */
+export function createUserAwareKeyGenerator(
+  userId?: string
+): (req: NextRequest) => string {
+  return (req: NextRequest) => {
+    if (userId) return `user:${userId}`;
+    return `ip:${getClientIP(req)}`;
   };
 }
 

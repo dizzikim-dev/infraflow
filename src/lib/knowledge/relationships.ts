@@ -1,0 +1,1086 @@
+/**
+ * Infrastructure Component Relationships
+ *
+ * 45+ verified relationships between infrastructure components.
+ * Each relationship carries trust metadata with real source citations.
+ *
+ * Categories:
+ * - REL-SEC: Security-related relationships
+ * - REL-NET: Network-related relationships
+ * - REL-CMP: Compute-related relationships
+ * - REL-CLD: Cloud-related relationships
+ * - REL-STR: Storage-related relationships
+ * - REL-AUTH: Authentication-related relationships
+ * - REL-CON: Conflict relationships
+ */
+
+import type { InfraNodeType } from '@/types/infra';
+import type { ComponentRelationship, RelationshipType } from './types';
+import {
+  NIST_800_41,
+  NIST_800_44,
+  NIST_800_53,
+  NIST_800_63B,
+  NIST_800_77,
+  NIST_800_81,
+  NIST_800_94,
+  NIST_800_123,
+  NIST_800_144,
+  NIST_800_125,
+  RFC_7230,
+  RFC_1034,
+  CIS_V8,
+  CIS_V8_12,
+  CIS_V8_13,
+  OWASP_TOP10,
+  OWASP_WSTG,
+  OWASP_API_TOP10,
+  AWS_WAF_REL,
+  AWS_WAF_SEC,
+  AWS_WAF_PERF,
+  AZURE_CAF,
+  CNCF_SECURITY,
+  SANS_CIS_TOP20,
+  SANS_FIREWALL,
+  withSection,
+} from './sourceRegistry';
+
+// ---------------------------------------------------------------------------
+// Mandatory Dependencies (requires) — REL-SEC / REL-NET / REL-CMP
+// ---------------------------------------------------------------------------
+
+const mandatoryDependencies: ComponentRelationship[] = [
+  {
+    id: 'REL-SEC-001',
+    type: 'relationship',
+    source: 'db-server',
+    target: 'firewall',
+    relationshipType: 'requires',
+    strength: 'mandatory',
+    direction: 'upstream',
+    reason: 'Databases must reside in firewall-protected network segments to prevent unauthorized access',
+    reasonKo: '데이터베이스는 무단 접근을 방지하기 위해 방화벽으로 보호되는 네트워크 세그먼트에 위치해야 합니다',
+    tags: ['security', 'database', 'firewall', 'segmentation'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_41, 'Section 2.1 - Network Segmentation')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-SEC-002',
+    type: 'relationship',
+    source: 'vpn-gateway',
+    target: 'firewall',
+    relationshipType: 'requires',
+    strength: 'mandatory',
+    direction: 'upstream',
+    reason: 'VPN gateways must be placed behind firewalls; VPN alone does not provide network-layer access control',
+    reasonKo: 'VPN 게이트웨이는 방화벽 뒤에 위치해야 합니다. VPN만으로는 네트워크 계층 접근 제어가 불가능합니다',
+    tags: ['security', 'vpn', 'firewall', 'access-control'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_77, 'Section 3.2 - VPN Security Architecture')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-SEC-003',
+    type: 'relationship',
+    source: 'web-server',
+    target: 'firewall',
+    relationshipType: 'requires',
+    strength: 'mandatory',
+    direction: 'upstream',
+    reason: 'Public-facing web servers require firewall protection to control inbound/outbound traffic',
+    reasonKo: '공개 웹 서버는 인바운드/아웃바운드 트래픽 제어를 위해 방화벽 보호가 필수입니다',
+    tags: ['security', 'web', 'firewall', 'perimeter'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_44, 'Section 8.2 - Network Security')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-NET-001',
+    type: 'relationship',
+    source: 'switch-l2',
+    target: 'switch-l3',
+    relationshipType: 'requires',
+    strength: 'mandatory',
+    direction: 'upstream',
+    reason: 'Layer 2 switches require a Layer 3 device (L3 switch or router) for inter-VLAN routing',
+    reasonKo: 'L2 스위치는 VLAN 간 라우팅을 위해 L3 장비(L3 스위치 또는 라우터)가 필요합니다',
+    tags: ['network', 'switch', 'routing', 'vlan'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(CIS_V8_12, '12.2 - Secure Network Architecture')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-NET-002',
+    type: 'relationship',
+    source: 'cdn',
+    target: 'dns',
+    relationshipType: 'requires',
+    strength: 'mandatory',
+    direction: 'downstream',
+    reason: 'CDN relies on DNS for domain resolution and geographic traffic routing (GSLB)',
+    reasonKo: 'CDN은 도메인 해석 및 지리적 트래픽 라우팅(GSLB)을 위해 DNS가 필수입니다',
+    tags: ['network', 'cdn', 'dns', 'routing'],
+    trust: {
+      confidence: 1.0,
+      sources: [withSection(RFC_1034, 'Section 3.6 - Resource Records')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CMP-001',
+    type: 'relationship',
+    source: 'kubernetes',
+    target: 'container',
+    relationshipType: 'requires',
+    strength: 'mandatory',
+    direction: 'downstream',
+    reason: 'Kubernetes orchestrates containers; it has no purpose without container workloads',
+    reasonKo: 'Kubernetes는 컨테이너를 오케스트레이션합니다. 컨테이너 워크로드 없이는 의미가 없습니다',
+    tags: ['compute', 'kubernetes', 'container', 'orchestration'],
+    trust: {
+      confidence: 0.7,
+      sources: [withSection(CNCF_SECURITY, 'Container Orchestration')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CMP-002',
+    type: 'relationship',
+    source: 'app-server',
+    target: 'web-server',
+    relationshipType: 'requires',
+    strength: 'mandatory',
+    direction: 'upstream',
+    reason: 'Application servers in multi-tier architectures require a web/reverse-proxy frontend for client-facing HTTP handling',
+    reasonKo: '멀티 티어 아키텍처에서 애플리케이션 서버는 클라이언트 HTTP 처리를 위해 웹/리버스 프록시 프론트엔드가 필요합니다',
+    tags: ['compute', 'app-server', 'web-server', 'multi-tier'],
+    trust: {
+      confidence: 1.0,
+      sources: [withSection(RFC_7230, 'Section 2.3 - Intermediaries')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-AUTH-001',
+    type: 'relationship',
+    source: 'sso',
+    target: 'ldap-ad',
+    relationshipType: 'requires',
+    strength: 'mandatory',
+    direction: 'downstream',
+    reason: 'SSO systems require a directory service (LDAP/AD) as the authoritative identity store',
+    reasonKo: 'SSO 시스템은 인가된 ID 저장소로 디렉터리 서비스(LDAP/AD)가 필수입니다',
+    tags: ['auth', 'sso', 'ldap', 'identity'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_63B, 'Section 4 - Authenticator Assurance Levels')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-AUTH-002',
+    type: 'relationship',
+    source: 'mfa',
+    target: 'ldap-ad',
+    relationshipType: 'requires',
+    strength: 'mandatory',
+    direction: 'downstream',
+    reason: 'MFA operates as an additional authentication factor on top of the primary identity store',
+    reasonKo: 'MFA는 기본 ID 저장소 위에 추가 인증 요소로 동작합니다',
+    tags: ['auth', 'mfa', 'ldap', 'multi-factor'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_63B, 'Section 4.2 - AAL2 Requirements')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-SEC-004',
+    type: 'relationship',
+    source: 'waf',
+    target: 'firewall',
+    relationshipType: 'requires',
+    strength: 'mandatory',
+    direction: 'upstream',
+    reason: 'WAF operates at application layer (L7) and requires network-layer firewall (L3/L4) for defense in depth',
+    reasonKo: 'WAF는 애플리케이션 계층(L7)에서 동작하며, 심층 방어를 위해 네트워크 계층 방화벽(L3/L4)이 필요합니다',
+    tags: ['security', 'waf', 'firewall', 'defense-in-depth'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_41, 'Section 4.1 - Layered Firewall Architecture')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-STR-001',
+    type: 'relationship',
+    source: 'backup',
+    target: 'san-nas',
+    relationshipType: 'requires',
+    strength: 'mandatory',
+    direction: 'downstream',
+    reason: 'Backup systems require primary storage (SAN/NAS) as the source data repository to back up',
+    reasonKo: '백업 시스템은 백업 대상인 기본 스토리지(SAN/NAS)가 필요합니다',
+    tags: ['storage', 'backup', 'san-nas', 'data-protection'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_53, 'CP-9 - Information System Backup')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Strong Recommendations (recommends) — REL-SEC / REL-NET / REL-CMP
+// ---------------------------------------------------------------------------
+
+const strongRecommendations: ComponentRelationship[] = [
+  {
+    id: 'REL-SEC-010',
+    type: 'relationship',
+    source: 'web-server',
+    target: 'waf',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'upstream',
+    reason: 'WAF provides OWASP Top 10 protection (SQL injection, XSS, CSRF) for web applications',
+    reasonKo: 'WAF는 웹 애플리케이션에 대한 OWASP Top 10 보호(SQL 인젝션, XSS, CSRF)를 제공합니다',
+    tags: ['security', 'web', 'waf', 'owasp'],
+    trust: {
+      confidence: 0.9,
+      sources: [OWASP_TOP10],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-NET-010',
+    type: 'relationship',
+    source: 'web-server',
+    target: 'load-balancer',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'upstream',
+    reason: 'Load balancers distribute traffic for high availability and horizontal scalability of web tiers',
+    reasonKo: '로드 밸런서는 웹 티어의 고가용성과 수평 확장성을 위해 트래픽을 분산합니다',
+    tags: ['network', 'web', 'load-balancer', 'high-availability'],
+    trust: {
+      confidence: 0.85,
+      sources: [AWS_WAF_REL],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-NET-011',
+    type: 'relationship',
+    source: 'app-server',
+    target: 'load-balancer',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'upstream',
+    reason: 'Application server clusters benefit from load balancing for session distribution and failover',
+    reasonKo: '애플리케이션 서버 클러스터는 세션 분산 및 장애 조치를 위해 로드 밸런싱이 권장됩니다',
+    tags: ['network', 'app-server', 'load-balancer', 'failover'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(AWS_WAF_REL, 'Design for Failure')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-SEC-011',
+    type: 'relationship',
+    source: 'web-server',
+    target: 'cdn',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'upstream',
+    reason: 'CDN offloads static content delivery and provides DDoS mitigation for origin servers',
+    reasonKo: 'CDN은 정적 콘텐츠 전송을 분산하고 오리진 서버에 대한 DDoS 완화를 제공합니다',
+    tags: ['network', 'web', 'cdn', 'ddos', 'performance'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(AWS_WAF_PERF, 'Content Delivery Network')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-SEC-012',
+    type: 'relationship',
+    source: 'firewall',
+    target: 'ids-ips',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'bidirectional',
+    reason: 'IDS/IPS complements firewall with deep packet inspection and threat signature detection',
+    reasonKo: 'IDS/IPS는 심층 패킷 검사와 위협 시그니처 탐지로 방화벽을 보완합니다',
+    tags: ['security', 'firewall', 'ids-ips', 'defense-in-depth'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(CIS_V8_13, '13.3 - Deploy a Network Intrusion Detection Solution')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CMP-010',
+    type: 'relationship',
+    source: 'db-server',
+    target: 'cache',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'upstream',
+    reason: 'Caching layer (Redis/Memcached) reduces database load and improves read latency',
+    reasonKo: '캐시 계층(Redis/Memcached)은 데이터베이스 부하를 줄이고 읽기 지연을 개선합니다',
+    tags: ['compute', 'database', 'cache', 'performance'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(AWS_WAF_PERF, 'Caching Strategy')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CMP-011',
+    type: 'relationship',
+    source: 'db-server',
+    target: 'backup',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'Database servers should have regular backups for disaster recovery and data protection',
+    reasonKo: '데이터베이스 서버는 재해 복구 및 데이터 보호를 위해 정기적인 백업이 권장됩니다',
+    tags: ['storage', 'database', 'backup', 'disaster-recovery'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_53, 'CP-9 - Information System Backup')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-NET-012',
+    type: 'relationship',
+    source: 'web-server',
+    target: 'dns',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'Web servers need DNS for name resolution; DNSSEC prevents DNS spoofing attacks',
+    reasonKo: '웹 서버는 이름 해석을 위해 DNS가 필요하며, DNSSEC는 DNS 스푸핑 공격을 방지합니다',
+    tags: ['network', 'web', 'dns', 'security'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_81, 'Section 2 - DNS Security Threats')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-AUTH-010',
+    type: 'relationship',
+    source: 'vpn-gateway',
+    target: 'mfa',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'VPN access should require multi-factor authentication to prevent credential-based attacks',
+    reasonKo: 'VPN 접근은 자격 증명 기반 공격을 방지하기 위해 다요소 인증이 권장됩니다',
+    tags: ['auth', 'vpn', 'mfa', 'zero-trust'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_63B, 'Section 4.3 - AAL3 Requirements')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-SEC-013',
+    type: 'relationship',
+    source: 'app-server',
+    target: 'waf',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'upstream',
+    reason: 'API-serving application servers benefit from WAF rules for API security (OWASP API Top 10)',
+    reasonKo: 'API를 제공하는 애플리케이션 서버는 API 보안(OWASP API Top 10)을 위한 WAF 규칙이 권장됩니다',
+    tags: ['security', 'app-server', 'waf', 'api-security'],
+    trust: {
+      confidence: 0.9,
+      sources: [OWASP_API_TOP10],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CLD-010',
+    type: 'relationship',
+    source: 'aws-vpc',
+    target: 'iam',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'Cloud VPCs should use IAM for fine-grained resource access control and least-privilege policies',
+    reasonKo: '클라우드 VPC는 세분화된 리소스 접근 제어와 최소 권한 정책을 위해 IAM 사용이 권장됩니다',
+    tags: ['cloud', 'aws', 'iam', 'access-control'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(AWS_WAF_SEC, 'Identity and Access Management')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CLD-011',
+    type: 'relationship',
+    source: 'azure-vnet',
+    target: 'iam',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'Azure Virtual Networks should integrate with IAM (Azure AD) for identity-based network policies',
+    reasonKo: 'Azure VNet은 ID 기반 네트워크 정책을 위해 IAM(Azure AD) 통합이 권장됩니다',
+    tags: ['cloud', 'azure', 'iam', 'identity'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(AZURE_CAF, 'Identity and Access Management')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CMP-012',
+    type: 'relationship',
+    source: 'kubernetes',
+    target: 'load-balancer',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'upstream',
+    reason: 'Kubernetes clusters need external load balancers (Ingress) for production traffic routing',
+    reasonKo: 'Kubernetes 클러스터는 프로덕션 트래픽 라우팅을 위해 외부 로드 밸런서(Ingress)가 권장됩니다',
+    tags: ['compute', 'kubernetes', 'load-balancer', 'ingress'],
+    trust: {
+      confidence: 0.7,
+      sources: [withSection(CNCF_SECURITY, 'Ingress and Load Balancing')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-NET-013',
+    type: 'relationship',
+    source: 'sd-wan',
+    target: 'firewall',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'SD-WAN should integrate with firewalls for consistent security policy enforcement across branch sites',
+    reasonKo: 'SD-WAN은 지사 간 일관된 보안 정책 적용을 위해 방화벽 통합이 권장됩니다',
+    tags: ['network', 'sd-wan', 'firewall', 'branch-security'],
+    trust: {
+      confidence: 0.7,
+      sources: [withSection(SANS_FIREWALL, 'Distributed Firewall Architectures')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-SEC-014',
+    type: 'relationship',
+    source: 'nac',
+    target: 'ldap-ad',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'NAC should authenticate devices against the directory service for identity-based network admission',
+    reasonKo: 'NAC는 ID 기반 네트워크 접근 허용을 위해 디렉터리 서비스와 연동이 권장됩니다',
+    tags: ['security', 'nac', 'ldap', 'identity', 'zero-trust'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_53, 'AC-3 - Access Enforcement')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-SEC-015',
+    type: 'relationship',
+    source: 'dlp',
+    target: 'firewall',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'bidirectional',
+    reason: 'DLP systems should work with firewalls to monitor and block sensitive data exfiltration at network boundaries',
+    reasonKo: 'DLP 시스템은 네트워크 경계에서 민감 데이터 유출을 모니터링하고 차단하기 위해 방화벽과 연동이 권장됩니다',
+    tags: ['security', 'dlp', 'firewall', 'data-protection'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_53, 'SC-7 - Boundary Protection')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CMP-013',
+    type: 'relationship',
+    source: 'vm',
+    target: 'san-nas',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'Virtual machines benefit from shared SAN/NAS storage for live migration and centralized management',
+    reasonKo: '가상 머신은 라이브 마이그레이션과 중앙 관리를 위해 공유 SAN/NAS 스토리지가 권장됩니다',
+    tags: ['compute', 'vm', 'san-nas', 'storage', 'migration'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_125, 'Section 4 - Virtualization Security')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CLD-012',
+    type: 'relationship',
+    source: 'private-cloud',
+    target: 'firewall',
+    relationshipType: 'recommends',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'Private clouds should deploy firewalls for micro-segmentation between tenants and workloads',
+    reasonKo: '프라이빗 클라우드는 테넌트 및 워크로드 간 마이크로 세그먼테이션을 위해 방화벽 배치가 권장됩니다',
+    tags: ['cloud', 'private-cloud', 'firewall', 'segmentation'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_144, 'Section 4 - Security and Privacy Issues')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Security Protections (protects / enhances)
+// ---------------------------------------------------------------------------
+
+const securityProtections: ComponentRelationship[] = [
+  {
+    id: 'REL-SEC-020',
+    type: 'relationship',
+    source: 'firewall',
+    target: 'db-server',
+    relationshipType: 'protects',
+    strength: 'mandatory',
+    direction: 'downstream',
+    reason: 'Firewall enforces network segmentation to isolate database tier from untrusted zones',
+    reasonKo: '방화벽은 네트워크 세그먼테이션을 통해 데이터베이스 티어를 비신뢰 구간으로부터 격리합니다',
+    tags: ['security', 'firewall', 'database', 'segmentation'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_41, 'Section 2.1 - Network Segmentation')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-SEC-021',
+    type: 'relationship',
+    source: 'waf',
+    target: 'web-server',
+    relationshipType: 'protects',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'WAF inspects HTTP/S traffic and blocks malicious payloads before they reach the web server',
+    reasonKo: 'WAF는 HTTP/S 트래픽을 검사하여 악성 페이로드가 웹 서버에 도달하기 전에 차단합니다',
+    tags: ['security', 'waf', 'web-server', 'application-security'],
+    trust: {
+      confidence: 0.9,
+      sources: [OWASP_TOP10, withSection(OWASP_WSTG, 'Configuration and Deployment Management')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-SEC-022',
+    type: 'relationship',
+    source: 'ids-ips',
+    target: 'firewall',
+    relationshipType: 'enhances',
+    strength: 'strong',
+    direction: 'bidirectional',
+    reason: 'IDS/IPS adds behavioral analysis and signature-based detection capabilities that complement stateful firewall inspection',
+    reasonKo: 'IDS/IPS는 상태 기반 방화벽 검사를 보완하는 행위 분석 및 시그니처 기반 탐지 기능을 추가합니다',
+    tags: ['security', 'ids-ips', 'firewall', 'defense-in-depth'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_94, 'Section 2.1 - Uses of IDPS Technologies')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-NET-020',
+    type: 'relationship',
+    source: 'load-balancer',
+    target: 'web-server',
+    relationshipType: 'enhances',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'Load balancer distributes incoming traffic across web server instances for improved throughput and fault tolerance',
+    reasonKo: '로드 밸런서는 처리량 향상과 내결함성을 위해 웹 서버 인스턴스에 트래픽을 분산합니다',
+    tags: ['network', 'load-balancer', 'web-server', 'high-availability'],
+    trust: {
+      confidence: 1.0,
+      sources: [withSection(RFC_7230, 'Section 2.3 - Intermediaries')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-SEC-023',
+    type: 'relationship',
+    source: 'firewall',
+    target: 'app-server',
+    relationshipType: 'protects',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'Firewall controls access to application servers, restricting traffic to only allowed ports and source IPs',
+    reasonKo: '방화벽은 애플리케이션 서버에 대한 접근을 제어하여 허용된 포트와 소스 IP로만 트래픽을 제한합니다',
+    tags: ['security', 'firewall', 'app-server', 'access-control'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_123, 'Section 5 - Securing the OS and Applications')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-NET-021',
+    type: 'relationship',
+    source: 'cache',
+    target: 'db-server',
+    relationshipType: 'enhances',
+    strength: 'strong',
+    direction: 'upstream',
+    reason: 'Caching layer absorbs repeated read queries, reducing database connection pressure and query latency',
+    reasonKo: '캐시 계층은 반복 읽기 쿼리를 흡수하여 데이터베이스 연결 부하와 쿼리 지연을 줄입니다',
+    tags: ['performance', 'cache', 'database', 'optimization'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(AWS_WAF_PERF, 'Caching')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-SEC-024',
+    type: 'relationship',
+    source: 'nac',
+    target: 'switch-l2',
+    relationshipType: 'protects',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'NAC enforces 802.1X authentication on switch ports to prevent unauthorized device connections',
+    reasonKo: 'NAC는 스위치 포트에서 802.1X 인증을 적용하여 비인가 장치 연결을 방지합니다',
+    tags: ['security', 'nac', 'switch', 'port-security'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(CIS_V8, 'Control 1 - Inventory and Control of Enterprise Assets')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-SEC-025',
+    type: 'relationship',
+    source: 'dlp',
+    target: 'db-server',
+    relationshipType: 'protects',
+    strength: 'strong',
+    direction: 'upstream',
+    reason: 'DLP monitors database query results and file transfers to prevent sensitive data exfiltration',
+    reasonKo: 'DLP는 민감 데이터 유출 방지를 위해 데이터베이스 쿼리 결과와 파일 전송을 모니터링합니다',
+    tags: ['security', 'dlp', 'database', 'data-loss-prevention'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_53, 'AC-4 - Information Flow Enforcement')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-AUTH-020',
+    type: 'relationship',
+    source: 'mfa',
+    target: 'vpn-gateway',
+    relationshipType: 'enhances',
+    strength: 'strong',
+    direction: 'upstream',
+    reason: 'MFA adds a second authentication factor to VPN login, preventing credential stuffing and phishing attacks',
+    reasonKo: 'MFA는 VPN 로그인에 2차 인증 요소를 추가하여 크리덴셜 스터핑과 피싱 공격을 방지합니다',
+    tags: ['auth', 'mfa', 'vpn', 'credential-protection'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_63B, 'Section 5 - Authenticator and Verifier Requirements')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-AUTH-021',
+    type: 'relationship',
+    source: 'iam',
+    target: 'kubernetes',
+    relationshipType: 'enhances',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'IAM provides RBAC integration for Kubernetes, enabling fine-grained pod and namespace access policies',
+    reasonKo: 'IAM은 Kubernetes에 RBAC 통합을 제공하여 세분화된 파드 및 네임스페이스 접근 정책을 가능하게 합니다',
+    tags: ['auth', 'iam', 'kubernetes', 'rbac'],
+    trust: {
+      confidence: 0.7,
+      sources: [withSection(CNCF_SECURITY, 'Identity and Access Management')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-NET-022',
+    type: 'relationship',
+    source: 'cdn',
+    target: 'web-server',
+    relationshipType: 'enhances',
+    strength: 'strong',
+    direction: 'upstream',
+    reason: 'CDN caches static assets at edge locations, reducing origin server load and improving global latency',
+    reasonKo: 'CDN은 엣지 로케이션에서 정적 자산을 캐시하여 오리진 서버 부하를 줄이고 글로벌 지연을 개선합니다',
+    tags: ['network', 'cdn', 'web-server', 'performance', 'edge'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(AWS_WAF_PERF, 'Content Delivery')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Conflicts / Forbidden Combinations (conflicts)
+// ---------------------------------------------------------------------------
+
+const conflicts: ComponentRelationship[] = [
+  {
+    id: 'REL-CON-001',
+    type: 'relationship',
+    source: 'db-server',
+    target: 'internet',
+    relationshipType: 'conflicts',
+    strength: 'mandatory',
+    direction: 'downstream',
+    reason: 'Database servers must never be directly exposed to the internet; this is a critical security vulnerability',
+    reasonKo: '데이터베이스 서버는 인터넷에 직접 노출되어서는 안 됩니다. 이는 심각한 보안 취약점입니다',
+    tags: ['security', 'database', 'internet', 'critical'],
+    trust: {
+      confidence: 0.95,
+      sources: [
+        withSection(NIST_800_41, 'Section 2.1 - Network Segmentation'),
+        withSection(NIST_800_123, 'Section 5 - Secure Network Configuration'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CON-002',
+    type: 'relationship',
+    source: 'ldap-ad',
+    target: 'internet',
+    relationshipType: 'conflicts',
+    strength: 'mandatory',
+    direction: 'downstream',
+    reason: 'Directory services (LDAP/AD) must not be internet-accessible; exposes all user credentials to attack',
+    reasonKo: '디렉터리 서비스(LDAP/AD)는 인터넷에 접근 가능해서는 안 됩니다. 모든 사용자 자격 증명이 공격에 노출됩니다',
+    tags: ['security', 'ldap', 'internet', 'credential-exposure'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_53, 'AC-17 - Remote Access')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CON-003',
+    type: 'relationship',
+    source: 'san-nas',
+    target: 'internet',
+    relationshipType: 'conflicts',
+    strength: 'mandatory',
+    direction: 'downstream',
+    reason: 'SAN/NAS storage should never be directly accessible from the internet; risks mass data exfiltration',
+    reasonKo: 'SAN/NAS 스토리지는 인터넷에서 직접 접근 가능해서는 안 됩니다. 대규모 데이터 유출 위험이 있습니다',
+    tags: ['security', 'storage', 'internet', 'data-exfiltration'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_53, 'SC-7 - Boundary Protection')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CON-004',
+    type: 'relationship',
+    source: 'app-server',
+    target: 'internet',
+    relationshipType: 'conflicts',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'Application servers should not be directly internet-facing; use a reverse proxy or load balancer as frontend',
+    reasonKo: '애플리케이션 서버는 인터넷에 직접 노출되면 안 됩니다. 리버스 프록시 또는 로드 밸런서를 프론트엔드로 사용하세요',
+    tags: ['security', 'app-server', 'internet', 'reverse-proxy'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_123, 'Section 5.3 - Network Configuration')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CON-005',
+    type: 'relationship',
+    source: 'backup',
+    target: 'internet',
+    relationshipType: 'conflicts',
+    strength: 'mandatory',
+    direction: 'downstream',
+    reason: 'Backup storage must be isolated from internet access to prevent ransomware attacks on backup data',
+    reasonKo: '백업 스토리지는 백업 데이터에 대한 랜섬웨어 공격을 방지하기 위해 인터넷 접근으로부터 격리되어야 합니다',
+    tags: ['security', 'backup', 'internet', 'ransomware'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_53, 'CP-9 - Information System Backup')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CON-006',
+    type: 'relationship',
+    source: 'switch-l2',
+    target: 'internet',
+    relationshipType: 'conflicts',
+    strength: 'mandatory',
+    direction: 'downstream',
+    reason: 'L2 switches have no routing or filtering capabilities and must not face the internet directly',
+    reasonKo: 'L2 스위치는 라우팅이나 필터링 기능이 없으므로 인터넷에 직접 연결되어서는 안 됩니다',
+    tags: ['network', 'switch', 'internet', 'architecture'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(CIS_V8_12, '12.2 - Secure Network Architecture')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CON-007',
+    type: 'relationship',
+    source: 'cache',
+    target: 'internet',
+    relationshipType: 'conflicts',
+    strength: 'mandatory',
+    direction: 'downstream',
+    reason: 'In-memory caches (Redis/Memcached) have weak authentication and must never be internet-exposed',
+    reasonKo: '인메모리 캐시(Redis/Memcached)는 인증이 취약하여 인터넷에 노출되어서는 안 됩니다',
+    tags: ['security', 'cache', 'internet', 'authentication'],
+    trust: {
+      confidence: 0.7,
+      sources: [withSection(SANS_CIS_TOP20, 'Control 12 - Network Infrastructure Management')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CON-008',
+    type: 'relationship',
+    source: 'web-server',
+    target: 'db-server',
+    relationshipType: 'conflicts',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'Web servers should not directly access databases; use an application tier for business logic separation',
+    reasonKo: '웹 서버는 데이터베이스에 직접 접근하면 안 됩니다. 비즈니스 로직 분리를 위해 애플리케이션 티어를 사용하세요',
+    tags: ['architecture', 'web-server', 'database', 'separation-of-concerns'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_123, 'Section 5 - Application Architecture')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+  {
+    id: 'REL-CON-009',
+    type: 'relationship',
+    source: 'container',
+    target: 'internet',
+    relationshipType: 'conflicts',
+    strength: 'strong',
+    direction: 'downstream',
+    reason: 'Individual containers should not be directly internet-exposed; use an ingress controller or load balancer',
+    reasonKo: '개별 컨테이너는 인터넷에 직접 노출되면 안 됩니다. 인그레스 컨트롤러 또는 로드 밸런서를 사용하세요',
+    tags: ['security', 'container', 'internet', 'ingress'],
+    trust: {
+      confidence: 0.7,
+      sources: [withSection(CNCF_SECURITY, 'Runtime Security - Network Policies')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-09',
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Combined registry
+// ---------------------------------------------------------------------------
+
+/** All verified component relationships */
+export const COMPONENT_RELATIONSHIPS: readonly ComponentRelationship[] = Object.freeze([
+  ...mandatoryDependencies,
+  ...strongRecommendations,
+  ...securityProtections,
+  ...conflicts,
+]);
+
+/** Public alias used by the knowledge graph index */
+export const RELATIONSHIPS = COMPONENT_RELATIONSHIPS;
+
+// ---------------------------------------------------------------------------
+// Lookup helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns all relationships where the given component appears as source or target.
+ */
+export function getRelationshipsForComponent(type: InfraNodeType): ComponentRelationship[] {
+  return COMPONENT_RELATIONSHIPS.filter(
+    (r) => r.source === type || r.target === type,
+  );
+}
+
+/**
+ * Returns related components with their relationship type and reason.
+ * Resolves direction so the returned type is always the "other" component.
+ */
+export function getRelatedComponents(
+  type: InfraNodeType,
+): { type: InfraNodeType; relationship: RelationshipType; reason: string }[] {
+  const results: { type: InfraNodeType; relationship: RelationshipType; reason: string }[] = [];
+
+  for (const r of COMPONENT_RELATIONSHIPS) {
+    if (r.source === type) {
+      results.push({ type: r.target, relationship: r.relationshipType, reason: r.reason });
+    } else if (r.target === type) {
+      results.push({ type: r.source, relationship: r.relationshipType, reason: r.reason });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Returns mandatory dependency relationships where the given component is the source.
+ * These are components that the given component MUST have in the architecture.
+ */
+export function getMandatoryDependencies(type: InfraNodeType): ComponentRelationship[] {
+  return COMPONENT_RELATIONSHIPS.filter(
+    (r) => r.source === type && r.relationshipType === 'requires',
+  );
+}
+
+/**
+ * Returns recommendation relationships where the given component is the source.
+ * These are components that are strongly suggested alongside the given component.
+ */
+export function getRecommendations(type: InfraNodeType): ComponentRelationship[] {
+  return COMPONENT_RELATIONSHIPS.filter(
+    (r) => r.source === type && r.relationshipType === 'recommends',
+  );
+}
+
+/**
+ * Returns conflict relationships where the given component is the source.
+ * These are component combinations that should be avoided.
+ */
+export function getConflicts(type: InfraNodeType): ComponentRelationship[] {
+  return COMPONENT_RELATIONSHIPS.filter(
+    (r) => r.source === type && r.relationshipType === 'conflicts',
+  );
+}
