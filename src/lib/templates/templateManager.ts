@@ -23,6 +23,7 @@ export type TemplateCategory =
   | 'cloud'
   | 'network'
   | 'container'
+  | 'telecom'
   | 'custom';
 
 // Built-in templates with metadata
@@ -165,6 +166,67 @@ export const builtInTemplates: Template[] = [
     icon: '☁️',
     spec: infraTemplates['hybrid-vdi'],
     tags: ['VDI', '하이브리드', '클라우드', '온프레미스'],
+    isBuiltIn: true,
+  },
+  // ── 통신망 (Telecom) ──
+  {
+    id: 'dedicated-line',
+    name: '기업 전용회선 접속',
+    description: '고객 구내(CPE)에서 전용회선을 통해 국사, PE 라우터를 거쳐 IDC까지 연결하는 기본 통신망 구조',
+    category: 'telecom',
+    icon: '🔗',
+    spec: infraTemplates['dedicated-line'],
+    tags: ['전용회선', 'WAN', '국사', 'B2B'],
+    isBuiltIn: true,
+  },
+  {
+    id: 'dedicated-line-dual',
+    name: '전용회선 이중화',
+    description: '2개 국사, 2개 전용회선, 링 네트워크를 활용한 이중화 구성으로 회선 장애 시 자동 전환',
+    category: 'telecom',
+    icon: '🔀',
+    spec: infraTemplates['dedicated-line-dual'],
+    tags: ['전용회선', '이중화', '링', 'HA'],
+    isBuiltIn: true,
+  },
+  {
+    id: 'mpls-vpn',
+    name: 'MPLS VPN 다지점',
+    description: '본사-지사를 MPLS VPN으로 연결하는 Hub-Spoke 구조 (PE/P 라우터, VPN 서비스)',
+    category: 'telecom',
+    icon: '🌐',
+    spec: infraTemplates['mpls-vpn'],
+    tags: ['MPLS', 'VPN', '다지점', 'Hub-Spoke'],
+    isBuiltIn: true,
+  },
+  {
+    id: 'hybrid-wan',
+    name: '하이브리드 WAN',
+    description: '전용회선과 기업인터넷(KORNET)을 SD-WAN으로 통합한 하이브리드 WAN 구조',
+    category: 'telecom',
+    icon: '⚡',
+    spec: infraTemplates['hybrid-wan'],
+    tags: ['SD-WAN', '하이브리드', 'KORNET', 'WAN'],
+    isBuiltIn: true,
+  },
+  {
+    id: '5g-private',
+    name: '5G 특화망',
+    description: '기지국(gNB)에서 5G 코어, UPF를 거쳐 IDC 엣지 서버까지 연결하는 Private 5G 네트워크',
+    category: 'telecom',
+    icon: '📶',
+    spec: infraTemplates['5g-private'],
+    tags: ['5G', '특화망', 'gNB', 'UPF', '스마트팩토리'],
+    isBuiltIn: true,
+  },
+  {
+    id: 'idc-dual',
+    name: 'IDC 이중화 접속',
+    description: '2개 국사 경유 2개 IDC(주/DR) 이중화 구성, DB 리플리케이션 포함',
+    category: 'telecom',
+    icon: '🏢',
+    spec: infraTemplates['idc-dual'],
+    tags: ['IDC', '이중화', 'DR', '데이터센터'],
     isBuiltIn: true,
   },
 ];

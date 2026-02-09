@@ -23,6 +23,7 @@ const categoryInfo: Record<TemplateCategory, { label: string; icon: string }> = 
   cloud: { label: '클라우드', icon: '☁️' },
   network: { label: '네트워크', icon: '📡' },
   container: { label: '컨테이너', icon: '📦' },
+  telecom: { label: '통신망', icon: '🔗' },
   custom: { label: '사용자 정의', icon: '📋' },
 };
 
@@ -44,7 +45,7 @@ export function TemplateGallery({
     return results;
   }, [searchQuery, selectedCategory]);
 
-  const categories: Array<TemplateCategory | 'all'> = ['all', 'web', 'security', 'cloud', 'network', 'container', 'custom'];
+  const categories: Array<TemplateCategory | 'all'> = ['all', 'web', 'security', 'cloud', 'network', 'container', 'telecom', 'custom'];
 
   const handleDelete = (id: string) => {
     deleteTemplate(id);
