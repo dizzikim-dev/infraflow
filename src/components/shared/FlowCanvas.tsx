@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, memo } from 'react';
+import { useCallback, useEffect, useState, memo } from 'react';
 import {
   ReactFlow,
   Background,
@@ -17,6 +17,7 @@ import {
   EdgeTypes,
   useReactFlow,
   ReactFlowProvider,
+  SelectionMode,
   XYPosition,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -72,6 +73,32 @@ const FlowCanvasInner = memo(function FlowCanvasInner({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const { screenToFlowPosition } = useReactFlow();
+
+  // Space key tracking: Space held → pan mode, otherwise → selection/drag mode
+  const [isSpaceHeld, setIsSpaceHeld] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !e.repeat) {
+        // Prevent page scroll when space is pressed on canvas
+        if ((e.target as HTMLElement)?.closest('.react-flow')) {
+          e.preventDefault();
+        }
+        setIsSpaceHeld(true);
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setIsSpaceHeld(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
 
   // Use the extracted history hook for undo/redo functionality
   useHistory(nodes, edges, setNodes, setEdges, {
@@ -156,7 +183,12 @@ const FlowCanvasInner = memo(function FlowCanvasInner({
           edgeTypes={edgeTypes as EdgeTypes}
           fitView
           attributionPosition="bottom-left"
-          className="bg-zinc-900"
+          className={`bg-zinc-900 ${isSpaceHeld ? 'cursor-grab' : ''}`}
+          // Default: drag to select, Space+drag: pan
+          panOnDrag={isSpaceHeld}
+          selectionOnDrag={!isSpaceHeld}
+          selectionMode={SelectionMode.Partial}
+          panOnScroll={false}
         >
           <Background
             variant={BackgroundVariant.Dots}

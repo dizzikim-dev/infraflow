@@ -5,7 +5,7 @@
  * Only active when the user is authenticated and has a diagram ID.
  */
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import type { InfraSpec } from '@/types';
 import type { Node, Edge } from '@xyflow/react';
@@ -32,15 +32,15 @@ export function useDiagramPersistence({
   debounceMs = 5000,
 }: UseDiagramPersistenceOptions): UseDiagramPersistenceReturn {
   const { data: session } = useSession();
-  const isSavingRef = useRef(false);
-  const lastSavedAtRef = useRef<Date | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingRef = useRef(false);
 
   const save = useCallback(async () => {
-    if (!diagramId || !session?.user || !spec || isSavingRef.current) return;
+    if (!diagramId || !session?.user || !spec || isSaving) return;
 
-    isSavingRef.current = true;
+    setIsSaving(true);
     try {
       const res = await fetch(`/api/diagrams/${diagramId}`, {
         method: 'PUT',
@@ -53,12 +53,12 @@ export function useDiagramPersistence({
       });
 
       if (res.ok) {
-        lastSavedAtRef.current = new Date();
+        setLastSavedAt(new Date());
       }
     } finally {
-      isSavingRef.current = false;
+      setIsSaving(false);
     }
-  }, [diagramId, session?.user, spec, nodes, edges]);
+  }, [diagramId, session?.user, spec, nodes, edges, isSaving]);
 
   // Debounced auto-save on changes
   useEffect(() => {
@@ -87,8 +87,8 @@ export function useDiagramPersistence({
   }, []);
 
   return {
-    isSaving: isSavingRef.current,
-    lastSavedAt: lastSavedAtRef.current,
+    isSaving,
+    lastSavedAt,
     save,
   };
 }

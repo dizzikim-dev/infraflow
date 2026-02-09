@@ -3,6 +3,7 @@
 import { useRef, useCallback, useState } from 'react';
 import { Node, Edge, XYPosition } from '@xyflow/react';
 import { InfraSpec, InfraNodeType, InfraNodeData } from '@/types';
+import { specToFlow } from '@/lib/layout';
 
 // Import specialized hooks
 import { useNodes, ComponentData } from './useNodes';
@@ -121,6 +122,27 @@ export function useInfraState() {
   );
 
   /**
+   * Load diagram from a spec with optional pre-computed nodes/edges
+   */
+  const loadFromSpec = useCallback(
+    (spec: InfraSpec, nodesJson?: Node[], edgesJson?: Edge[]) => {
+      if (nodesJson?.length && edgesJson?.length) {
+        setNodes(nodesJson);
+        setEdges(edgesJson);
+      } else {
+        const { nodes: generated, edges: generatedEdges } = specToFlow(spec);
+        setNodes(generated);
+        setEdges(generatedEdges);
+      }
+      setCurrentSpec(spec);
+      setLastResult(null);
+      resetAnimation();
+      clearSelection();
+    },
+    [setNodes, setEdges, setLastResult, resetAnimation, clearSelection]
+  );
+
+  /**
    * Clear current diagram
    */
   const clearDiagram = useCallback(() => {
@@ -162,6 +184,7 @@ export function useInfraState() {
     handleScenarioSelect,
     handleTemplateSelect,
     handleNodeClick,
+    loadFromSpec,
     clearDiagram,
     updateNodeData,
 

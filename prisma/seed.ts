@@ -5,8 +5,9 @@
  * 실행: npx prisma db seed
  */
 
-import { PrismaClient, ComponentCategory, TierType, PolicyPriority, PolicyCategory } from '../src/generated/prisma';
+import { PrismaClient, ComponentCategory, TierType, PolicyPriority, PolicyCategory, UserRole } from '../src/generated/prisma';
 import { infrastructureDB, InfraComponent, PolicyRecommendation } from '../src/lib/data/infrastructureDB';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -55,8 +56,68 @@ function toPolicyCategory(category: string): PolicyCategory {
   return map[category] || PolicyCategory.security;
 }
 
+// ============================================
+// 관리자 계정 시드
+// ============================================
+
+const ADMIN_ACCOUNTS = [
+  {
+    name: '김현기',
+    email: 'admin@infraflow.dev',
+    password: 'Admin1234!',
+  },
+  {
+    name: '운영관리자',
+    email: 'ops@infraflow.dev',
+    password: 'Ops1234!',
+  },
+  {
+    name: '테스트관리자',
+    email: 'test-admin@infraflow.dev',
+    password: 'Test1234!',
+  },
+];
+
+async function seedAdminAccounts() {
+  console.log('👤 관리자 계정 시드 시작...\n');
+
+  for (const account of ADMIN_ACCOUNTS) {
+    // 환경변수로 비밀번호 오버라이드 가능
+    const envKey = `ADMIN_PASSWORD_${account.email.split('@')[0].toUpperCase().replace('-', '_')}`;
+    const password = process.env[envKey] || account.password;
+
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    const user = await prisma.user.upsert({
+      where: { email: account.email },
+      update: {
+        name: account.name,
+        role: UserRole.ADMIN,
+        passwordHash,
+      },
+      create: {
+        name: account.name,
+        email: account.email,
+        passwordHash,
+        role: UserRole.ADMIN,
+      },
+    });
+
+    console.log(`  ✅ ${user.name} (${user.email}) - role: ${user.role}`);
+  }
+
+  console.log('');
+}
+
+// ============================================
+// 인프라 컴포넌트 시드
+// ============================================
+
 async function main() {
   console.log('🌱 시드 스크립트 시작...\n');
+
+  // 관리자 계정 시드
+  await seedAdminAccounts();
 
   // 기존 데이터 삭제 (clean slate)
   console.log('🗑️  기존 데이터 삭제 중...');
