@@ -1,35 +1,23 @@
 /**
- * NextAuth.js v5 Configuration
+ * NextAuth.js v5 Full Configuration
  *
- * - PrismaAdapter for database persistence
- * - JWT session strategy (stateless, Edge Middleware compatible)
- * - Credentials + Google + GitHub providers
+ * - Extends Edge-compatible config with PrismaAdapter + Credentials provider
+ * - This file must NOT be imported from middleware.ts (uses Prisma)
  */
 
 import NextAuth from 'next-auth';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import Credentials from 'next-auth/providers/credentials';
-import Google from 'next-auth/providers/google';
-import GitHub from 'next-auth/providers/github';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db/prisma';
 import { LoginSchema } from '@/lib/validations/auth';
+import { authConfig } from './auth.config';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(prisma),
-  session: { strategy: 'jwt' },
-  pages: {
-    signIn: '/auth/login',
-  },
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
-    GitHub({
-      clientId: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    }),
+    ...authConfig.providers,
     Credentials({
       name: 'credentials',
       credentials: {
@@ -61,20 +49,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id!;
-        token.role = ((user as { role?: string }).role as 'USER' | 'ADMIN') ?? 'USER';
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as 'USER' | 'ADMIN';
-      }
-      return session;
-    },
-  },
 });
