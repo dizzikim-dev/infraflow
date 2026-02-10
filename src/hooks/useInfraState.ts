@@ -11,6 +11,7 @@ import { useEdges } from './useEdges';
 import { usePromptParser, ParseResultInfo } from './usePromptParser';
 import { useInfraSelection, SelectedNodeDetail, SelectedNodePolicy } from './useInfraSelection';
 import { useAnimationScenario } from './useAnimationScenario';
+import { useFeedback } from './useFeedback';
 
 // Re-export types for backward compatibility
 export type { ParseResultInfo, SelectedNodeDetail, SelectedNodePolicy };
@@ -75,6 +76,9 @@ export function useInfraState() {
     resetAnimation,
   } = useAnimationScenario({ currentSpec });
 
+  // Feedback collection hook
+  const feedback = useFeedback();
+
   // Prompt parser hook
   const parserHook = usePromptParser({
     currentSpec,
@@ -85,6 +89,7 @@ export function useInfraState() {
     onSpecUpdate: setCurrentSpec,
     onAnimationReset: resetAnimation,
     onPolicyReset: () => setSelectedNodePolicy(null),
+    onDiagramGenerated: feedback.captureOriginalSpec,
   });
   const {
     isLoading,
@@ -199,5 +204,8 @@ export function useInfraState() {
     insertNodeBetween,
     deleteEdge,
     reverseEdge,
+
+    // Feedback
+    feedback,
   };
 }
