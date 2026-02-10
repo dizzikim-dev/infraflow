@@ -8,8 +8,9 @@
  * 플러그인 시스템 사용 시 pluginRegistry.getAllNodeConfigs()를 사용하세요.
  */
 
-import { NodeCategory } from '@/types';
+import { NodeCategory, InfraNodeType } from '@/types';
 import { createLogger } from '@/lib/utils/logger';
+import { getCategoryForType } from '@/lib/data/infrastructureDB';
 
 const logger = createLogger('NodeConfig');
 
@@ -32,105 +33,95 @@ export interface NodeConfig {
  * 플러그인 시스템 초기화 전에도 사용 가능하도록 유지
  * 플러그인 시스템 초기화 후에는 레지스트리에서 가져옴
  */
-export const defaultNodeConfigs: NodeConfig[] = [
-  // ============================================================
-  // Security Nodes
-  // ============================================================
-  { id: 'firewall', name: 'Firewall', category: 'security', color: 'red', icon: '🔥' },
-  { id: 'waf', name: 'WAF', category: 'security', color: 'red', icon: '🛡️' },
-  { id: 'ids-ips', name: 'IDS/IPS', category: 'security', color: 'red', icon: '👁️' },
-  { id: 'vpn-gateway', name: 'VPN Gateway', category: 'security', color: 'red', icon: '🔐' },
-  { id: 'nac', name: 'NAC', category: 'security', color: 'red', icon: '🚧' },
-  { id: 'dlp', name: 'DLP', category: 'security', color: 'red', icon: '📋' },
-  { id: 'sase-gateway', name: 'SASE Gateway', category: 'security', color: 'red', icon: '☁️' },
-  { id: 'ztna-broker', name: 'ZTNA Broker', category: 'security', color: 'red', icon: '🔑' },
-  { id: 'casb', name: 'CASB', category: 'security', color: 'red', icon: '🔒' },
-  { id: 'siem', name: 'SIEM', category: 'security', color: 'red', icon: '📊' },
-  { id: 'soar', name: 'SOAR', category: 'security', color: 'red', icon: '⚡' },
+// Category → color mapping for node configs
+const categoryColorMap: Record<string, string> = {
+  security: 'red', network: 'blue', compute: 'green', cloud: 'purple',
+  storage: 'amber', auth: 'pink', external: 'gray', telecom: 'teal',
+  wan: 'indigo', zone: 'gray',
+};
 
-  // ============================================================
-  // Network Nodes
-  // ============================================================
-  { id: 'router', name: 'Router', category: 'network', color: 'blue', icon: '📡' },
-  { id: 'switch-l2', name: 'Switch L2', category: 'network', color: 'blue', icon: '🔀' },
-  { id: 'switch-l3', name: 'Switch L3', category: 'network', color: 'blue', icon: '🔀' },
-  { id: 'load-balancer', name: 'Load Balancer', category: 'network', color: 'blue', icon: '⚖️' },
-  { id: 'sd-wan', name: 'SD-WAN', category: 'network', color: 'blue', icon: '🌐' },
-  { id: 'dns', name: 'DNS', category: 'network', color: 'blue', icon: '📖' },
-  { id: 'cdn', name: 'CDN', category: 'network', color: 'blue', icon: '🌍' },
-
-  // ============================================================
-  // Compute Nodes
-  // ============================================================
-  { id: 'web-server', name: 'Web Server', category: 'compute', color: 'green', icon: '🌐' },
-  { id: 'app-server', name: 'App Server', category: 'compute', color: 'green', icon: '⚙️' },
-  { id: 'db-server', name: 'DB Server', category: 'compute', color: 'green', icon: '🗄️' },
-  { id: 'container', name: 'Container', category: 'compute', color: 'green', icon: '📦' },
-  { id: 'vm', name: 'VM', category: 'compute', color: 'green', icon: '💻' },
-  { id: 'kubernetes', name: 'Kubernetes', category: 'compute', color: 'green', icon: '☸️' },
-
-  // ============================================================
-  // External Nodes
-  // ============================================================
-  { id: 'user', name: 'User', category: 'external', color: 'gray', icon: '👤' },
-  { id: 'internet', name: 'Internet', category: 'external', color: 'gray', icon: '🌏' },
-
-  // ============================================================
-  // Cloud Nodes
-  // ============================================================
-  { id: 'aws-vpc', name: 'AWS VPC', category: 'cloud', color: 'purple', icon: '☁️' },
-  { id: 'azure-vnet', name: 'Azure VNet', category: 'cloud', color: 'purple', icon: '☁️' },
-  { id: 'gcp-network', name: 'GCP Network', category: 'cloud', color: 'purple', icon: '☁️' },
-  { id: 'private-cloud', name: 'Private Cloud', category: 'cloud', color: 'purple', icon: '🏢' },
-
-  // ============================================================
-  // Storage Nodes
-  // ============================================================
-  { id: 'san-nas', name: 'SAN/NAS', category: 'storage', color: 'amber', icon: '💽' },
-  { id: 'object-storage', name: 'Object Storage', category: 'storage', color: 'amber', icon: '📦' },
-  { id: 'backup', name: 'Backup', category: 'storage', color: 'amber', icon: '💾' },
-  { id: 'storage', name: 'Storage', category: 'storage', color: 'amber', icon: '💾' },
-  { id: 'cache', name: 'Cache', category: 'storage', color: 'amber', icon: '⚡' },
-
-  // ============================================================
-  // Auth Nodes
-  // ============================================================
-  { id: 'ldap-ad', name: 'LDAP/AD', category: 'auth', color: 'pink', icon: '🔑' },
-  { id: 'ldap', name: 'LDAP', category: 'auth', color: 'pink', icon: '🔑' }, // 하위호환
-  { id: 'sso', name: 'SSO', category: 'auth', color: 'pink', icon: '🎫' },
-  { id: 'mfa', name: 'MFA', category: 'auth', color: 'pink', icon: '📱' },
-  { id: 'iam', name: 'IAM', category: 'auth', color: 'pink', icon: '👥' },
-
-  // ============================================================
-  // Telecom Nodes
-  // ============================================================
-  { id: 'central-office', name: 'Central Office', category: 'telecom', color: 'teal', icon: '🏢' },
-  { id: 'base-station', name: 'Base Station', category: 'telecom', color: 'teal', icon: '📶' },
-  { id: 'olt', name: 'OLT', category: 'telecom', color: 'teal', icon: '💡' },
-  { id: 'customer-premise', name: 'Customer Premise', category: 'telecom', color: 'teal', icon: '🏠' },
-  { id: 'idc', name: 'IDC', category: 'telecom', color: 'teal', icon: '🏗️' },
-
-  // ============================================================
-  // WAN Nodes
-  // ============================================================
-  { id: 'pe-router', name: 'PE Router', category: 'wan', color: 'indigo', icon: '🔀' },
-  { id: 'p-router', name: 'P Router', category: 'wan', color: 'indigo', icon: '🔁' },
-  { id: 'mpls-network', name: 'MPLS Network', category: 'wan', color: 'indigo', icon: '🌐' },
-  { id: 'dedicated-line', name: 'Dedicated Line', category: 'wan', color: 'indigo', icon: '🔗' },
-  { id: 'metro-ethernet', name: 'Metro Ethernet', category: 'wan', color: 'indigo', icon: '🔌' },
-  { id: 'corporate-internet', name: 'Corporate Internet', category: 'wan', color: 'indigo', icon: '🌍' },
-  { id: 'vpn-service', name: 'VPN Service', category: 'wan', color: 'indigo', icon: '🔐' },
-  { id: 'sd-wan-service', name: 'SD-WAN Service', category: 'wan', color: 'indigo', icon: '☁️' },
-  { id: 'private-5g', name: 'Private 5G', category: 'wan', color: 'indigo', icon: '📡' },
-  { id: 'core-network', name: 'Core Network', category: 'wan', color: 'indigo', icon: '⚡' },
-  { id: 'upf', name: 'UPF', category: 'wan', color: 'indigo', icon: '🔄' },
-  { id: 'ring-network', name: 'Ring Network', category: 'wan', color: 'indigo', icon: '⭕' },
-
-  // ============================================================
-  // Zone
-  // ============================================================
-  { id: 'zone', name: 'Zone', category: 'zone', color: 'gray', icon: '📦' },
+// Raw config data (category is derived from infrastructureDB SSoT)
+const nodeConfigsRaw: Array<{ id: string; name: string; icon: string }> = [
+  // Security
+  { id: 'firewall', name: 'Firewall', icon: '🔥' },
+  { id: 'waf', name: 'WAF', icon: '🛡️' },
+  { id: 'ids-ips', name: 'IDS/IPS', icon: '👁️' },
+  { id: 'vpn-gateway', name: 'VPN Gateway', icon: '🔐' },
+  { id: 'nac', name: 'NAC', icon: '🚧' },
+  { id: 'dlp', name: 'DLP', icon: '📋' },
+  { id: 'sase-gateway', name: 'SASE Gateway', icon: '☁️' },
+  { id: 'ztna-broker', name: 'ZTNA Broker', icon: '🔑' },
+  { id: 'casb', name: 'CASB', icon: '🔒' },
+  { id: 'siem', name: 'SIEM', icon: '📊' },
+  { id: 'soar', name: 'SOAR', icon: '⚡' },
+  // Network
+  { id: 'router', name: 'Router', icon: '📡' },
+  { id: 'switch-l2', name: 'Switch L2', icon: '🔀' },
+  { id: 'switch-l3', name: 'Switch L3', icon: '🔀' },
+  { id: 'load-balancer', name: 'Load Balancer', icon: '⚖️' },
+  { id: 'sd-wan', name: 'SD-WAN', icon: '🌐' },
+  { id: 'dns', name: 'DNS', icon: '📖' },
+  { id: 'cdn', name: 'CDN', icon: '🌍' },
+  // Compute
+  { id: 'web-server', name: 'Web Server', icon: '🌐' },
+  { id: 'app-server', name: 'App Server', icon: '⚙️' },
+  { id: 'db-server', name: 'DB Server', icon: '🗄️' },
+  { id: 'container', name: 'Container', icon: '📦' },
+  { id: 'vm', name: 'VM', icon: '💻' },
+  { id: 'kubernetes', name: 'Kubernetes', icon: '☸️' },
+  // External
+  { id: 'user', name: 'User', icon: '👤' },
+  { id: 'internet', name: 'Internet', icon: '🌏' },
+  // Cloud
+  { id: 'aws-vpc', name: 'AWS VPC', icon: '☁️' },
+  { id: 'azure-vnet', name: 'Azure VNet', icon: '☁️' },
+  { id: 'gcp-network', name: 'GCP Network', icon: '☁️' },
+  { id: 'private-cloud', name: 'Private Cloud', icon: '🏢' },
+  // Storage
+  { id: 'san-nas', name: 'SAN/NAS', icon: '💽' },
+  { id: 'object-storage', name: 'Object Storage', icon: '📦' },
+  { id: 'backup', name: 'Backup', icon: '💾' },
+  { id: 'storage', name: 'Storage', icon: '💾' },
+  { id: 'cache', name: 'Cache', icon: '⚡' },
+  // Auth
+  { id: 'ldap-ad', name: 'LDAP/AD', icon: '🔑' },
+  { id: 'ldap', name: 'LDAP', icon: '🔑' }, // 하위호환
+  { id: 'sso', name: 'SSO', icon: '🎫' },
+  { id: 'mfa', name: 'MFA', icon: '📱' },
+  { id: 'iam', name: 'IAM', icon: '👥' },
+  // Telecom
+  { id: 'central-office', name: 'Central Office', icon: '🏢' },
+  { id: 'base-station', name: 'Base Station', icon: '📶' },
+  { id: 'olt', name: 'OLT', icon: '💡' },
+  { id: 'customer-premise', name: 'Customer Premise', icon: '🏠' },
+  { id: 'idc', name: 'IDC', icon: '🏗️' },
+  // WAN
+  { id: 'pe-router', name: 'PE Router', icon: '🔀' },
+  { id: 'p-router', name: 'P Router', icon: '🔁' },
+  { id: 'mpls-network', name: 'MPLS Network', icon: '🌐' },
+  { id: 'dedicated-line', name: 'Dedicated Line', icon: '🔗' },
+  { id: 'metro-ethernet', name: 'Metro Ethernet', icon: '🔌' },
+  { id: 'corporate-internet', name: 'Corporate Internet', icon: '🌍' },
+  { id: 'vpn-service', name: 'VPN Service', icon: '🔐' },
+  { id: 'sd-wan-service', name: 'SD-WAN Service', icon: '☁️' },
+  { id: 'private-5g', name: 'Private 5G', icon: '📡' },
+  { id: 'core-network', name: 'Core Network', icon: '⚡' },
+  { id: 'upf', name: 'UPF', icon: '🔄' },
+  { id: 'ring-network', name: 'Ring Network', icon: '⭕' },
+  // Zone (special — not in infrastructureDB)
+  { id: 'zone', name: 'Zone', icon: '📦' },
 ];
+
+// Derive category from infrastructureDB (SSoT) at module init
+export const defaultNodeConfigs: NodeConfig[] = nodeConfigsRaw.map((raw) => {
+  const category: NodeConfig['category'] =
+    raw.id === 'zone' ? 'zone' : getCategoryForType(raw.id as InfraNodeType);
+  return {
+    ...raw,
+    category,
+    color: categoryColorMap[category] || 'gray',
+  };
+});
 
 /**
  * 노드 설정 배열

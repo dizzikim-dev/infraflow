@@ -35,6 +35,7 @@ import {
 } from '@/lib/parser/intelligentParser';
 import { ConversationContext, SmartParseResult } from '@/lib/parser/UnifiedParser';
 import { ParseRequestSchema } from '@/lib/validations/api';
+import { sanitizeUserInput, validateOutputSafety } from '@/lib/security/llmSecurityControls';
 
 /**
  * Request body for the smart parse endpoint.
@@ -292,7 +293,10 @@ export async function POST(
       );
     }
 
-    const { prompt, context, provider, model, useLLM } = parsed.data;
+    const { prompt: rawPrompt, context, provider, model, useLLM } = parsed.data;
+
+    // Sanitize prompt (OWASP LLM01: Prompt Injection prevention)
+    const prompt = sanitizeUserInput(rawPrompt);
 
     // Build conversation context
     const conversationContext: ConversationContext = {
@@ -350,6 +354,20 @@ export async function POST(
         error: error || 'Failed to analyze intent',
         rawResponse,
       });
+    }
+
+    // Validate output safety (OWASP LLM02: Insecure Output Handling prevention)
+    if (rawResponse) {
+      const outputCheck = validateOutputSafety(rawResponse);
+      if (!outputCheck.safe) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'LLM 응답에서 안전하지 않은 패턴이 감지되었습니다.',
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Apply intent to generate result

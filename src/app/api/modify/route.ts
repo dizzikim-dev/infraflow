@@ -31,6 +31,7 @@ import {
   FAILURES,
 } from '@/lib/knowledge';
 import { assessChangeRisk, type ChangeRiskAssessment } from '@/lib/parser/changeRiskAssessor';
+import { sanitizeUserInput, validateOutputSafety } from '@/lib/security/llmSecurityControls';
 
 const log = createLogger('Modify API');
 
@@ -309,6 +310,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ModifyRes
       return addRateLimitHeaders(response, info);
     }
 
+    // Sanitize prompt (OWASP LLM01: Prompt Injection prevention)
+    const sanitizedPrompt = sanitizeUserInput(prompt);
+
     // Check for empty diagram
     if (!nodes || nodes.length === 0) {
       const response = NextResponse.json<ModifyResponse>(
@@ -339,8 +343,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ModifyRes
     // Build context from current canvas state
     const context = buildContext(nodes, edges);
 
-    // Format user message
-    const userMessage = formatUserMessage(context, prompt);
+    // Format user message (using sanitized prompt)
+    const userMessage = formatUserMessage(context, sanitizedPrompt);
 
     // Enrich with knowledge graph
     const enriched = enrichContext(context, [...RELATIONSHIPS], {
@@ -369,6 +373,24 @@ export async function POST(request: NextRequest): Promise<NextResponse<ModifyRes
     );
 
     log.info('LLM Response received');
+
+    // Validate output safety (OWASP LLM02: Insecure Output Handling prevention)
+    const outputCheck = validateOutputSafety(llmResponse);
+    if (!outputCheck.safe) {
+      log.warn('LLM output safety check failed', { issues: outputCheck.issues });
+      const response = NextResponse.json<ModifyResponse>(
+        {
+          success: false,
+          error: {
+            code: 'UNSAFE_OUTPUT',
+            userMessage: 'LLM 응답에서 안전하지 않은 패턴이 감지되었습니다.',
+          },
+          rateLimit: rateLimitInfo,
+        },
+        { status: 400 }
+      );
+      return addRateLimitHeaders(response, info);
+    }
 
     // Parse and validate response
     const validatedResponse = parseAndValidateLLMResponse(llmResponse);

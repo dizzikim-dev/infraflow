@@ -96,86 +96,20 @@ export const colors = {
   },
 };
 
-// 노드 타입 → 카테고리 매핑
-export const nodeCategories: Record<string, keyof typeof colors.categories> = {
-  // Security
-  'firewall': 'security',
-  'waf': 'security',
-  'ids-ips': 'security',
-  'vpn-gateway': 'security',
-  'nac': 'security',
-  'dlp': 'security',
-  'sase-gateway': 'security',
-  'ztna-broker': 'security',
-  'casb': 'security',
-  'siem': 'security',
-  'soar': 'security',
+// 노드 타입 → 카테고리 매핑 (infrastructureDB에서 동적 파생 — SSoT)
+import { infrastructureDB, getCategoryForType } from '@/lib/data/infrastructureDB';
+import type { InfraNodeType } from '@/types';
 
-  // Network
-  'router': 'network',
-  'switch-l2': 'network',
-  'switch-l3': 'network',
-  'load-balancer': 'network',
-  'sd-wan': 'network',
-  'dns': 'network',
-  'cdn': 'network',
+export const nodeCategories: Record<string, keyof typeof colors.categories> = Object.fromEntries(
+  Object.keys(infrastructureDB).map((type) => [
+    type,
+    getCategoryForType(type as InfraNodeType) as keyof typeof colors.categories,
+  ])
+) as Record<string, keyof typeof colors.categories>;
 
-  // Compute
-  'web-server': 'compute',
-  'app-server': 'compute',
-  'db-server': 'compute',
-  'container': 'compute',
-  'vm': 'compute',
-  'kubernetes': 'compute',
-
-  // Cloud
-  'aws-vpc': 'cloud',
-  'azure-vnet': 'cloud',
-  'gcp-network': 'cloud',
-  'private-cloud': 'cloud',
-
-  // Storage
-  'san-nas': 'storage',
-  'object-storage': 'storage',
-  'backup': 'storage',
-  'cache': 'storage',
-  'storage': 'storage',
-
-  // Auth
-  'ldap-ad': 'auth',
-  'sso': 'auth',
-  'mfa': 'auth',
-  'iam': 'auth',
-
-  // Telecom
-  'central-office': 'telecom',
-  'base-station': 'telecom',
-  'olt': 'telecom',
-  'customer-premise': 'telecom',
-  'idc': 'telecom',
-
-  // WAN
-  'pe-router': 'wan',
-  'p-router': 'wan',
-  'mpls-network': 'wan',
-  'dedicated-line': 'wan',
-  'metro-ethernet': 'wan',
-  'corporate-internet': 'wan',
-  'vpn-service': 'wan',
-  'sd-wan-service': 'wan',
-  'private-5g': 'wan',
-  'core-network': 'wan',
-  'upf': 'wan',
-  'ring-network': 'wan',
-
-  // External
-  'user': 'external',
-  'internet': 'external',
-};
-
-// 카테고리 가져오기
+// 카테고리 가져오기 (SSoT: infrastructureDB에 위임)
 export function getCategoryForNode(nodeType: string): keyof typeof colors.categories {
-  return nodeCategories[nodeType] || 'external';
+  return (getCategoryForType(nodeType as InfraNodeType) as keyof typeof colors.categories) || 'external';
 }
 
 // 카테고리별 색상 가져오기
