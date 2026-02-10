@@ -13,7 +13,7 @@ import {
   EdgeContextMenu,
   ComponentPicker,
 } from '@/components/contextMenu';
-import { useInfraState, useModalManager, useContextMenu, useComparisonMode, type ComponentData } from '@/hooks';
+import { useInfraState, useModalManager, useContextMenu, useComparisonMode, useHistory, type ComponentData } from '@/hooks';
 import { useDiagramPersistence } from '@/hooks/useDiagramPersistence';
 import { InfraNodeType, InfraSpec } from '@/types';
 import { isInfraNodeData } from '@/types/guards';
@@ -133,6 +133,9 @@ export function InfraEditor({
     handleNodeClick,
     loadFromSpec,
     updateNodeData,
+    // State setters
+    setNodes,
+    setEdges,
     // CRUD operations
     addNode,
     deleteNode,
@@ -146,6 +149,9 @@ export function InfraEditor({
     // Feedback
     feedback,
   } = useInfraState();
+
+  // Undo/Redo history
+  const { undo, redo, canUndo, canRedo } = useHistory(nodes, edges, setNodes, setEdges);
 
   // Load initial spec once on mount
   const loadedRef = useRef(false);
@@ -357,6 +363,11 @@ export function InfraEditor({
         onCloudCatalogClick={() => toggleModal('cloudCatalog')}
         onComplianceClick={() => toggleModal('compliance')}
         onBenchmarkClick={() => toggleModal('benchmark')}
+        // Undo/Redo
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo()}
+        canRedo={canRedo()}
         // Save/title props
         isSaving={diagramId ? persistence.isSaving : undefined}
         lastSavedAt={diagramId ? persistence.lastSavedAt : undefined}

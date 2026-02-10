@@ -44,12 +44,6 @@ export {
   type UseHistoryReturn,
 } from './useHistory';
 export {
-  useErrorHandler,
-  type ErrorState,
-  type ErrorHandlerOptions,
-  type UseErrorHandlerReturn,
-} from './useErrorHandler';
-export {
   useKeyboardNavigation,
   formatShortcutKey,
   defaultCanvasShortcuts,

@@ -2,62 +2,25 @@
 
 import { memo, useState, useCallback, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import {
+  Play,
+  LayoutGrid,
+  Download,
+  Sparkles,
+  Columns2,
+  Save,
+  Check,
+  AlertCircle,
+  CheckCircle2,
+  ShieldAlert,
+  Cloud,
+  ClipboardCheck,
+  BarChart3,
+  Undo2,
+  Redo2,
+} from 'lucide-react';
 import type { ParseResultInfo } from '@/hooks';
 import { UserMenu } from '@/components/auth/UserMenu';
-
-// SVG Icons
-const PlayIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <polygon points="5 3 19 12 5 21 5 3" />
-  </svg>
-);
-
-const LayoutIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="3" y="3" width="7" height="7" />
-    <rect x="14" y="3" width="7" height="7" />
-    <rect x="14" y="14" width="7" height="7" />
-    <rect x="3" y="14" width="7" height="7" />
-  </svg>
-);
-
-const DownloadIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-    <polyline points="7 10 12 15 17 10" />
-    <line x1="12" y1="15" x2="12" y2="3" />
-  </svg>
-);
-
-const SparklesIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z" />
-    <path d="M5 19l1 3 1-3 3-1-3-1-1-3-1 3-3 1 3 1z" />
-    <path d="M19 13l1 2 1-2 2-1-2-1-1-2-1 2-2 1 2 1z" />
-  </svg>
-);
-
-const CompareIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="2" y="3" width="8" height="18" rx="1" />
-    <rect x="14" y="3" width="8" height="18" rx="1" />
-    <path d="M10 12h4" />
-  </svg>
-);
-
-const SaveIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-    <polyline points="17 21 17 13 7 13 7 21" />
-    <polyline points="7 3 7 8 15 8" />
-  </svg>
-);
-
-const CheckIcon = () => (
-  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-);
 
 function formatTimeSince(date: Date): string {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -67,51 +30,6 @@ function formatTimeSince(date: Date): string {
   if (minutes < 60) return `${minutes}분 전`;
   return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
 }
-
-const HealthCheckIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-    <path d="M12 8v4" />
-    <path d="M12 16h.01" />
-  </svg>
-);
-
-const InsightsIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-9-9 9 9 0 0 1 9-9 9 9 0 0 1 9 9z" />
-    <path d="M9 12l2 2 4-4" />
-  </svg>
-);
-
-const ShieldAlertIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    <path d="M12 8v4" />
-    <path d="M12 16h.01" />
-  </svg>
-);
-
-const CloudIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
-  </svg>
-);
-
-const ClipboardCheckIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-    <path d="M9 14l2 2 4-4" />
-  </svg>
-);
-
-const BarChartIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <line x1="18" y1="20" x2="18" y2="10" />
-    <line x1="12" y1="20" x2="12" y2="4" />
-    <line x1="6" y1="20" x2="6" y2="14" />
-  </svg>
-);
 
 export interface HeaderProps {
   hasNodes: boolean;
@@ -126,6 +44,11 @@ export interface HeaderProps {
   onCloudCatalogClick?: () => void;
   onComplianceClick?: () => void;
   onBenchmarkClick?: () => void;
+  // Undo/Redo
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
   // Save/title props
   isSaving?: boolean;
   lastSavedAt?: Date | null;
@@ -147,6 +70,10 @@ export const Header = memo(function Header({
   onCloudCatalogClick,
   onComplianceClick,
   onBenchmarkClick,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
   isSaving,
   lastSavedAt,
   title,
@@ -207,7 +134,7 @@ export const Header = memo(function Header({
               flex items-center justify-center
               shadow-lg shadow-blue-500/20
             ">
-              <SparklesIcon />
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
               <h1 className="text-base font-bold text-white tracking-tight">InfraFlow</h1>
@@ -252,7 +179,7 @@ export const Header = memo(function Header({
                   </span>
                 ) : lastSavedAt ? (
                   <span className="text-[11px] text-zinc-500 flex items-center gap-1">
-                    <CheckIcon />
+                    <Check className="w-3 h-3" />
                     저장됨 · {savedTimeText}
                   </span>
                 ) : null}
@@ -287,6 +214,40 @@ export const Header = memo(function Header({
 
           {/* Actions */}
           <div className="flex items-center gap-1.5">
+            {/* Undo/Redo */}
+            {onUndo && (
+              <div className="flex items-center gap-0.5 mr-1">
+                <button
+                  onClick={onUndo}
+                  disabled={!canUndo}
+                  title="실행 취소 (Ctrl+Z)"
+                  className={`
+                    p-2 rounded-lg transition-all duration-200
+                    ${canUndo
+                      ? 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                      : 'text-zinc-700 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  <Undo2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={onRedo}
+                  disabled={!canRedo}
+                  title="다시 실행 (Ctrl+Shift+Z)"
+                  className={`
+                    p-2 rounded-lg transition-all duration-200
+                    ${canRedo
+                      ? 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                      : 'text-zinc-700 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  <Redo2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
             {/* Animation Button */}
             <button
               onClick={onAnimateClick}
@@ -300,7 +261,7 @@ export const Header = memo(function Header({
                 }
               `}
             >
-              <PlayIcon />
+              <Play className="w-4 h-4" />
               <span className="hidden sm:inline">Animate</span>
             </button>
 
@@ -318,7 +279,7 @@ export const Header = memo(function Header({
                   }
                 `}
               >
-                <CompareIcon />
+                <Columns2 className="w-4 h-4" />
                 <span className="hidden sm:inline">Compare</span>
               </button>
             )}
@@ -337,7 +298,7 @@ export const Header = memo(function Header({
                   }
                 `}
               >
-                <HealthCheckIcon />
+                <AlertCircle className="w-4 h-4" />
                 <span className="hidden sm:inline">Diagnose</span>
               </button>
             )}
@@ -356,7 +317,7 @@ export const Header = memo(function Header({
                   }
                 `}
               >
-                <InsightsIcon />
+                <CheckCircle2 className="w-4 h-4" />
                 <span className="hidden sm:inline">Insights</span>
               </button>
             )}
@@ -375,7 +336,7 @@ export const Header = memo(function Header({
                   }
                 `}
               >
-                <ShieldAlertIcon />
+                <ShieldAlert className="w-4 h-4" />
                 <span className="hidden lg:inline">CVE</span>
               </button>
             )}
@@ -394,7 +355,7 @@ export const Header = memo(function Header({
                   }
                 `}
               >
-                <CloudIcon />
+                <Cloud className="w-4 h-4" />
                 <span className="hidden lg:inline">Cloud</span>
               </button>
             )}
@@ -413,7 +374,7 @@ export const Header = memo(function Header({
                   }
                 `}
               >
-                <ClipboardCheckIcon />
+                <ClipboardCheck className="w-4 h-4" />
                 <span className="hidden lg:inline">Comply</span>
               </button>
             )}
@@ -432,7 +393,7 @@ export const Header = memo(function Header({
                   }
                 `}
               >
-                <BarChartIcon />
+                <BarChart3 className="w-4 h-4" />
                 <span className="hidden lg:inline">Bench</span>
               </button>
             )}
@@ -448,7 +409,7 @@ export const Header = memo(function Header({
                 transition-all duration-200
               "
             >
-              <LayoutIcon />
+              <LayoutGrid className="w-4 h-4" />
               <span className="hidden sm:inline">Templates</span>
             </button>
 
@@ -465,7 +426,7 @@ export const Header = memo(function Header({
                 }
               `}
             >
-              <DownloadIcon />
+              <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Export</span>
             </button>
 
@@ -483,7 +444,7 @@ export const Header = memo(function Header({
                   }
                 `}
               >
-                <SaveIcon />
+                <Save className="w-4 h-4" />
                 <span className="hidden sm:inline">Save</span>
               </button>
             )}

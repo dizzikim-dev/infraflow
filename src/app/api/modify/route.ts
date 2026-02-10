@@ -32,6 +32,7 @@ import {
 } from '@/lib/knowledge';
 import { assessChangeRisk, type ChangeRiskAssessment } from '@/lib/parser/changeRiskAssessor';
 import { sanitizeUserInput, validateOutputSafety } from '@/lib/security/llmSecurityControls';
+import { recordLLMCall } from '@/lib/utils/llmMetrics';
 
 const log = createLogger('Modify API');
 
@@ -243,6 +244,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<ModifyRes
     return addRateLimitHeaders(response, info);
   }
 
+  let llmCallStartTime = 0;
+  let llmCallProvider: 'claude' | 'openai' = 'claude';
+  let llmCallModel = '';
+
   try {
     // Parse request body
     const body: ModifyRequestBody = await request.json();
@@ -365,19 +370,34 @@ export async function POST(request: NextRequest): Promise<NextResponse<ModifyRes
     }
 
     // Call LLM (auto-detect provider)
+    llmCallStartTime = Date.now();
+    llmCallProvider = llmProvider.provider === 'openai' ? 'openai' : 'claude';
+    llmCallModel = modelName;
     const llmResponse = await callLLM(
       systemPrompt,
       userMessage,
       llmProvider.provider,
       llmProvider.apiKey
     );
+    const llmLatencyMs = Date.now() - llmCallStartTime;
 
-    log.info('LLM Response received');
+    log.info('LLM Response received', { latencyMs: llmLatencyMs });
 
     // Validate output safety (OWASP LLM02: Insecure Output Handling prevention)
     const outputCheck = validateOutputSafety(llmResponse);
     if (!outputCheck.safe) {
       log.warn('LLM output safety check failed', { issues: outputCheck.issues });
+      recordLLMCall({
+        timestamp: new Date().toISOString(),
+        provider: llmCallProvider,
+        model: llmCallModel,
+        promptTokens: 0,
+        completionTokens: 0,
+        latencyMs: llmLatencyMs,
+        success: false,
+        errorType: 'unsafe_output',
+        validationPassed: false,
+      });
       const response = NextResponse.json<ModifyResponse>(
         {
           success: false,
@@ -402,6 +422,18 @@ export async function POST(request: NextRequest): Promise<NextResponse<ModifyRes
     const result = applyOperations(currentSpec, operations);
 
     if (!result.success) {
+      recordLLMCall({
+        timestamp: new Date().toISOString(),
+        provider: llmCallProvider,
+        model: llmCallModel,
+        promptTokens: 0,
+        completionTokens: 0,
+        latencyMs: llmLatencyMs,
+        success: false,
+        errorType: 'operation_failed',
+        validationPassed: true,
+        operationCount: operations.length,
+      });
       const response = NextResponse.json<ModifyResponse>(
         {
           success: false,
@@ -422,6 +454,19 @@ export async function POST(request: NextRequest): Promise<NextResponse<ModifyRes
     const riskAssessment = assessChangeRisk(currentSpec, result.newSpec);
     log.info('Risk assessment', { level: riskAssessment.level, factors: riskAssessment.factors.length });
 
+    // Record successful LLM call metrics
+    recordLLMCall({
+      timestamp: new Date().toISOString(),
+      provider: llmProvider.provider === 'openai' ? 'openai' : 'claude',
+      model: modelName,
+      promptTokens: 0,
+      completionTokens: 0,
+      latencyMs: llmLatencyMs,
+      success: true,
+      validationPassed: true,
+      operationCount: operations.length,
+    });
+
     // Success
     const response = NextResponse.json<ModifyResponse>({
       success: true,
@@ -434,6 +479,25 @@ export async function POST(request: NextRequest): Promise<NextResponse<ModifyRes
     return addRateLimitHeaders(response, info);
   } catch (error) {
     log.error('Request failed', error instanceof Error ? error : new Error(String(error)));
+
+    // Record failed LLM call metrics (only if LLM was actually called)
+    if (llmCallStartTime > 0) {
+      const errorType = error instanceof LLMModifyError ? error.code.toLowerCase()
+        : error instanceof LLMValidationError ? 'validation_failed'
+        : error instanceof Error && error.name === 'AbortError' ? 'timeout'
+        : 'unknown';
+      recordLLMCall({
+        timestamp: new Date().toISOString(),
+        provider: llmCallProvider,
+        model: llmCallModel,
+        promptTokens: 0,
+        completionTokens: 0,
+        latencyMs: Date.now() - llmCallStartTime,
+        success: false,
+        errorType,
+        validationPassed: false,
+      });
+    }
 
     // Handle known errors
     if (error instanceof LLMModifyError) {

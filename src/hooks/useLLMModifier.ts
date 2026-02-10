@@ -8,6 +8,7 @@ import { InfraSpec, InfraNodeData } from '@/types';
 import type { Operation } from '@/lib/parser/diffApplier';
 import type { ModifyResponse } from '@/app/api/modify/route';
 import { createLogger } from '@/lib/utils/logger';
+import { withRetry, isRetryableError } from '@/lib/utils/retry';
 import type { ParseResultInfo } from './usePromptParser';
 
 const log = createLogger('useLLMModifier');
@@ -118,17 +119,39 @@ export function useLLMModifier(config: UseLLMModifierConfig): UseLLMModifierRetu
       onLoadingChange(true);
 
       try {
-        const response = await fetch('/api/modify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            prompt: trimmedPrompt,
-            currentSpec: currentSpec || flowToSpec(currentNodes, currentEdges),
-            nodes: currentNodes,
-            edges: currentEdges,
-          }),
-          signal: abortController.signal,
-        });
+        const retryResult = await withRetry(
+          async () => {
+            const res = await fetch('/api/modify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                prompt: trimmedPrompt,
+                currentSpec: currentSpec || flowToSpec(currentNodes, currentEdges),
+                nodes: currentNodes,
+                edges: currentEdges,
+              }),
+              signal: abortController.signal,
+            });
+            if (!res.ok && res.status >= 500) {
+              throw new Error(`Server error: ${res.status}`);
+            }
+            return res;
+          },
+          {
+            maxAttempts: 3,
+            initialDelayMs: 1000,
+            maxDelayMs: 5000,
+            isRetryable: (error) => {
+              if (error instanceof Error && error.name === 'AbortError') return false;
+              return isRetryableError(error);
+            },
+            onRetry: (attempt, error, delayMs) => {
+              log.warn(`LLM retry attempt ${attempt}, waiting ${delayMs}ms`, {
+                error: error instanceof Error ? error.message : String(error),
+              });
+            },
+          }
+        );
 
         // Race condition check
         if (currentRequestId !== requestIdRef.current) {
@@ -136,6 +159,11 @@ export function useLLMModifier(config: UseLLMModifierConfig): UseLLMModifierRetu
           return;
         }
 
+        if (!retryResult.success || !retryResult.data) {
+          throw retryResult.error || new Error('LLM 요청이 모든 재시도 후 실패했습니다.');
+        }
+
+        const response = retryResult.data;
         const result: ModifyResponse = await response.json();
 
         if (result.success && result.spec) {

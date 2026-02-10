@@ -14,6 +14,21 @@ import {
   ConnectionSpec,
   EdgeFlowType,
 } from './infra';
+import { infrastructureDB } from '@/lib/data/infrastructureDB';
+
+// Derive valid node types from infrastructureDB (SSoT)
+const validNodeTypes = new Set<string>(Object.keys(infrastructureDB));
+
+// Valid categories including extended types used in InfraNodeData
+const validCategories = new Set<string>([
+  'security', 'network', 'compute', 'cloud', 'storage', 'auth', 'telecom', 'wan',
+]);
+
+// Valid flow types matching EdgeFlowType union
+const validFlowTypes = new Set<string>([
+  'request', 'response', 'sync', 'blocked', 'encrypted',
+  'wan-link', 'wireless', 'tunnel',
+]);
 
 /**
  * InfraNodeData 타입 가드
@@ -45,44 +60,21 @@ export function isValidTier(tier: unknown): tier is TierType {
  * NodeCategory 타입 가드
  */
 export function isValidCategory(category: unknown): category is NodeCategory {
-  return (
-    category === 'security' ||
-    category === 'network' ||
-    category === 'compute' ||
-    category === 'cloud' ||
-    category === 'storage' ||
-    category === 'auth'
-  );
+  return typeof category === 'string' && validCategories.has(category);
 }
 
 /**
- * InfraNodeType 타입 가드 (일부)
+ * InfraNodeType 타입 가드 — derived from infrastructureDB keys (SSoT)
  */
-const validNodeTypes: InfraNodeType[] = [
-  'firewall', 'waf', 'ids-ips', 'vpn-gateway', 'nac', 'dlp',
-  'router', 'switch-l2', 'switch-l3', 'load-balancer', 'sd-wan', 'dns', 'cdn',
-  'web-server', 'app-server', 'db-server', 'container', 'vm', 'kubernetes',
-  'aws-vpc', 'azure-vnet', 'gcp-network', 'private-cloud',
-  'san-nas', 'object-storage', 'backup', 'cache', 'storage',
-  'ldap-ad', 'sso', 'mfa', 'iam',
-  'user', 'internet', 'zone',
-];
-
 export function isValidNodeType(type: unknown): type is InfraNodeType {
-  return typeof type === 'string' && validNodeTypes.includes(type as InfraNodeType);
+  return typeof type === 'string' && validNodeTypes.has(type);
 }
 
 /**
  * EdgeFlowType 타입 가드
  */
 export function isValidFlowType(flowType: unknown): flowType is EdgeFlowType {
-  return (
-    flowType === 'request' ||
-    flowType === 'response' ||
-    flowType === 'sync' ||
-    flowType === 'blocked' ||
-    flowType === 'encrypted'
-  );
+  return typeof flowType === 'string' && validFlowTypes.has(flowType);
 }
 
 /**

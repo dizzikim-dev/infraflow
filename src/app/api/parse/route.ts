@@ -36,6 +36,7 @@ import {
 import { ConversationContext, SmartParseResult } from '@/lib/parser/UnifiedParser';
 import { ParseRequestSchema } from '@/lib/validations/api';
 import { sanitizeUserInput, validateOutputSafety } from '@/lib/security/llmSecurityControls';
+import { recordLLMCall } from '@/lib/utils/llmMetrics';
 
 /**
  * Request body for the smart parse endpoint.
@@ -341,14 +342,28 @@ export async function POST(
     }
 
     // Analyze intent with LLM
+    const parseStartTime = Date.now();
     const { intent, rawResponse, error } = await analyzeFunction(
       prompt,
       conversationContext.currentSpec,
       apiKey,
       model
     );
+    const parseLatencyMs = Date.now() - parseStartTime;
+    const parseModel = model || (provider === 'claude' ? 'claude-3-haiku-20240307' : 'gpt-4o-mini');
 
     if (!intent) {
+      recordLLMCall({
+        timestamp: new Date().toISOString(),
+        provider: provider === 'openai' ? 'openai' : 'claude',
+        model: parseModel,
+        promptTokens: 0,
+        completionTokens: 0,
+        latencyMs: parseLatencyMs,
+        success: false,
+        errorType: error?.includes('API Error') ? 'api_error' : 'parse_failed',
+        validationPassed: false,
+      });
       return NextResponse.json({
         success: false,
         error: error || 'Failed to analyze intent',
@@ -360,6 +375,17 @@ export async function POST(
     if (rawResponse) {
       const outputCheck = validateOutputSafety(rawResponse);
       if (!outputCheck.safe) {
+        recordLLMCall({
+          timestamp: new Date().toISOString(),
+          provider: provider === 'openai' ? 'openai' : 'claude',
+          model: parseModel,
+          promptTokens: 0,
+          completionTokens: 0,
+          latencyMs: parseLatencyMs,
+          success: false,
+          errorType: 'unsafe_output',
+          validationPassed: false,
+        });
         return NextResponse.json(
           {
             success: false,
@@ -372,6 +398,19 @@ export async function POST(
 
     // Apply intent to generate result
     const result = applyIntentToSpec(intent, conversationContext);
+
+    // Record successful LLM call
+    recordLLMCall({
+      timestamp: new Date().toISOString(),
+      provider: provider === 'openai' ? 'openai' : 'claude',
+      model: parseModel,
+      promptTokens: 0,
+      completionTokens: 0,
+      latencyMs: parseLatencyMs,
+      success: true,
+      validationPassed: true,
+      operationCount: result.spec?.nodes.length,
+    });
 
     // Validate the spec if it exists
     if (result.spec && !isInfraSpec(result.spec)) {

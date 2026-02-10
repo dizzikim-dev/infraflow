@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, KeyboardEvent, RefObject } from 'react';
+import { useState, useMemo, KeyboardEvent, RefObject } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Operation } from '@/lib/parser/diffApplier';
+import { recommendTemplates } from '@/lib/templates/templateRecommender';
 
 interface PromptPanelProps {
   onSubmit: (prompt: string) => void;
@@ -66,6 +67,12 @@ export function PromptPanel({
   };
 
   const examples = effectiveMode === 'modify' ? modifyExamples : createExamples;
+
+  // Template recommendations based on current input
+  const recommendations = useMemo(() => {
+    if (effectiveMode !== 'create' || prompt.trim().length < 2) return [];
+    return recommendTemplates(prompt.trim(), 2);
+  }, [prompt, effectiveMode]);
 
   return (
     <motion.div
@@ -153,6 +160,34 @@ export function PromptPanel({
             </button>
           </div>
         )}
+
+        {/* Template Recommendations */}
+        <AnimatePresence>
+          {recommendations.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-3"
+            >
+              <div className="text-[10px] text-zinc-500 mb-1.5">추천 템플릿</div>
+              <div className="flex flex-wrap gap-2">
+                {recommendations.map((rec) => (
+                  <button
+                    key={rec.template.id}
+                    onClick={() => onSubmit(rec.template.description)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 rounded-full transition-colors"
+                  >
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {rec.template.name}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Example Prompts */}
         <div className="flex flex-wrap gap-2 mb-3">
