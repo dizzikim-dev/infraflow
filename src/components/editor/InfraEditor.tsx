@@ -59,6 +59,41 @@ const ComparisonView = dynamic(
   { ssr: false }
 );
 
+const HealthCheckPanel = dynamic(
+  () => import('@/components/panels/HealthCheckPanel').then(mod => ({ default: mod.HealthCheckPanel })),
+  { ssr: false }
+);
+
+const FeedbackRating = dynamic(
+  () => import('@/components/feedback/FeedbackRating').then(mod => ({ default: mod.FeedbackRating })),
+  { ssr: false }
+);
+
+const InsightsPanel = dynamic(
+  () => import('@/components/panels/InsightsPanel').then(mod => ({ default: mod.InsightsPanel })),
+  { ssr: false }
+);
+
+const VulnerabilityPanel = dynamic(
+  () => import('@/components/panels/VulnerabilityPanel').then(mod => ({ default: mod.VulnerabilityPanel })),
+  { ssr: false }
+);
+
+const CloudCatalogPanel = dynamic(
+  () => import('@/components/panels/CloudCatalogPanel').then(mod => ({ default: mod.CloudCatalogPanel })),
+  { ssr: false }
+);
+
+const IndustryCompliancePanel = dynamic(
+  () => import('@/components/panels/IndustryCompliancePanel').then(mod => ({ default: mod.IndustryCompliancePanel })),
+  { ssr: false }
+);
+
+const BenchmarkPanel = dynamic(
+  () => import('@/components/panels/BenchmarkPanel').then(mod => ({ default: mod.BenchmarkPanel })),
+  { ssr: false }
+);
+
 export interface InfraEditorProps {
   diagramId?: string | null;
   initialSpec?: InfraSpec | null;
@@ -108,6 +143,8 @@ export function InfraEditor({
     // LLM Modification
     handleLLMModify,
     llmAvailable,
+    // Feedback
+    feedback,
   } = useInfraState();
 
   // Load initial spec once on mount
@@ -177,6 +214,12 @@ export function InfraEditor({
     showSaveDialog,
     showScenarioSelector,
     showAnimationControls,
+    showHealthCheck,
+    showInsights,
+    showVulnerability,
+    showCloudCatalog,
+    showCompliance,
+    showBenchmark,
     openModal,
     closeModal,
     toggleModal,
@@ -308,6 +351,12 @@ export function InfraEditor({
         onTemplatesClick={() => openModal('templateGallery')}
         onExportClick={() => openModal('exportPanel')}
         onCompareClick={handleEnterComparisonMode}
+        onHealthCheckClick={() => toggleModal('healthCheck')}
+        onInsightsClick={() => toggleModal('insights')}
+        onVulnerabilityClick={() => toggleModal('vulnerability')}
+        onCloudCatalogClick={() => toggleModal('cloudCatalog')}
+        onComplianceClick={() => toggleModal('compliance')}
+        onBenchmarkClick={() => toggleModal('benchmark')}
         // Save/title props
         isSaving={diagramId ? persistence.isSaving : undefined}
         lastSavedAt={diagramId ? persistence.lastSavedAt : undefined}
@@ -386,6 +435,65 @@ export function InfraEditor({
         )}
       </AnimatePresence>
 
+      {/* Health Check Panel */}
+      <AnimatePresence>
+        {showHealthCheck && (
+          <HealthCheckPanel
+            spec={currentSpec}
+            onClose={() => closeModal('healthCheck')}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Insights Panel */}
+      <AnimatePresence>
+        {showInsights && (
+          <InsightsPanel
+            onClose={() => closeModal('insights')}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Vulnerability Panel */}
+      <AnimatePresence>
+        {showVulnerability && (
+          <VulnerabilityPanel
+            spec={currentSpec}
+            onClose={() => closeModal('vulnerability')}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Cloud Catalog Panel */}
+      <AnimatePresence>
+        {showCloudCatalog && (
+          <CloudCatalogPanel
+            spec={currentSpec}
+            onClose={() => closeModal('cloudCatalog')}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Industry Compliance Panel */}
+      <AnimatePresence>
+        {showCompliance && (
+          <IndustryCompliancePanel
+            spec={currentSpec}
+            onClose={() => closeModal('compliance')}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Benchmark Panel */}
+      <AnimatePresence>
+        {showBenchmark && (
+          <BenchmarkPanel
+            spec={currentSpec}
+            onClose={() => closeModal('benchmark')}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Template Gallery Modal */}
       <AnimatePresence>
         {showTemplateGallery && (
@@ -424,6 +532,16 @@ export function InfraEditor({
           />
         )}
       </AnimatePresence>
+
+      {/* Feedback Rating */}
+      {feedback.isAvailable && (
+        <FeedbackRating
+          show={feedback.hasPendingFeedback}
+          onRate={feedback.submitRating}
+          onDismiss={() => {}}
+          submitted={feedback.ratingSubmitted}
+        />
+      )}
 
       {/* Prompt Panel */}
       <PromptPanel

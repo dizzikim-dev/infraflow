@@ -7,7 +7,13 @@ export type ModalType =
   | 'exportPanel'
   | 'saveDialog'
   | 'scenarioSelector'
-  | 'animationControls';
+  | 'animationControls'
+  | 'healthCheck'
+  | 'insights'
+  | 'vulnerability'
+  | 'cloudCatalog'
+  | 'compliance'
+  | 'benchmark';
 
 interface ModalState {
   templateGallery: boolean;
@@ -15,6 +21,12 @@ interface ModalState {
   saveDialog: boolean;
   scenarioSelector: boolean;
   animationControls: boolean;
+  healthCheck: boolean;
+  insights: boolean;
+  vulnerability: boolean;
+  cloudCatalog: boolean;
+  compliance: boolean;
+  benchmark: boolean;
 }
 
 /**
@@ -28,6 +40,12 @@ export function useModalManager() {
     saveDialog: false,
     scenarioSelector: false,
     animationControls: false,
+    healthCheck: false,
+    insights: false,
+    vulnerability: false,
+    cloudCatalog: false,
+    compliance: false,
+    benchmark: false,
   });
 
   /**
@@ -61,6 +79,12 @@ export function useModalManager() {
       saveDialog: false,
       scenarioSelector: false,
       animationControls: false,
+      healthCheck: false,
+      insights: false,
+      vulnerability: false,
+      cloudCatalog: false,
+      compliance: false,
+      benchmark: false,
     });
   }, []);
 
@@ -77,5 +101,11 @@ export function useModalManager() {
     showSaveDialog: modals.saveDialog,
     showScenarioSelector: modals.scenarioSelector,
     showAnimationControls: modals.animationControls,
+    showHealthCheck: modals.healthCheck,
+    showInsights: modals.insights,
+    showVulnerability: modals.vulnerability,
+    showCloudCatalog: modals.cloudCatalog,
+    showCompliance: modals.compliance,
+    showBenchmark: modals.benchmark,
   };
 }

@@ -10,7 +10,7 @@ import { ARCHITECTURE_PATTERNS } from '@/lib/knowledge/patterns';
 import { ANTI_PATTERNS } from '@/lib/knowledge/antipatterns';
 import { FAILURE_SCENARIOS } from '@/lib/knowledge/failures';
 import { PERFORMANCE_PROFILES } from '@/lib/knowledge/performance';
-import type { InfraSpec, InfraNodeData } from '@/types';
+import type { InfraSpec, InfraNodeData, InfraNodeType } from '@/types';
 
 // ---------------------------------------------------------------------------
 // Integration helper: simulate what the pipeline does for a given prompt
@@ -296,8 +296,8 @@ describe('Telecom Pipeline Integration', () => {
   // ---------------------------------------------------------------------------
 
   describe('SSoT integration for all telecom/wan types', () => {
-    const telecomTypes = ['central-office', 'base-station', 'olt', 'customer-premise', 'idc'];
-    const wanTypes = [
+    const telecomTypes: InfraNodeType[] = ['central-office', 'base-station', 'olt', 'customer-premise', 'idc'];
+    const wanTypes: InfraNodeType[] = [
       'pe-router', 'p-router', 'mpls-network', 'dedicated-line', 'metro-ethernet',
       'corporate-internet', 'vpn-service', 'sd-wan-service', 'private-5g',
       'core-network', 'upf', 'ring-network',
@@ -394,13 +394,14 @@ describe('Telecom Pipeline Integration', () => {
     it('should enrich context with telecom components', () => {
       const diagramContext = {
         nodes: [
-          { id: 'pe-1', type: 'pe-router', label: 'PE Router' },
-          { id: 'p-1', type: 'p-router', label: 'P Router' },
+          { id: 'pe-1', type: 'pe-router', label: 'PE Router', category: 'wan', zone: 'internal', connectedTo: ['p-1'], connectedFrom: [] },
+          { id: 'p-1', type: 'p-router', label: 'P Router', category: 'wan', zone: 'internal', connectedTo: [], connectedFrom: ['pe-1'] },
         ],
         connections: [{ source: 'pe-1', target: 'p-1' }],
+        summary: 'PE-P router telecom topology',
       };
 
-      const enriched = enrichContext(diagramContext, COMPONENT_RELATIONSHIPS);
+      const enriched = enrichContext(diagramContext, [...COMPONENT_RELATIONSHIPS]);
       // Should include telecom-related relationships (pe-router→p-router is REL-TEL-002)
       expect(enriched.relationships.length).toBeGreaterThanOrEqual(1);
     });

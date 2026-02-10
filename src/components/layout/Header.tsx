@@ -68,6 +68,51 @@ function formatTimeSince(date: Date): string {
   return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
 }
 
+const HealthCheckIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+    <path d="M12 8v4" />
+    <path d="M12 16h.01" />
+  </svg>
+);
+
+const InsightsIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-9-9 9 9 0 0 1 9-9 9 9 0 0 1 9 9z" />
+    <path d="M9 12l2 2 4-4" />
+  </svg>
+);
+
+const ShieldAlertIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <path d="M12 8v4" />
+    <path d="M12 16h.01" />
+  </svg>
+);
+
+const CloudIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
+  </svg>
+);
+
+const ClipboardCheckIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+    <path d="M9 14l2 2 4-4" />
+  </svg>
+);
+
+const BarChartIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+);
+
 export interface HeaderProps {
   hasNodes: boolean;
   lastResult: ParseResultInfo | null;
@@ -75,6 +120,12 @@ export interface HeaderProps {
   onTemplatesClick: () => void;
   onExportClick: () => void;
   onCompareClick?: () => void;
+  onHealthCheckClick?: () => void;
+  onInsightsClick?: () => void;
+  onVulnerabilityClick?: () => void;
+  onCloudCatalogClick?: () => void;
+  onComplianceClick?: () => void;
+  onBenchmarkClick?: () => void;
   // Save/title props
   isSaving?: boolean;
   lastSavedAt?: Date | null;
@@ -90,6 +141,12 @@ export const Header = memo(function Header({
   onTemplatesClick,
   onExportClick,
   onCompareClick,
+  onHealthCheckClick,
+  onInsightsClick,
+  onVulnerabilityClick,
+  onCloudCatalogClick,
+  onComplianceClick,
+  onBenchmarkClick,
   isSaving,
   lastSavedAt,
   title,
@@ -263,6 +320,120 @@ export const Header = memo(function Header({
               >
                 <CompareIcon />
                 <span className="hidden sm:inline">Compare</span>
+              </button>
+            )}
+
+            {/* Health Check Button */}
+            {onHealthCheckClick && (
+              <button
+                onClick={onHealthCheckClick}
+                disabled={!hasNodes}
+                className={`
+                  flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium
+                  transition-all duration-200
+                  ${hasNodes
+                    ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20'
+                    : 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed border border-transparent'
+                  }
+                `}
+              >
+                <HealthCheckIcon />
+                <span className="hidden sm:inline">Diagnose</span>
+              </button>
+            )}
+
+            {/* Insights Button */}
+            {onInsightsClick && (
+              <button
+                onClick={onInsightsClick}
+                disabled={!hasNodes}
+                className={`
+                  flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium
+                  transition-all duration-200
+                  ${hasNodes
+                    ? 'bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border border-cyan-500/20'
+                    : 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed border border-transparent'
+                  }
+                `}
+              >
+                <InsightsIcon />
+                <span className="hidden sm:inline">Insights</span>
+              </button>
+            )}
+
+            {/* Vulnerability Button */}
+            {onVulnerabilityClick && (
+              <button
+                onClick={onVulnerabilityClick}
+                disabled={!hasNodes}
+                className={`
+                  flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium
+                  transition-all duration-200
+                  ${hasNodes
+                    ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
+                    : 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed border border-transparent'
+                  }
+                `}
+              >
+                <ShieldAlertIcon />
+                <span className="hidden lg:inline">CVE</span>
+              </button>
+            )}
+
+            {/* Cloud Catalog Button */}
+            {onCloudCatalogClick && (
+              <button
+                onClick={onCloudCatalogClick}
+                disabled={!hasNodes}
+                className={`
+                  flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium
+                  transition-all duration-200
+                  ${hasNodes
+                    ? 'bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 border border-sky-500/20'
+                    : 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed border border-transparent'
+                  }
+                `}
+              >
+                <CloudIcon />
+                <span className="hidden lg:inline">Cloud</span>
+              </button>
+            )}
+
+            {/* Compliance Button */}
+            {onComplianceClick && (
+              <button
+                onClick={onComplianceClick}
+                disabled={!hasNodes}
+                className={`
+                  flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium
+                  transition-all duration-200
+                  ${hasNodes
+                    ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
+                    : 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed border border-transparent'
+                  }
+                `}
+              >
+                <ClipboardCheckIcon />
+                <span className="hidden lg:inline">Comply</span>
+              </button>
+            )}
+
+            {/* Benchmark Button */}
+            {onBenchmarkClick && (
+              <button
+                onClick={onBenchmarkClick}
+                disabled={!hasNodes}
+                className={`
+                  flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium
+                  transition-all duration-200
+                  ${hasNodes
+                    ? 'bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 border border-violet-500/20'
+                    : 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed border border-transparent'
+                  }
+                `}
+              >
+                <BarChartIcon />
+                <span className="hidden lg:inline">Bench</span>
               </button>
             )}
 
