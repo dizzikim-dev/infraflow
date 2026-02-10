@@ -9,6 +9,10 @@
 import type { AntiPattern, ComponentRelationship, EnrichedKnowledge, FailureScenario, VulnerabilityEntry, ComplianceGap } from './types';
 import type { DiagramContext } from '../parser/prompts';
 import type { InfraSpec, InfraNodeType } from '@/types/infra';
+import { createLogger } from '@/lib/utils/logger';
+import { compareBySeverity } from '@/lib/utils/severity';
+
+const log = createLogger('ContextEnricher');
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -352,7 +356,8 @@ function detectViolations(
   return antiPatterns.filter((ap) => {
     try {
       return ap.detection(spec);
-    } catch {
+    } catch (error) {
+      log.warn(`Anti-pattern detection failed for "${ap.id}"`, { error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   });
@@ -379,9 +384,8 @@ function buildViolationLines(enriched: EnrichedKnowledge): string[] {
   const lines: string[] = [];
 
   // Anti-pattern violations (severity-sorted: critical first)
-  const severityOrder = { critical: 0, high: 1, medium: 2 };
   const sortedViolations = [...enriched.violations].sort(
-    (a, b) => severityOrder[a.severity] - severityOrder[b.severity],
+    (a, b) => compareBySeverity(a.severity, b.severity),
   );
   for (const violation of sortedViolations) {
     const icon = violation.severity === 'critical' ? '🔴' : violation.severity === 'high' ? '🟠' : '🟡';
@@ -448,10 +452,9 @@ function filterVulnerabilities(
   vulnerabilities?: VulnerabilityEntry[],
 ): VulnerabilityEntry[] {
   if (!vulnerabilities || vulnerabilities.length === 0) return [];
-  const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
   return vulnerabilities
     .filter((v) => v.affectedComponents.some((c) => presentTypes.has(c)))
-    .sort((a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9))
+    .sort((a, b) => compareBySeverity(a.severity, b.severity))
     .slice(0, 10);
 }
 

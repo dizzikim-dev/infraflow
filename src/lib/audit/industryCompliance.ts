@@ -7,6 +7,7 @@
 
 import type { InfraSpec, InfraNodeType } from '@/types/infra';
 import { checkCompliance, type ComplianceFramework, type ComplianceReport } from './complianceChecker';
+import { compareBySeverity } from '@/lib/utils/severity';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -280,8 +281,7 @@ function generateGaps(
   }
 
   // Sort by priority
-  const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
-  return gaps.sort((a, b) => (priorityOrder[a.priority] ?? 9) - (priorityOrder[b.priority] ?? 9));
+  return gaps.sort((a, b) => compareBySeverity(a.priority, b.priority));
 }
 
 function calculateOverallScore(

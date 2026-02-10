@@ -20,6 +20,9 @@ import { nanoid } from 'nanoid';
 import { InfraSpec, InfraNodeSpec, ConnectionSpec, InfraNodeType } from '@/types';
 import { ConversationContext, SmartParseResult, SpecModification } from './UnifiedParser';
 import { CommandType } from './patterns';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('IntelligentParser');
 
 /**
  * Result of intent analysis from LLM.
@@ -151,7 +154,8 @@ export function parseIntentResponse(content: string): IntentAnalysis | null {
   const tryParse = (jsonStr: string): unknown => {
     try {
       return JSON.parse(jsonStr);
-    } catch {
+    } catch (error) {
+      log.debug('Intent JSON parse attempt failed', { error: error instanceof Error ? error.message : String(error) });
       return null;
     }
   };

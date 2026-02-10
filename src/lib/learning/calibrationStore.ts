@@ -114,6 +114,7 @@ class IndexedDBCalibrationStore implements CalibrationStoreAdapter {
       db.close();
       return result;
     } catch (error) {
+      log.warn('Failed to count calibration interactions', { error: error instanceof Error ? error.message : String(error) });
       return 0;
     }
   }

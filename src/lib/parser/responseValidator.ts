@@ -4,6 +4,9 @@
 
 import { z } from 'zod';
 import type { Operation } from './diffApplier';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('ResponseValidator');
 
 // Flow types
 const flowTypeSchema = z.enum(['request', 'response', 'sync', 'blocked', 'encrypted']);
@@ -168,8 +171,8 @@ export function parseJSONFromText(text: string): unknown {
   if (jsonBlockMatch) {
     try {
       return JSON.parse(jsonBlockMatch[1]);
-    } catch {
-      // Continue to next method
+    } catch (error) {
+      log.debug('JSON code block parse failed, trying next method', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -178,8 +181,8 @@ export function parseJSONFromText(text: string): unknown {
   if (balanced) {
     try {
       return JSON.parse(balanced);
-    } catch {
-      // Continue to next method
+    } catch (error) {
+      log.debug('Balanced JSON parse failed, trying next method', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 

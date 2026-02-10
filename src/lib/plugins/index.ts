@@ -91,7 +91,7 @@ export async function initializePluginSystem(): Promise<void> {
     await pluginRegistry.activate('core');
   }
 
-  console.log('[PluginSystem] Initialized with core plugin');
+  log.info('Initialized with core plugin');
 }
 
 /**
@@ -114,3 +114,6 @@ export function getPluginSystemStatus(): {
 
 // Type import for getSummary return type
 import type { PluginRegistry } from './registry';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('PluginSystem');

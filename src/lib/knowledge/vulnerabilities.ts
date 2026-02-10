@@ -8,6 +8,7 @@
 import type { InfraNodeType } from '@/types/infra';
 import type { TrustMetadata, KnowledgeSource } from './types';
 import type { InfraSpec } from '@/types/infra';
+import { compareBySeverity } from '@/lib/utils/severity';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -837,8 +838,7 @@ export function getVulnerabilitiesForSpec(spec: InfraSpec): VulnerabilityEntry[]
   }
 
   // Sort: critical first, then high, medium, low
-  const severityOrder: Record<CVESeverity, number> = { critical: 0, high: 1, medium: 2, low: 3 };
-  return result.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+  return result.sort((a, b) => compareBySeverity(a.severity, b.severity));
 }
 
 /** Get aggregate vulnerability statistics */

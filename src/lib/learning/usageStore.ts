@@ -108,6 +108,7 @@ class IndexedDBUsageStore implements UsageStoreAdapter {
       db.close();
       return result;
     } catch (error) {
+      log.warn('Failed to count usage events', { error: error instanceof Error ? error.message : String(error) });
       return 0;
     }
   }

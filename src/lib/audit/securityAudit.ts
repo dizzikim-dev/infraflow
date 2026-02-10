@@ -20,6 +20,7 @@
  */
 
 import { InfraSpec, InfraNodeSpec, ConnectionSpec, InfraNodeType } from '@/types';
+import { compareBySeverity } from '@/lib/utils/severity';
 
 /**
  * Security audit severity levels.
@@ -624,15 +625,7 @@ export function runSecurityAudit(spec: InfraSpec, specName?: string): SecurityAu
   }
 
   // Sort by severity
-  const severityOrder: Record<AuditSeverity, number> = {
-    critical: 0,
-    high: 1,
-    medium: 2,
-    low: 3,
-    info: 4,
-  };
-
-  findings.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+  findings.sort((a, b) => compareBySeverity(a.severity, b.severity));
 
   return {
     timestamp: new Date().toISOString(),

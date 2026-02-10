@@ -10,6 +10,9 @@ import type { InfraSpec, InfraNodeType } from '@/types/infra';
 import { ANTIPATTERNS } from '../knowledge/antipatterns';
 import { getMandatoryDependencies } from '../knowledge/relationships';
 import { getCategoryForType } from '../data/infrastructureDB';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('ChangeRiskAssessor');
 
 // ---------------------------------------------------------------------------
 // Types
@@ -247,8 +250,8 @@ export function getRiskFactors(
           details: ap.id,
         });
       }
-    } catch {
-      // Skip antipatterns that throw during detection
+    } catch (error) {
+      log.warn(`Anti-pattern detection failed for "${ap.id}"`, { error: error instanceof Error ? error.message : String(error) });
     }
   }
 

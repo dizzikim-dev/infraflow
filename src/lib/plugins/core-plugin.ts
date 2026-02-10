@@ -15,6 +15,9 @@ import type {
   CategoryStyle,
 } from '@/types/plugin';
 import type { NodeCategory } from '@/types/infra';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('CorePlugin');
 
 // ============================================================
 // Category Styles
@@ -340,11 +343,11 @@ export const corePlugin: InfraFlowPlugin = {
 
   // 라이프사이클 훅
   onLoad: async () => {
-    console.log('[CorePlugin] Core plugin loaded');
+    log.info('Core plugin loaded');
   },
 
   onUnload: async () => {
-    console.log('[CorePlugin] Core plugin unloaded');
+    log.info('Core plugin unloaded');
   },
 };
 

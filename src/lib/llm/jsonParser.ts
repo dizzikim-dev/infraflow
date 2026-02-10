@@ -9,6 +9,9 @@
 
 import type { InfraSpec } from '@/types';
 import { isInfraSpec } from '@/types/guards';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('JSONParser');
 
 /**
  * Parses JSON from LLM response, handling various formats.
@@ -25,7 +28,8 @@ export function parseJSONFromLLMResponse(content: string): InfraSpec | null {
   const tryParse = (jsonStr: string): unknown => {
     try {
       return JSON.parse(jsonStr);
-    } catch {
+    } catch (error) {
+      log.debug('JSON parse attempt failed', { error: error instanceof Error ? error.message : String(error) });
       return null;
     }
   };
