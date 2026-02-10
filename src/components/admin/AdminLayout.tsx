@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Admin 레이아웃 컴포넌트
+ * Admin 레이아�트 컴포넌트
  *
  * 사이드바와 콘텐츠 영역을 포함하는 Admin 전용 레이아웃
  */
@@ -18,6 +18,12 @@ interface NavItem {
   href: string;
   label: string;
   icon: ReactNode;
+}
+
+interface NavSection {
+  label: string;
+  icon: ReactNode;
+  items: { href: string; label: string }[];
 }
 
 const navItems: NavItem[] = [
@@ -59,16 +65,46 @@ const navItems: NavItem[] = [
   },
 ];
 
+const knowledgeSection: NavSection = {
+  label: 'Knowledge DB',
+  icon: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+    </svg>
+  ),
+  items: [
+    { href: '/admin/knowledge', label: '개요' },
+    { href: '/admin/knowledge/relationships', label: '관계' },
+    { href: '/admin/knowledge/patterns', label: '패턴' },
+    { href: '/admin/knowledge/antipatterns', label: '안티패턴' },
+    { href: '/admin/knowledge/failures', label: '장애 시나리오' },
+    { href: '/admin/knowledge/performance', label: '성능 프로파일' },
+    { href: '/admin/knowledge/vulnerabilities', label: '취약점' },
+    { href: '/admin/knowledge/cloud-services', label: '클라우드 서비스' },
+    { href: '/admin/knowledge/benchmarks', label: '벤치마크' },
+    { href: '/admin/knowledge/industry-presets', label: '산업별 프리셋' },
+    { href: '/admin/knowledge/sources', label: '출처 관리' },
+  ],
+};
+
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [knowledgeOpen, setKnowledgeOpen] = useState(
+    pathname.startsWith('/admin/knowledge'),
+  );
 
   const isActive = (href: string) => {
     if (href === '/admin') {
       return pathname === '/admin';
     }
+    if (href === '/admin/knowledge') {
+      return pathname === '/admin/knowledge';
+    }
     return pathname.startsWith(href);
   };
+
+  const isKnowledgeActive = pathname.startsWith('/admin/knowledge');
 
   return (
     <div className="min-h-screen bg-gray-100 flex">
@@ -101,7 +137,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
 
         {/* 네비게이션 */}
-        <nav className="flex-1 py-4">
+        <nav className="flex-1 py-4 overflow-y-auto">
           <ul className="space-y-1 px-2">
             {navItems.map((item) => (
               <li key={item.href}>
@@ -119,6 +155,58 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </li>
             ))}
           </ul>
+
+          {/* Knowledge DB 섹션 */}
+          <div className="mt-4 px-2">
+            {sidebarOpen && (
+              <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Knowledge
+              </div>
+            )}
+            <button
+              onClick={() => setKnowledgeOpen(!knowledgeOpen)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                isKnowledgeActive
+                  ? 'bg-blue-600/20 text-blue-300'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              {knowledgeSection.icon}
+              {sidebarOpen && (
+                <>
+                  <span className="flex-1 text-left">{knowledgeSection.label}</span>
+                  <svg
+                    className={`w-4 h-4 transition-transform ${knowledgeOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </>
+              )}
+            </button>
+
+            {sidebarOpen && knowledgeOpen && (
+              <ul className="mt-1 space-y-0.5 pl-4">
+                {knowledgeSection.items.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition ${
+                        isActive(item.href)
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50" />
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </nav>
 
         {/* 하단 링크 */}

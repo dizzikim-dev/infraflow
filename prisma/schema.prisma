@@ -53,6 +53,117 @@ enum PolicyCategory {
 }
 
 // ============================================
+// KNOWLEDGE DB ENUMS
+// ============================================
+
+enum KnowledgeRelType {
+  requires
+  recommends
+  conflicts
+  enhances
+  protects
+}
+
+enum KnowledgeStrength {
+  mandatory
+  strong
+  weak
+}
+
+enum KnowledgeDirection {
+  upstream
+  downstream
+  bidirectional
+}
+
+enum AntiPatternSeverity {
+  critical
+  high
+  medium
+}
+
+enum FailureImpact {
+  service_down
+  degraded
+  data_loss
+  security_breach
+}
+
+enum Likelihood {
+  high
+  medium
+  low
+}
+
+enum ScalingStrategy {
+  horizontal
+  vertical
+  both
+}
+
+enum CloudProvider {
+  aws
+  azure
+  gcp
+}
+
+enum ServiceStatus {
+  active
+  deprecated
+  preview
+  end_of_life
+}
+
+enum PricingTier {
+  free
+  low
+  medium
+  high
+  enterprise
+}
+
+enum TrafficTier {
+  small
+  medium
+  large
+  enterprise
+}
+
+enum IndustryType {
+  financial
+  healthcare
+  government
+  ecommerce
+  general
+}
+
+enum SecurityLevel {
+  basic
+  standard
+  enhanced
+  maximum
+}
+
+enum SourceType {
+  rfc
+  nist
+  cis
+  owasp
+  vendor
+  academic
+  industry
+  user_verified
+  user_unverified
+}
+
+enum VulnSeverity {
+  critical
+  high
+  medium
+  low
+}
+
+// ============================================
 // AUTH MODELS (NextAuth.js v5)
 // ============================================
 
@@ -65,12 +176,12 @@ model User {
   passwordHash  String?
   role          UserRole  @default(USER)
 
-  accounts      Account[]
-  sessions      Session[]
-  diagrams      Diagram[]
+  accounts Account[]
+  sessions Session[]
+  diagrams Diagram[]
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }
@@ -126,35 +237,35 @@ model VerificationToken {
 // ============================================
 
 model Diagram {
-  id          String   @id @default(cuid())
-  title       String   @default("Untitled Diagram")
-  description String?  @db.Text
+  id          String  @id @default(cuid())
+  title       String  @default("Untitled Diagram")
+  description String? @db.Text
   spec        Json
   nodesJson   Json?
   edgesJson   Json?
-  thumbnail   String?  @db.Text
-  isPublic    Boolean  @default(false)
+  thumbnail   String? @db.Text
+  isPublic    Boolean @default(false)
 
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  versions    DiagramVersion[]
+  versions DiagramVersion[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@map("diagrams")
 }
 
 model DiagramVersion {
-  id         String   @id @default(cuid())
-  diagramId  String
-  diagram    Diagram  @relation(fields: [diagramId], references: [id], onDelete: Cascade)
-  spec       Json
-  message    String?
+  id        String  @id @default(cuid())
+  diagramId String
+  diagram   Diagram @relation(fields: [diagramId], references: [id], onDelete: Cascade)
+  spec      Json
+  message   String?
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([diagramId])
   @@map("diagram_versions")
@@ -166,37 +277,37 @@ model DiagramVersion {
 
 /// 인프라 구성요소 (장비/솔루션)
 model InfraComponent {
-  id            String            @id @default(cuid())
-  componentId   String            @unique  // kebab-case ID (예: firewall, load-balancer)
+  id          String @id @default(cuid())
+  componentId String @unique // kebab-case ID (예: firewall, load-balancer)
 
   // 기본 정보
-  name          String            // 영문명
-  nameKo        String            // 한국어명
-  category      ComponentCategory // 카테고리
-  tier          TierType          // 티어 위치
+  name     String // 영문명
+  nameKo   String // 한국어명
+  category ComponentCategory // 카테고리
+  tier     TierType // 티어 위치
 
   // 상세 설명
-  description   String            @db.Text  // 영문 설명
-  descriptionKo String            @db.Text  // 한국어 설명
+  description   String @db.Text // 영문 설명
+  descriptionKo String @db.Text // 한국어 설명
 
   // 기능 및 특징 (배열)
-  functions     String[]          // 영문 기능 목록
-  functionsKo   String[]          // 한국어 기능 목록
-  features      String[]          // 영문 특징 목록
-  featuresKo    String[]          // 한국어 특징 목록
+  functions   String[] // 영문 기능 목록
+  functionsKo String[] // 한국어 기능 목록
+  features    String[] // 영문 특징 목록
+  featuresKo  String[] // 한국어 특징 목록
 
   // 기술 정보
-  ports         String[]          // 사용 포트
-  protocols     String[]          // 지원 프로토콜
-  vendors       String[]          // 벤더 목록
+  ports     String[] // 사용 포트
+  protocols String[] // 지원 프로토콜
+  vendors   String[] // 벤더 목록
 
   // 관계
-  policies      PolicyRecommendation[]  // 권장 정책 목록
+  policies PolicyRecommendation[] // 권장 정책 목록
 
   // 메타데이터
-  isActive      Boolean           @default(true)  // 활성화 상태 (소프트 삭제용)
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  isActive  Boolean  @default(true) // 활성화 상태 (소프트 삭제용)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([category])
   @@index([tier])
@@ -206,12 +317,12 @@ model InfraComponent {
 
 /// 권장 정책
 model PolicyRecommendation {
-  id          String         @id @default(cuid())
+  id String @id @default(cuid())
 
   // 정책 정보
-  name        String         // 영문명
-  nameKo      String         // 한국어명
-  description String         @db.Text  // 설명
+  name        String // 영문명
+  nameKo      String // 한국어명
+  description String         @db.Text // 설명
   priority    PolicyPriority // 우선순위
   category    PolicyCategory // 정책 분류
 
@@ -220,10 +331,261 @@ model PolicyRecommendation {
   component   InfraComponent @relation(fields: [componentId], references: [id], onDelete: Cascade)
 
   // 메타데이터
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([componentId])
   @@index([priority])
   @@map("policy_recommendations")
+}
+
+// ============================================
+// KNOWLEDGE DB MODELS
+// ============================================
+
+/// 컴포넌트 관계 (예: firewall requires router)
+model KnowledgeRelationship {
+  id               String             @id @default(cuid())
+  knowledgeId      String             @unique // e.g. REL-001
+  sourceComponent  String // InfraNodeType (e.g. "firewall")
+  targetComponent  String // InfraNodeType (e.g. "router")
+  relationshipType KnowledgeRelType
+  strength         KnowledgeStrength
+  direction        KnowledgeDirection
+  reason           String             @db.Text
+  reasonKo         String             @db.Text
+  tags             String[]
+  trustMetadata    Json // TrustMetadata JSON
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sourceComponent])
+  @@index([targetComponent])
+  @@index([relationshipType])
+  @@index([isActive])
+  @@map("knowledge_relationships")
+}
+
+/// 아키텍처 패턴 (예: 3-tier, microservices)
+model KnowledgePattern {
+  id                 String   @id @default(cuid())
+  patternId          String   @unique // e.g. PAT-001
+  name               String
+  nameKo             String
+  description        String   @db.Text
+  descriptionKo      String   @db.Text
+  requiredComponents Json // { type: string; minCount: number }[]
+  optionalComponents Json // { type: string; benefit: string; benefitKo: string }[]
+  scalability        String // "low" | "medium" | "high" | "auto"
+  complexity         Int // 1-5
+  bestForKo          String[]
+  notSuitableForKo   String[]
+  evolvesTo          String[]
+  evolvesFrom        String[]
+  tags               String[]
+  trustMetadata      Json // TrustMetadata JSON
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([scalability])
+  @@index([isActive])
+  @@map("knowledge_patterns")
+}
+
+/// 안티패턴 (탐지 + 해결책)
+model KnowledgeAntiPattern {
+  id                     String              @id @default(cuid())
+  antiPatternId          String              @unique // e.g. AP-SEC-001
+  name                   String
+  nameKo                 String
+  severity               AntiPatternSeverity
+  detectionRuleId        String // References detectionRegistry.ts
+  detectionDescriptionKo String              @db.Text
+  problemKo              String              @db.Text
+  impactKo               String              @db.Text
+  solutionKo             String              @db.Text
+  tags                   String[]
+  trustMetadata          Json // TrustMetadata JSON
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([severity])
+  @@index([isActive])
+  @@map("knowledge_antipatterns")
+}
+
+/// 장애 시나리오
+model KnowledgeFailure {
+  id                 String        @id @default(cuid())
+  failureId          String        @unique // e.g. FAIL-FW-001
+  component          String // InfraNodeType
+  titleKo            String
+  scenarioKo         String        @db.Text
+  impact             FailureImpact
+  likelihood         Likelihood
+  affectedComponents String[] // InfraNodeType[]
+  preventionKo       String[]
+  mitigationKo       String[]
+  estimatedMTTR      String
+  tags               String[]
+  trustMetadata      Json // TrustMetadata JSON
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([component])
+  @@index([impact])
+  @@index([isActive])
+  @@map("knowledge_failures")
+}
+
+/// 성능 프로파일
+model KnowledgePerformance {
+  id                     String          @id @default(cuid())
+  performanceId          String          @unique // e.g. PERF-FW-001
+  component              String // InfraNodeType
+  nameKo                 String
+  latencyRange           Json // { min: number; max: number; unit: "ms" | "us" }
+  throughputRange        Json // { typical: string; max: string }
+  scalingStrategy        ScalingStrategy
+  bottleneckIndicators   String[]
+  bottleneckIndicatorsKo String[]
+  optimizationTipsKo     String[]
+  tags                   String[]
+  trustMetadata          Json // TrustMetadata JSON
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([component])
+  @@index([scalingStrategy])
+  @@index([isActive])
+  @@map("knowledge_performance")
+}
+
+/// 취약점 정보
+model KnowledgeVulnerability {
+  id                 String       @id @default(cuid())
+  vulnId             String       @unique // e.g. VULN-001
+  cveId              String? // e.g. CVE-2024-12345
+  affectedComponents String[] // InfraNodeType[]
+  severity           VulnSeverity
+  cvssScore          Float?
+  title              String
+  titleKo            String
+  description        String       @db.Text
+  descriptionKo      String       @db.Text
+  mitigation         String       @db.Text
+  mitigationKo       String       @db.Text
+  publishedDate      String
+  references         String[]
+  trustMetadata      Json // TrustMetadata JSON
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([severity])
+  @@index([isActive])
+  @@map("knowledge_vulnerabilities")
+}
+
+/// 클라우드 서비스 카탈로그
+model KnowledgeCloudService {
+  id            String        @id @default(cuid())
+  serviceId     String        @unique // e.g. aws-ec2
+  provider      CloudProvider
+  componentType String // InfraNodeType it maps to
+  serviceName   String
+  serviceNameKo String
+  status        ServiceStatus
+  successor     String? // Replacement service if deprecated
+  features      String[]
+  featuresKo    String[]
+  pricingTier   PricingTier
+  trustMetadata Json // TrustMetadata JSON
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([provider])
+  @@index([componentType])
+  @@index([status])
+  @@index([isActive])
+  @@map("knowledge_cloud_services")
+}
+
+/// 벤치마크 (사이징 매트릭스)
+model KnowledgeBenchmark {
+  id                       String      @id @default(cuid())
+  componentType            String // InfraNodeType
+  trafficTier              TrafficTier
+  recommendedInstanceCount Int
+  recommendedSpec          String
+  recommendedSpecKo        String
+  minimumInstanceCount     Int
+  minimumSpec              String
+  minimumSpecKo            String
+  scalingNotes             String      @db.Text
+  scalingNotesKo           String      @db.Text
+  estimatedMonthlyCost     Float?
+  maxRPS                   Int
+  trustMetadata            Json // TrustMetadata JSON
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([componentType, trafficTier])
+  @@index([isActive])
+  @@map("knowledge_benchmarks")
+}
+
+/// 산업별 프리셋
+model KnowledgeIndustryPreset {
+  id                    String        @id @default(cuid())
+  industryType          IndustryType  @unique
+  name                  String
+  nameKo                String
+  description           String        @db.Text
+  descriptionKo         String        @db.Text
+  requiredFrameworks    String[]
+  requiredComponents    String[] // InfraNodeType[]
+  recommendedComponents String[] // InfraNodeType[]
+  minimumSecurityLevel  SecurityLevel
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("knowledge_industry_presets")
+}
+
+/// 지식 출처 레지스트리
+model KnowledgeSourceEntry {
+  id            String     @id @default(cuid())
+  sourceId      String     @unique // e.g. NIST-800-41
+  sourceType    SourceType
+  title         String
+  url           String?
+  section       String?
+  publishedDate String?
+  accessedDate  String
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sourceType])
+  @@index([isActive])
+  @@map("knowledge_sources")
 }
