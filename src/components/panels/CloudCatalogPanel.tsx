@@ -7,12 +7,12 @@
  * Two tabs: "Deprecation 경고" / "서비스 카탈로그"
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Cloud, AlertTriangle, CheckCircle2, Search } from 'lucide-react';
 import type { InfraSpec, InfraNodeType } from '@/types';
 import { useCloudCatalog } from '@/hooks/useCloudCatalog';
-import type { CloudProvider, CloudService } from '@/lib/knowledge/cloudCatalog';
+import type { CloudProvider, CloudService, ServiceComparison } from '@/lib/knowledge/cloudCatalog';
 
 // ============================================================
 // Types
@@ -39,6 +39,27 @@ export function CloudCatalogPanel({ spec, onClose }: CloudCatalogPanelProps) {
     if (!spec) return [];
     return [...new Set(spec.nodes.map((n) => n.type))];
   }, [spec]);
+
+  // Pre-fetch catalog comparisons for all component types
+  const [catalogMap, setCatalogMap] = useState<Record<string, ServiceComparison>>({});
+  useEffect(() => {
+    if (activeTab !== 'catalog' || componentTypes.length === 0) return;
+    let cancelled = false;
+    Promise.all(
+      componentTypes.map(async (type) => {
+        const comparison = await compareServicesForType(type);
+        return [type, comparison] as const;
+      }),
+    ).then((results) => {
+      if (cancelled) return;
+      const map: Record<string, ServiceComparison> = {};
+      for (const [type, comparison] of results) {
+        if (comparison) map[type] = comparison;
+      }
+      setCatalogMap(map);
+    });
+    return () => { cancelled = true; };
+  }, [activeTab, componentTypes, compareServicesForType]);
 
   const tabs: { key: TabType; label: string; count?: number }[] = [
     { key: 'deprecation', label: 'Deprecation 경고', count: deprecationWarnings.length },
@@ -171,10 +192,11 @@ export function CloudCatalogPanel({ spec, onClose }: CloudCatalogPanelProps) {
               </div>
             ) : (
               componentTypes.map((type) => {
-                const comparison = compareServicesForType(type);
+                const comparison = catalogMap[type];
+                if (!comparison) return null;
                 const filteredServices = selectedProvider === 'all'
                   ? comparison.services
-                  : comparison.services.filter((s) => s.provider === selectedProvider);
+                  : comparison.services.filter((s: CloudService) => s.provider === selectedProvider);
                 if (filteredServices.length === 0) return null;
                 return (
                   <div key={type} className="mb-4">

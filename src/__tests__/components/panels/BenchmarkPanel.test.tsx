@@ -6,6 +6,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BenchmarkPanel } from '@/components/panels/BenchmarkPanel';
 import type { InfraSpec } from '@/types/infra';
+import { recommendSizing, estimateCapacity, findBottlenecks } from '@/lib/knowledge/benchmarks';
+import type { TrafficTier } from '@/lib/knowledge/benchmarks';
+import { useState } from 'react';
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
@@ -14,6 +17,24 @@ vi.mock('framer-motion', () => ({
       const { initial, animate, exit, ...rest } = props;
       return <div {...rest}>{children as React.ReactNode}</div>;
     },
+  },
+}));
+
+// Mock hook to bypass fetch — compute data synchronously
+vi.mock('@/hooks/useBenchmark', () => ({
+  useBenchmark: (spec: InfraSpec | null) => {
+    const [selectedTier, setTier] = useState<TrafficTier>('medium');
+    if (!spec || spec.nodes.length === 0) {
+      return { selectedTier, setTier, recommendations: [], capacity: null, bottlenecks: [], isLoading: false };
+    }
+    return {
+      selectedTier,
+      setTier,
+      recommendations: recommendSizing(spec, selectedTier),
+      capacity: estimateCapacity(spec),
+      bottlenecks: findBottlenecks(spec),
+      isLoading: false,
+    };
   },
 }));
 

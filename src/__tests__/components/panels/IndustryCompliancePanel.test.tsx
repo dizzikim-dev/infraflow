@@ -6,6 +6,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { IndustryCompliancePanel } from '@/components/panels/IndustryCompliancePanel';
 import type { InfraSpec } from '@/types/infra';
+import { analyzeComplianceGap } from '@/lib/audit/industryCompliance';
+import type { IndustryType } from '@/lib/audit/industryCompliance';
+import { useState, useCallback } from 'react';
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
@@ -14,6 +17,16 @@ vi.mock('framer-motion', () => ({
       const { initial, animate, exit, ...rest } = props;
       return <div {...rest}>{children as React.ReactNode}</div>;
     },
+  },
+}));
+
+// Mock hook to bypass fetch — compute data synchronously
+vi.mock('@/hooks/useIndustryCompliance', () => ({
+  useIndustryCompliance: (spec: InfraSpec | null) => {
+    const [selectedIndustry, setSelectedIndustry] = useState<IndustryType>('general');
+    const report = spec && spec.nodes.length > 0 ? analyzeComplianceGap(spec, selectedIndustry) : null;
+    const setIndustry = useCallback((industry: IndustryType) => setSelectedIndustry(industry), []);
+    return { report, selectedIndustry, setIndustry, analyze: () => {}, isAnalyzing: false };
   },
 }));
 

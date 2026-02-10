@@ -6,6 +6,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CloudCatalogPanel } from '@/components/panels/CloudCatalogPanel';
 import type { InfraSpec } from '@/types/infra';
+import type { InfraNodeType } from '@/types/infra';
+import { getDeprecationWarnings, getCloudServices, compareServices } from '@/lib/knowledge/cloudCatalog';
+import type { CloudProvider } from '@/lib/knowledge/cloudCatalog';
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
@@ -14,6 +17,19 @@ vi.mock('framer-motion', () => ({
       const { initial, animate, exit, ...rest } = props;
       return <div {...rest}>{children as React.ReactNode}</div>;
     },
+  },
+}));
+
+// Mock hook to bypass fetch — compute data synchronously
+vi.mock('@/hooks/useCloudCatalog', () => ({
+  useCloudCatalog: (spec: InfraSpec | null) => {
+    const warnings = spec && spec.nodes.length > 0 ? getDeprecationWarnings(spec) : [];
+    return {
+      deprecationWarnings: warnings,
+      getServicesForType: async (type: InfraNodeType, provider?: CloudProvider) => getCloudServices(type, provider),
+      compareServicesForType: async (type: InfraNodeType) => compareServices(type),
+      isLoading: false,
+    };
   },
 }));
 

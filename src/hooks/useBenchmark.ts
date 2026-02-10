@@ -1,19 +1,17 @@
 /**
  * useBenchmark Hook
  *
- * Provides traffic-based sizing recommendations and capacity estimation.
+ * Provides traffic-based sizing recommendations and capacity estimation via server-side API.
+ * Data processing runs server-side to reduce client bundle size.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { InfraSpec } from '@/types/infra';
-import {
-  recommendSizing,
-  estimateCapacity,
-  findBottlenecks,
-  type TrafficTier,
-  type SizingRecommendation,
-  type CapacityEstimate,
-  type BottleneckInfo,
+import type {
+  TrafficTier,
+  SizingRecommendation,
+  CapacityEstimate,
+  BottleneckInfo,
 } from '@/lib/knowledge/benchmarks';
 
 export interface UseBenchmarkResult {
@@ -22,31 +20,46 @@ export interface UseBenchmarkResult {
   recommendations: SizingRecommendation[];
   capacity: CapacityEstimate | null;
   bottlenecks: BottleneckInfo[];
+  isLoading: boolean;
 }
 
 export function useBenchmark(spec: InfraSpec | null): UseBenchmarkResult {
   const [selectedTier, setTier] = useState<TrafficTier>('medium');
+  const [recommendations, setRecommendations] = useState<SizingRecommendation[]>([]);
+  const [capacity, setCapacity] = useState<CapacityEstimate | null>(null);
+  const [bottlenecks, setBottlenecks] = useState<BottleneckInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const requestIdRef = useRef(0);
 
-  const recommendations = useMemo(() => {
-    if (!spec || spec.nodes.length === 0) return [];
-    return recommendSizing(spec, selectedTier);
+  useEffect(() => {
+    if (!spec || spec.nodes.length === 0) {
+      setRecommendations([]);
+      setCapacity(null);
+      setBottlenecks([]);
+      return;
+    }
+
+    const currentId = ++requestIdRef.current;
+    setIsLoading(true);
+
+    fetch('/api/analyze/benchmarks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ spec, tier: selectedTier }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (currentId !== requestIdRef.current) return;
+        setRecommendations(data.recommendations ?? []);
+        setCapacity(data.capacity ?? null);
+        setBottlenecks(data.bottlenecks ?? []);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        if (currentId !== requestIdRef.current) return;
+        setIsLoading(false);
+      });
   }, [spec, selectedTier]);
 
-  const capacity = useMemo(() => {
-    if (!spec || spec.nodes.length === 0) return null;
-    return estimateCapacity(spec);
-  }, [spec]);
-
-  const bottlenecks = useMemo(() => {
-    if (!spec || spec.nodes.length === 0) return [];
-    return findBottlenecks(spec);
-  }, [spec]);
-
-  return {
-    selectedTier,
-    setTier,
-    recommendations,
-    capacity,
-    bottlenecks,
-  };
+  return { selectedTier, setTier, recommendations, capacity, bottlenecks, isLoading };
 }
