@@ -21,6 +21,11 @@ const c4ElementMap: Record<InfraNodeType, { stereotype: string; shape: string }>
   'vpn-gateway': { stereotype: 'Security', shape: 'Container' },
   'nac': { stereotype: 'Security', shape: 'Container' },
   'dlp': { stereotype: 'Security', shape: 'Container' },
+  'sase-gateway': { stereotype: 'Security', shape: 'Container' },
+  'ztna-broker': { stereotype: 'Security', shape: 'Container' },
+  'casb': { stereotype: 'Security', shape: 'Container' },
+  'siem': { stereotype: 'Security', shape: 'Container' },
+  'soar': { stereotype: 'Security', shape: 'Container' },
 
   // Network
   'router': { stereotype: 'Network', shape: 'Container' },

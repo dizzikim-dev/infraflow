@@ -22,6 +22,8 @@ const categoryConfig: Record<string, { label: string; icon: string; color: strin
   cloud: { label: '클라우드', icon: '☁️', color: 'text-purple-400' },
   storage: { label: '스토리지', icon: '💾', color: 'text-amber-400' },
   auth: { label: '인증/접근', icon: '🔐', color: 'text-pink-400' },
+  telecom: { label: '통신 인프라', icon: '🏢', color: 'text-teal-400' },
+  wan: { label: 'WAN', icon: '🔗', color: 'text-indigo-400' },
   external: { label: '외부', icon: '👤', color: 'text-zinc-400' },
 };
 

@@ -26,7 +26,19 @@ function formatAvailableComponents(): string {
     .join('\n');
 }
 
-export const SYSTEM_PROMPT = `당신은 인프라 아키텍처 수정 전문가입니다.
+/**
+ * Build the system prompt with an optional knowledge section appended.
+ * When knowledgeSection is provided, it's appended after the base prompt.
+ */
+export function buildSystemPrompt(knowledgeSection?: string): string {
+  let prompt = BASE_SYSTEM_PROMPT;
+  if (knowledgeSection) {
+    prompt += `\n\n${knowledgeSection}`;
+  }
+  return prompt;
+}
+
+const BASE_SYSTEM_PROMPT = `당신은 인프라 아키텍처 수정 전문가입니다.
 
 ## 역할
 사용자의 자연어 요청을 분석하여 현재 인프라 다이어그램에 적용할 변경 사항을 JSON으로 반환합니다.
@@ -165,6 +177,9 @@ flowType 옵션:
   }
 }
 \`\`\``;
+
+// Backward-compatible constant (no knowledge section)
+export const SYSTEM_PROMPT = buildSystemPrompt();
 
 export interface DiagramContext {
   nodes: NodeContext[];

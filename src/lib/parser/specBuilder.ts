@@ -11,15 +11,31 @@ import {
 import { detectAllNodeTypes, findInsertionPoint, generateNodeId } from './componentDetector';
 import { parsePromptLocal, type ParseResult } from './templateMatcher';
 import type { CommandType } from './patterns';
+import { getConflicts, getMandatoryDependencies } from '@/lib/knowledge';
 
 // ============================================================
 // Types
 // ============================================================
 
+export interface KnowledgeWarning {
+  type: 'conflict' | 'antipattern';
+  severity: 'critical' | 'high' | 'medium';
+  messageKo: string;
+}
+
+export interface KnowledgeSuggestion {
+  type: 'mandatory' | 'recommended';
+  missingComponent: string;
+  reason: string;
+  reasonKo: string;
+}
+
 export interface SmartParseResult extends ParseResult {
   commandType: CommandType;
   modifications?: SpecModification[];
   query?: string;
+  warnings?: KnowledgeWarning[];
+  suggestions?: KnowledgeSuggestion[];
 }
 
 export interface SpecModification {
@@ -37,6 +53,52 @@ export interface PromptHistoryItem {
   prompt: string;
   result: ParseResult;
   timestamp: number;
+}
+
+// ============================================================
+// Knowledge-based Validation
+// ============================================================
+
+/**
+ * Validate spec against knowledge graph for conflicts and missing dependencies.
+ */
+function validateWithKnowledge(
+  spec: InfraSpec,
+): { warnings: KnowledgeWarning[]; suggestions: KnowledgeSuggestion[] } {
+  const warnings: KnowledgeWarning[] = [];
+  const suggestions: KnowledgeSuggestion[] = [];
+  const allTypes = new Set(spec.nodes.map((n) => n.type));
+
+  for (const nodeType of allTypes) {
+    // Check conflicts
+    for (const conflict of getConflicts(nodeType)) {
+      if (allTypes.has(conflict.target)) {
+        // Avoid duplicate warnings (A↔B and B↔A)
+        const key = [conflict.source, conflict.target].sort().join('|');
+        if (!warnings.some((w) => w.messageKo.includes(key.replace('|', '" ↔ "')))) {
+          warnings.push({
+            type: 'conflict',
+            severity: 'high',
+            messageKo: `"${conflict.source}" ↔ "${conflict.target}" 충돌: ${conflict.reasonKo}`,
+          });
+        }
+      }
+    }
+
+    // Check mandatory dependencies
+    for (const dep of getMandatoryDependencies(nodeType)) {
+      if (!allTypes.has(dep.target)) {
+        suggestions.push({
+          type: 'mandatory',
+          missingComponent: dep.target,
+          reason: dep.reason,
+          reasonKo: dep.reasonKo,
+        });
+      }
+    }
+  }
+
+  return { warnings, suggestions };
 }
 
 // ============================================================
@@ -82,10 +144,19 @@ export function handleCreate(
   options: { useTemplates?: boolean; useComponentDetection?: boolean }
 ): SmartParseResult {
   const result = parsePromptLocal(prompt, options);
-  return {
+  const base: SmartParseResult = {
     ...result,
     commandType: 'create',
   };
+
+  // Add knowledge-based validation if spec was generated
+  if (base.success && base.spec) {
+    const { warnings, suggestions } = validateWithKnowledge(base.spec);
+    if (warnings.length > 0) base.warnings = warnings;
+    if (suggestions.length > 0) base.suggestions = suggestions;
+  }
+
+  return base;
 }
 
 /**
@@ -153,12 +224,17 @@ export function handleAdd(
     }
   }
 
+  // Knowledge-based validation
+  const { warnings, suggestions } = validateWithKnowledge(newSpec);
+
   return {
     success: true,
     spec: newSpec,
     commandType: 'add',
     modifications,
     confidence: 0.8,
+    warnings: warnings.length > 0 ? warnings : undefined,
+    suggestions: suggestions.length > 0 ? suggestions : undefined,
   };
 }
 

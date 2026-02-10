@@ -22,13 +22,19 @@ import {
   NIST_800_81,
   NIST_800_123,
   NIST_800_144,
+  NIST_800_145,
+  NIST_800_207,
   OWASP_TOP10,
   OWASP_WSTG,
   AWS_WAF_REL,
   AWS_WAF_SEC,
   AWS_WAF_PERF,
+  AWS_WAF_OPS,
   AZURE_CAF,
+  GCP_ARCH_FRAMEWORK,
   CNCF_SECURITY,
+  CIS_KUBERNETES,
+  K8S_DOCS,
   SANS_CIS_TOP20,
   SANS_FIREWALL,
   CIS_V8_12,
@@ -754,6 +760,414 @@ const architectureAntiPatterns: AntiPattern[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Cloud Anti-patterns (AP-CLD)
+// ---------------------------------------------------------------------------
+
+const CLOUD_TYPES: InfraNodeType[] = ['aws-vpc', 'azure-vnet', 'gcp-network', 'private-cloud'];
+
+const cloudAntiPatterns: AntiPattern[] = [
+  {
+    id: 'AP-CLD-001',
+    type: 'antipattern',
+    name: 'Single AZ Deployment',
+    nameKo: '단일 AZ 배치',
+    severity: 'critical',
+    detection: (spec: InfraSpec): boolean => {
+      // Cloud VPC exists but no load-balancer for multi-AZ distribution
+      if (!hasNodeOfCategory(spec, CLOUD_TYPES)) return false;
+      return !hasNodeType(spec, 'load-balancer');
+    },
+    detectionDescriptionKo: '클라우드 VPC가 존재하지만 다중 AZ 분산을 위한 로드 밸런서가 없는지 검사합니다.',
+    problemKo: '단일 가용 영역(AZ)에만 리소스를 배치하면 해당 AZ 장애 시 전체 서비스가 중단됩니다.',
+    impactKo: 'AZ 장애 시 전면 서비스 중단, SLA 위반, 데이터 정합성 위험이 발생합니다.',
+    solutionKo: '로드 밸런서를 배치하고 최소 2개 이상의 AZ에 리소스를 분산 배치하세요.',
+    tags: ['cloud', 'availability-zone', 'single-az', 'critical'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(AWS_WAF_REL, 'Design for Failure - Multi-AZ Deployments'),
+        withSection(NIST_800_145, 'Section 2 - Cloud Computing Characteristics'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'AP-CLD-002',
+    type: 'antipattern',
+    name: 'Public Subnet DB',
+    nameKo: 'Public Subnet에 DB 배치',
+    severity: 'critical',
+    detection: (spec: InfraSpec): boolean => {
+      // db-server in cloud environment without firewall protection
+      if (!hasNodeType(spec, 'db-server')) return false;
+      if (!hasNodeOfCategory(spec, CLOUD_TYPES)) return false;
+      return !hasNodeType(spec, 'firewall');
+    },
+    detectionDescriptionKo: '클라우드 환경에서 db-server가 방화벽 없이 존재하는지 검사합니다.',
+    problemKo: '클라우드의 Public Subnet에 데이터베이스를 배치하면 인터넷에서 직접 접근이 가능해 데이터 탈취 위험이 극대화됩니다.',
+    impactKo: '전체 데이터베이스 침해, 고객 데이터 유출, 컴플라이언스 위반, 막대한 벌금이 발생할 수 있습니다.',
+    solutionKo: '데이터베이스를 Private Subnet으로 이동하고, 보안 그룹과 NACL로 접근을 제한하며, 방화벽을 배치하세요.',
+    tags: ['cloud', 'database', 'public-subnet', 'security', 'critical'],
+    trust: {
+      confidence: 0.95,
+      sources: [
+        withSection(AWS_WAF_SEC, 'Infrastructure Protection - VPC Security'),
+        withSection(NIST_800_144, 'Section 4 - Security and Privacy Issues'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'AP-CLD-003',
+    type: 'antipattern',
+    name: 'Security Group Wide Open',
+    nameKo: '보안 그룹 전체 오픈',
+    severity: 'high',
+    detection: (spec: InfraSpec): boolean => {
+      // Cloud + internet but no firewall or WAF
+      if (!hasNodeOfCategory(spec, CLOUD_TYPES)) return false;
+      if (!hasNodeType(spec, 'internet')) return false;
+      return !hasNodeType(spec, 'firewall') && !hasNodeType(spec, 'waf');
+    },
+    detectionDescriptionKo: '클라우드 환경에 인터넷이 연결되어 있지만 방화벽이나 WAF가 없는지 검사합니다.',
+    problemKo: '보안 그룹(Security Group)이 0.0.0.0/0으로 전체 오픈되면 모든 인터넷 트래픽이 인스턴스에 직접 도달합니다.',
+    impactKo: '무차별 포트 스캔, 브루트포스 공격, 취약점 익스플로잇에 무방비로 노출됩니다.',
+    solutionKo: '최소 권한 원칙에 따라 필요한 포트와 소스 IP만 허용하고, WAF 또는 방화벽을 앞단에 배치하세요.',
+    tags: ['cloud', 'security-group', 'wide-open', 'firewall'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(AWS_WAF_SEC, 'Infrastructure Protection - Security Groups'),
+        withSection(GCP_ARCH_FRAMEWORK, 'Security - Network Security'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'AP-CLD-004',
+    type: 'antipattern',
+    name: 'Cloud Without IAM',
+    nameKo: 'IAM 없는 클라우드',
+    severity: 'high',
+    detection: (spec: InfraSpec): boolean => {
+      // Cloud VPC exists but no IAM
+      if (!hasNodeOfCategory(spec, CLOUD_TYPES)) return false;
+      return !hasNodeType(spec, 'iam');
+    },
+    detectionDescriptionKo: '클라우드 VPC가 존재하지만 IAM이 없는지 검사합니다.',
+    problemKo: 'IAM 없이 클라우드를 운영하면 리소스 접근 제어가 불가능하고, 최소 권한 원칙을 적용할 수 없습니다.',
+    impactKo: '과도한 권한 부여, 자격 증명 남용, 리소스 무단 생성/삭제, 비용 급증이 발생합니다.',
+    solutionKo: 'IAM을 구성하여 역할 기반 접근 제어(RBAC)를 적용하고, 최소 권한 정책을 시행하세요.',
+    tags: ['cloud', 'iam', 'access-control', 'least-privilege'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(AWS_WAF_SEC, 'Identity and Access Management'),
+        withSection(NIST_800_53, 'AC-2 - Account Management'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'AP-CLD-005',
+    type: 'antipattern',
+    name: 'No Auto Scaling',
+    nameKo: 'Auto Scaling 미설정',
+    severity: 'medium',
+    detection: (spec: InfraSpec): boolean => {
+      // Cloud + compute but no load-balancer (auto-scaling indicator)
+      if (!hasNodeOfCategory(spec, CLOUD_TYPES)) return false;
+      if (!hasNodeOfCategory(spec, COMPUTE_TYPES)) return false;
+      return !hasNodeType(spec, 'load-balancer');
+    },
+    detectionDescriptionKo: '클라우드에 컴퓨팅 노드가 있지만 로드 밸런서(Auto Scaling 지표)가 없는지 검사합니다.',
+    problemKo: 'Auto Scaling 없이 클라우드를 운영하면 트래픽 급증 시 수동 확장이 필요하고, 비용 최적화가 불가능합니다.',
+    impactKo: '트래픽 급증 시 서비스 장애, 유휴 시간 과다 비용, 수동 관리 부담이 발생합니다.',
+    solutionKo: '로드 밸런서와 Auto Scaling 그룹을 구성하여 트래픽에 따른 자동 확장/축소를 적용하세요.',
+    tags: ['cloud', 'auto-scaling', 'compute', 'cost-optimization'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(AWS_WAF_PERF, 'Auto Scaling'),
+        withSection(AWS_WAF_OPS, 'Operational Health - Auto Scaling'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'AP-CLD-006',
+    type: 'antipattern',
+    name: 'Cloud No Monitoring',
+    nameKo: '모니터링 없는 클라우드',
+    severity: 'high',
+    detection: (spec: InfraSpec): boolean => {
+      // Cloud + compute but no IDS/IPS (monitoring indicator)
+      if (!hasNodeOfCategory(spec, CLOUD_TYPES)) return false;
+      if (!hasNodeOfCategory(spec, COMPUTE_TYPES)) return false;
+      return !hasNodeType(spec, 'ids-ips');
+    },
+    detectionDescriptionKo: '클라우드에 컴퓨팅 노드가 있지만 IDS/IPS(모니터링 지표)가 없는지 검사합니다.',
+    problemKo: '모니터링 없이 클라우드를 운영하면 보안 위협, 성능 저하, 리소스 이상을 실시간으로 감지할 수 없습니다.',
+    impactKo: '보안 침해 탐지 지연, 장애 대응 지연, 비정상 비용 발생 감지 불가가 발생합니다.',
+    solutionKo: 'IDS/IPS를 배치하고 클라우드 네이티브 모니터링(CloudWatch, Stackdriver 등)을 구성하세요.',
+    tags: ['cloud', 'monitoring', 'ids-ips', 'observability'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(AWS_WAF_OPS, 'Monitoring and Observability'),
+        withSection(GCP_ARCH_FRAMEWORK, 'Operational Excellence - Monitoring'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Kubernetes/Container Anti-patterns (AP-K8S)
+// ---------------------------------------------------------------------------
+
+const k8sAntiPatterns: AntiPattern[] = [
+  {
+    id: 'AP-K8S-001',
+    type: 'antipattern',
+    name: 'No Resource Limits',
+    nameKo: '리소스 Limit 미설정',
+    severity: 'high',
+    detection: (spec: InfraSpec): boolean => {
+      // kubernetes exists but only 1 container (no resource isolation indicator)
+      if (!hasNodeType(spec, 'kubernetes')) return false;
+      return countNodesByType(spec, 'container') <= 1;
+    },
+    detectionDescriptionKo: 'Kubernetes가 있지만 컨테이너가 1개 이하로 리소스 격리가 불충분한지 검사합니다.',
+    problemKo: '컨테이너에 CPU/메모리 Limit을 설정하지 않으면 단일 파드가 노드 전체 리소스를 소비하여 다른 워크로드에 영향을 줍니다.',
+    impactKo: '노이지 네이버(Noisy Neighbor) 문제, 노드 OOM 킬, 예측 불가능한 성능, 카스케이드 장애가 발생합니다.',
+    solutionKo: '모든 컨테이너에 CPU/메모리 requests와 limits를 설정하고, LimitRange와 ResourceQuota를 네임스페이스에 적용하세요.',
+    tags: ['kubernetes', 'container', 'resource-limits', 'noisy-neighbor'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(CIS_KUBERNETES, '5.2 - Pod Security Standards'),
+        withSection(K8S_DOCS, 'Managing Resources for Containers'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'AP-K8S-002',
+    type: 'antipattern',
+    name: 'Single Replica',
+    nameKo: '단일 레플리카',
+    severity: 'high',
+    detection: (spec: InfraSpec): boolean => {
+      // kubernetes exists but only 1 container
+      if (!hasNodeType(spec, 'kubernetes')) return false;
+      return countNodesByType(spec, 'container') === 1;
+    },
+    detectionDescriptionKo: 'Kubernetes 환경에서 컨테이너가 1개뿐인지 검사합니다.',
+    problemKo: '단일 레플리카로 운영하면 파드 재시작, 노드 장애, 배포 중 서비스 중단이 발생합니다.',
+    impactKo: '배포 시 다운타임, 파드 장애 시 서비스 중단, 롤링 업데이트 불가, SLA 미달이 발생합니다.',
+    solutionKo: '최소 2~3개의 레플리카를 유지하고, PodDisruptionBudget을 설정하여 가용성을 보장하세요.',
+    tags: ['kubernetes', 'container', 'single-replica', 'availability'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(K8S_DOCS, 'ReplicaSet - Running Multiple Replicas'),
+        withSection(CNCF_SECURITY, 'Workload Security'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'AP-K8S-003',
+    type: 'antipattern',
+    name: 'No Network Policy',
+    nameKo: '네트워크 정책 부재',
+    severity: 'high',
+    detection: (spec: InfraSpec): boolean => {
+      // kubernetes exists but no firewall (network policy indicator)
+      if (!hasNodeType(spec, 'kubernetes')) return false;
+      return !hasNodeType(spec, 'firewall');
+    },
+    detectionDescriptionKo: 'Kubernetes가 있지만 방화벽(네트워크 정책 지표)이 없는지 검사합니다.',
+    problemKo: 'NetworkPolicy 없이 K8s를 운영하면 모든 파드 간 무제한 통신이 가능해 횡적 이동 공격에 취약합니다.',
+    impactKo: '파드 간 무차별 접근, 침해된 파드로부터의 횡적 이동, 데이터 유출, 규정 위반이 발생합니다.',
+    solutionKo: 'Kubernetes NetworkPolicy를 적용하여 파드 간 통신을 최소 권한으로 제한하고, 방화벽으로 클러스터 경계를 보호하세요.',
+    tags: ['kubernetes', 'network-policy', 'firewall', 'lateral-movement'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(CIS_KUBERNETES, '5.2 - Pod Security Standards'),
+        withSection(CNCF_SECURITY, 'Runtime Security - Network Policies'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'AP-K8S-004',
+    type: 'antipattern',
+    name: 'No Registry Security',
+    nameKo: '레지스트리 보안 부재',
+    severity: 'medium',
+    detection: (spec: InfraSpec): boolean => {
+      // kubernetes + container but no iam (registry auth indicator)
+      if (!hasNodeType(spec, 'kubernetes')) return false;
+      if (!hasNodeType(spec, 'container')) return false;
+      return !hasNodeType(spec, 'iam');
+    },
+    detectionDescriptionKo: 'Kubernetes와 컨테이너가 있지만 IAM(레지스트리 인증 지표)이 없는지 검사합니다.',
+    problemKo: '컨테이너 레지스트리에 대한 보안 없이 운영하면 악성 이미지 배포, 이미지 변조, 공급망 공격에 취약합니다.',
+    impactKo: '악성 컨테이너 이미지 배포, 공급망 공격, 취약한 베이스 이미지 사용, 비인가 이미지 실행이 발생합니다.',
+    solutionKo: 'IAM으로 레지스트리 접근을 제어하고, 이미지 서명 검증과 취약점 스캔을 CI/CD 파이프라인에 통합하세요.',
+    tags: ['kubernetes', 'container', 'registry', 'supply-chain', 'iam'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(CNCF_SECURITY, 'Supply Chain Security'),
+        withSection(CIS_KUBERNETES, '5.2 - Pod Security Standards'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Authentication/Zero Trust Anti-patterns (AP-AUTH)
+// ---------------------------------------------------------------------------
+
+const authAntiPatterns: AntiPattern[] = [
+  {
+    id: 'AP-AUTH-001',
+    type: 'antipattern',
+    name: 'No MFA',
+    nameKo: 'MFA 없는 인증',
+    severity: 'critical',
+    detection: (spec: InfraSpec): boolean => {
+      // Has auth (sso or ldap-ad) but no MFA
+      if (!hasNodeType(spec, 'sso') && !hasNodeType(spec, 'ldap-ad')) return false;
+      return !hasNodeType(spec, 'mfa');
+    },
+    detectionDescriptionKo: 'SSO 또는 LDAP/AD가 있지만 MFA가 없는지 검사합니다.',
+    problemKo: 'MFA 없이 인증을 운영하면 비밀번호만으로 인증이 완료되어 크리덴셜 스터핑, 피싱 공격에 무방비입니다.',
+    impactKo: '계정 탈취, 권한 상승, 내부 시스템 무단 접근, 데이터 유출이 발생합니다.',
+    solutionKo: '모든 인증 시스템에 MFA를 필수 적용하고, FIDO2/WebAuthn 등 피싱 방지 인증을 도입하세요.',
+    tags: ['auth', 'mfa', 'credential-protection', 'critical'],
+    trust: {
+      confidence: 0.95,
+      sources: [
+        withSection(NIST_800_63B, 'Section 4.2 - AAL2 Requirements'),
+        withSection(NIST_800_207, 'Section 3 - Zero Trust Architecture Components'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'AP-AUTH-002',
+    type: 'antipattern',
+    name: 'No Internal Access Control',
+    nameKo: '접근 제어 없는 내부망',
+    severity: 'high',
+    detection: (spec: InfraSpec): boolean => {
+      // Has compute but relies only on perimeter (firewall) without internal auth
+      if (!hasNodeOfCategory(spec, COMPUTE_TYPES)) return false;
+      if (!hasNodeType(spec, 'firewall')) return false;
+      return !hasNodeOfCategory(spec, AUTH_TYPES);
+    },
+    detectionDescriptionKo: '컴퓨팅 노드와 방화벽이 있지만 인증 구성요소가 없는지 검사합니다.',
+    problemKo: '경계 보안(방화벽)만 의존하고 내부 접근 제어가 없으면 경계 돌파 시 내부 자원에 무제한 접근 가능합니다.',
+    impactKo: '횡적 이동 공격 용이, 내부자 위협 방어 불가, 제로 트러스트 원칙 위반이 발생합니다.',
+    solutionKo: '제로 트러스트 원칙에 따라 내부 서비스에도 인증/인가를 적용하고, 마이크로 세그먼테이션을 구현하세요.',
+    tags: ['auth', 'zero-trust', 'internal-security', 'lateral-movement'],
+    trust: {
+      confidence: 0.95,
+      sources: [
+        withSection(NIST_800_207, 'Section 2 - Zero Trust Basics'),
+        withSection(NIST_800_53, 'AC-3 - Access Enforcement'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'AP-AUTH-003',
+    type: 'antipattern',
+    name: 'No VPN Remote Access',
+    nameKo: 'VPN 없는 원격 접근',
+    severity: 'high',
+    detection: (spec: InfraSpec): boolean => {
+      // Has internet-facing services and auth but no VPN
+      if (!hasNodeType(spec, 'internet')) return false;
+      if (!hasNodeOfCategory(spec, COMPUTE_TYPES)) return false;
+      return !hasNodeType(spec, 'vpn-gateway');
+    },
+    detectionDescriptionKo: '인터넷과 컴퓨팅 노드가 있지만 VPN 게이트웨이가 없는지 검사합니다.',
+    problemKo: 'VPN 없이 인터넷에서 내부 시스템에 접근하면 통신이 암호화되지 않고 접근 제어가 불가능합니다.',
+    impactKo: '중간자 공격, 세션 하이재킹, 비인가 원격 접근, 데이터 유출이 발생합니다.',
+    solutionKo: 'VPN 게이트웨이를 배치하고, MFA와 결합하여 원격 접근을 보호하세요. ZTNA 도입도 고려하세요.',
+    tags: ['auth', 'vpn', 'remote-access', 'encryption'],
+    trust: {
+      confidence: 0.95,
+      sources: [
+        withSection(NIST_800_77, 'Section 3.2 - VPN Security Architecture'),
+        withSection(NIST_800_207, 'Section 3 - Zero Trust Access'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'AP-AUTH-004',
+    type: 'antipattern',
+    name: 'No Central Authentication',
+    nameKo: '중앙 인증 부재',
+    severity: 'medium',
+    detection: (spec: InfraSpec): boolean => {
+      // Multiple compute nodes but no SSO or LDAP/AD
+      if (spec.nodes.filter((n) => COMPUTE_TYPES.includes(n.type)).length < 2) return false;
+      return !hasNodeType(spec, 'sso') && !hasNodeType(spec, 'ldap-ad');
+    },
+    detectionDescriptionKo: '컴퓨팅 노드가 2개 이상이지만 SSO나 LDAP/AD가 없는지 검사합니다.',
+    problemKo: '중앙 인증 시스템 없이 각 서비스마다 개별 인증을 구현하면 일관된 보안 정책 적용이 불가능합니다.',
+    impactKo: '비밀번호 관리 복잡, 퇴사자 계정 정리 누락, 감사 추적 불가, 보안 정책 불일치가 발생합니다.',
+    solutionKo: 'LDAP/AD 기반 중앙 디렉터리를 구축하고, SSO를 도입하여 단일 인증으로 모든 서비스에 접근하도록 통합하세요.',
+    tags: ['auth', 'sso', 'ldap', 'centralized', 'identity-management'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(NIST_800_63B, 'Section 4 - Authenticator Assurance Levels'),
+        withSection(NIST_800_53, 'IA-2 - Identification and Authentication'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Combined registry
 // ---------------------------------------------------------------------------
 
@@ -920,13 +1334,92 @@ const telecomAntiPatterns: AntiPattern[] = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// SASE/SOC Anti-patterns (AP-SASE-001 ~ AP-SASE-003)
+// ---------------------------------------------------------------------------
+
+const saseAntiPatterns: AntiPattern[] = [
+  {
+    id: 'AP-SASE-001',
+    type: 'antipattern',
+    name: 'SASE without ZTNA',
+    nameKo: 'ZTNA 없는 SASE',
+    severity: 'high',
+    detection: (spec: InfraSpec) =>
+      hasNodeType(spec, 'sase-gateway' as InfraNodeType) &&
+      !hasNodeType(spec, 'ztna-broker' as InfraNodeType),
+    detectionDescriptionKo: 'SASE 게이트웨이가 있지만 ZTNA 브로커가 없는지 검사합니다.',
+    problemKo: 'SASE 없이 ZTNA를 구현하지 않으면 네트워크 수준 접근만 제어되고, 애플리케이션 수준의 제로 트러스트 접근 제어가 누락됩니다.',
+    impactKo: '과도한 네트워크 노출, 횡적 이동 공격 위험, 리모트 워커의 보안 취약점이 발생합니다.',
+    solutionKo: 'ZTNA 브로커를 추가하여 애플리케이션별 접근 제어를 구현하고, VPN 대신 ZTNA 기반 접근으로 전환하세요.',
+    tags: ['sase', 'ztna', 'zero-trust', 'access-control'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(NIST_800_207, 'Section 3 - Zero Trust Architecture Components')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'AP-SASE-002',
+    type: 'antipattern',
+    name: 'SIEM without SOAR',
+    nameKo: 'SOAR 없는 SIEM',
+    severity: 'medium',
+    detection: (spec: InfraSpec) =>
+      hasNodeType(spec, 'siem' as InfraNodeType) &&
+      !hasNodeType(spec, 'soar' as InfraNodeType),
+    detectionDescriptionKo: 'SIEM이 있지만 자동 대응을 위한 SOAR가 없는지 검사합니다.',
+    problemKo: 'SIEM만 운영하면 경보 피로(Alert Fatigue)가 발생하고, 수동 대응으로 인해 MTTR이 길어집니다.',
+    impactKo: '경보 피로로 인한 중요 이벤트 누락, 느린 사고 대응, 보안 인력 소진이 발생합니다.',
+    solutionKo: 'SOAR 플랫폼을 추가하여 반복적인 사고 대응을 자동화하고, 상위 10개 사고 유형에 대한 플레이북을 구성하세요.',
+    tags: ['siem', 'soar', 'incident-response', 'automation'],
+    trust: {
+      confidence: 0.80,
+      sources: [withSection(NIST_800_53, 'IR-4 - Incident Handling')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'AP-SASE-003',
+    type: 'antipattern',
+    name: 'VPN in Cloud-First Architecture',
+    nameKo: '클라우드 우선 환경에서의 VPN 사용',
+    severity: 'medium',
+    detection: (spec: InfraSpec) =>
+      hasNodeType(spec, 'vpn-gateway') &&
+      (hasNodeType(spec, 'aws-vpc') || hasNodeType(spec, 'azure-vnet') || hasNodeType(spec, 'gcp-network')) &&
+      !hasNodeType(spec, 'ztna-broker' as InfraNodeType) &&
+      !hasNodeType(spec, 'sase-gateway' as InfraNodeType),
+    detectionDescriptionKo: '클라우드 환경에서 ZTNA/SASE 없이 VPN만 사용하는지 검사합니다.',
+    problemKo: '클라우드 우선 환경에서 기존 VPN은 네트워크 전체에 접근을 허용하여 과도한 권한을 부여하고, 클라우드 네이티브 보안 모델과 맞지 않습니다.',
+    impactKo: '과도한 네트워크 접근 권한, 횡적 이동 위험, 성능 저하(헤어핀 라우팅), 확장성 제한이 발생합니다.',
+    solutionKo: 'ZTNA 브로커 또는 SASE 게이트웨이를 도입하여 애플리케이션 수준의 접근 제어로 전환하세요.',
+    tags: ['vpn', 'cloud', 'ztna', 'sase', 'modernization'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(NIST_800_207, 'Section 4 - Deployment Models')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+];
+
 /** All verified anti-patterns (frozen, readonly) */
 export const ANTI_PATTERNS: readonly AntiPattern[] = Object.freeze([
   ...securityAntiPatterns,
   ...availabilityAntiPatterns,
   ...performanceAntiPatterns,
   ...architectureAntiPatterns,
+  ...cloudAntiPatterns,
+  ...k8sAntiPatterns,
+  ...authAntiPatterns,
   ...telecomAntiPatterns,
+  ...saseAntiPatterns,
 ]);
 
 /** Public alias used by the knowledge graph index */

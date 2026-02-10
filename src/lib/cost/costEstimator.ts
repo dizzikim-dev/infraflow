@@ -75,6 +75,36 @@ const BASE_COSTS: Record<InfraNodeType, {
     gcp: { service: 'Cloud DLP', cost: 75, tier: 'Standard' },
     onprem: { service: 'DLP Solution', cost: 500, tier: 'Estimated' },
   },
+  'sase-gateway': {
+    aws: { service: 'AWS Verified Access + CloudWAN', cost: 800, tier: 'Standard' },
+    azure: { service: 'Azure SASE', cost: 750, tier: 'Standard' },
+    gcp: { service: 'BeyondCorp Enterprise', cost: 700, tier: 'Standard' },
+    onprem: { service: 'SASE Gateway Appliance', cost: 1200, tier: 'Estimated' },
+  },
+  'ztna-broker': {
+    aws: { service: 'AWS Verified Access', cost: 300, tier: 'Standard' },
+    azure: { service: 'Azure AD App Proxy', cost: 250, tier: 'Standard' },
+    gcp: { service: 'BeyondCorp', cost: 200, tier: 'Standard' },
+    onprem: { service: 'ZTNA Broker Solution', cost: 600, tier: 'Estimated' },
+  },
+  casb: {
+    aws: { service: 'AWS CloudTrail + Macie', cost: 200, tier: 'Standard' },
+    azure: { service: 'Microsoft Defender for Cloud Apps', cost: 350, tier: 'Standard' },
+    gcp: { service: 'Google Cloud SCC', cost: 250, tier: 'Standard' },
+    onprem: { service: 'CASB Solution', cost: 800, tier: 'Estimated' },
+  },
+  siem: {
+    aws: { service: 'Amazon Security Lake + OpenSearch', cost: 500, tier: 'Standard' },
+    azure: { service: 'Microsoft Sentinel', cost: 450, tier: 'Standard' },
+    gcp: { service: 'Chronicle SIEM', cost: 400, tier: 'Standard' },
+    onprem: { service: 'SIEM Solution', cost: 1000, tier: 'Estimated' },
+  },
+  soar: {
+    aws: { service: 'AWS Security Hub + Step Functions', cost: 300, tier: 'Standard' },
+    azure: { service: 'Microsoft Sentinel SOAR', cost: 350, tier: 'Standard' },
+    gcp: { service: 'Chronicle SOAR', cost: 300, tier: 'Standard' },
+    onprem: { service: 'SOAR Platform', cost: 900, tier: 'Estimated' },
+  },
 
   // Network
   router: {
@@ -382,7 +412,7 @@ function detectProvider(nodeType: InfraNodeType): CloudProvider {
  */
 function getCategory(nodeType: InfraNodeType): string {
   const categories: Record<string, string[]> = {
-    security: ['firewall', 'waf', 'ids-ips', 'vpn-gateway', 'nac', 'dlp'],
+    security: ['firewall', 'waf', 'ids-ips', 'vpn-gateway', 'nac', 'dlp', 'sase-gateway', 'ztna-broker', 'casb', 'siem', 'soar'],
     network: ['router', 'switch-l2', 'switch-l3', 'load-balancer', 'sd-wan', 'dns', 'cdn'],
     compute: ['web-server', 'app-server', 'db-server', 'container', 'vm', 'kubernetes'],
     cloud: ['aws-vpc', 'azure-vnet', 'gcp-network', 'private-cloud'],

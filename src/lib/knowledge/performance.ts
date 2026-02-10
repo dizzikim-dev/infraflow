@@ -25,12 +25,15 @@ import {
   NIST_800_94,
   NIST_800_123,
   NIST_800_144,
+  NIST_800_145,
   NIST_800_125,
   CIS_V8,
   CIS_V8_12,
   AWS_WAF_PERF,
   AWS_WAF_REL,
   AWS_WAF_SEC,
+  AZURE_CAF,
+  GCP_ARCH_FRAMEWORK,
   OWASP_TOP10,
   SANS_CIS_TOP20,
   CNCF_SECURITY,
@@ -40,6 +43,8 @@ import {
   THREEGPP_23002,
   MEF_4,
   ITU_G984,
+  NIST_800_207,
+  CIS_V8_13,
 } from './sourceRegistry';
 
 // ---------------------------------------------------------------------------
@@ -1259,6 +1264,257 @@ const TELECOM_PROFILES: PerformanceProfile[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Cloud Performance Profiles — PERF-CLD
+// ---------------------------------------------------------------------------
+
+const CLOUD_PROFILES: PerformanceProfile[] = [
+  {
+    id: 'PERF-CLD-001',
+    type: 'performance',
+    component: 'aws-vpc',
+    nameKo: 'AWS VPC 성능 프로파일',
+    latencyRange: { min: 0.5, max: 5, unit: 'ms' },
+    throughputRange: { typical: '10~25 Gbps', max: '100 Gbps' },
+    scalingStrategy: 'horizontal',
+    bottleneckIndicators: [
+      'NAT Gateway throughput limits under high outbound traffic',
+      'VPC peering bandwidth saturation between regions',
+      'Security group rule evaluation overhead with 200+ rules',
+    ],
+    bottleneckIndicatorsKo: [
+      '높은 아웃바운드 트래픽 시 NAT 게이트웨이 처리량 한계',
+      '리전 간 VPC 피어링 대역폭 포화',
+      '200개 이상 보안 그룹 규칙 평가 오버헤드',
+    ],
+    optimizationTipsKo: [
+      '각 AZ에 NAT 게이트웨이를 분산 배치하여 처리량을 분산합니다',
+      'AWS PrivateLink를 사용하여 VPC 피어링 대역폭 부하를 줄입니다',
+      '보안 그룹 규칙을 최적화하고 프리픽스 리스트를 활용합니다',
+    ],
+    tags: ['cloud', 'aws', 'vpc', 'performance'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(AWS_WAF_PERF, 'VPC Networking Performance'),
+        withSection(NIST_800_145, 'Cloud Computing Characteristics'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'PERF-CLD-002',
+    type: 'performance',
+    component: 'azure-vnet',
+    nameKo: 'Azure VNet 성능 프로파일',
+    latencyRange: { min: 0.5, max: 5, unit: 'ms' },
+    throughputRange: { typical: '10~30 Gbps', max: '100 Gbps' },
+    scalingStrategy: 'horizontal',
+    bottleneckIndicators: [
+      'Azure Firewall throughput limits during TLS inspection',
+      'VNet gateway SKU bandwidth cap for hybrid connectivity',
+      'NSG flow log processing delay under high traffic volume',
+    ],
+    bottleneckIndicatorsKo: [
+      'TLS 검사 시 Azure Firewall 처리량 한계',
+      '하이브리드 연결 시 VNet 게이트웨이 SKU 대역폭 상한',
+      '고트래픽 시 NSG 흐름 로그 처리 지연',
+    ],
+    optimizationTipsKo: [
+      'Azure Firewall Premium SKU로 업그레이드하여 처리량을 확보합니다',
+      'ExpressRoute를 VPN 대신 사용하여 일관된 대역폭을 확보합니다',
+      'NSG 규칙을 간소화하고 ASG(Application Security Group)를 활용합니다',
+    ],
+    tags: ['cloud', 'azure', 'vnet', 'performance'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(AZURE_CAF, 'Performance - Network Optimization'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'PERF-CLD-003',
+    type: 'performance',
+    component: 'gcp-network',
+    nameKo: 'GCP Network 성능 프로파일',
+    latencyRange: { min: 0.3, max: 3, unit: 'ms' },
+    throughputRange: { typical: '10~32 Gbps', max: '100 Gbps' },
+    scalingStrategy: 'horizontal',
+    bottleneckIndicators: [
+      'Cloud NAT port allocation exhaustion for high-connection workloads',
+      'Shared VPC cross-project routing complexity increasing latency',
+      'Firewall rule evaluation overhead in large-scale deployments',
+    ],
+    bottleneckIndicatorsKo: [
+      '고연결 워크로드에서 Cloud NAT 포트 할당 고갈',
+      '공유 VPC 교차 프로젝트 라우팅 복잡성으로 인한 지연 증가',
+      '대규모 배포에서 방화벽 규칙 평가 오버헤드',
+    ],
+    optimizationTipsKo: [
+      'Cloud NAT의 최소 포트 수를 워크로드에 맞게 조정합니다',
+      'VPC 서비스 컨트롤을 사용하여 보안과 성능을 동시에 최적화합니다',
+      '계층적 방화벽 정책을 사용하여 규칙 평가를 최적화합니다',
+    ],
+    tags: ['cloud', 'gcp', 'network', 'performance'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(GCP_ARCH_FRAMEWORK, 'Performance - Network'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'PERF-CLD-004',
+    type: 'performance',
+    component: 'private-cloud',
+    nameKo: '프라이빗 클라우드 성능 프로파일',
+    latencyRange: { min: 0.1, max: 2, unit: 'ms' },
+    throughputRange: { typical: '10~40 Gbps', max: '100 Gbps' },
+    scalingStrategy: 'both',
+    bottleneckIndicators: [
+      'Hypervisor CPU overcommit ratio exceeding 4:1 causing contention',
+      'Storage I/O saturation under mixed read/write workloads',
+      'Internal network bandwidth saturation during VM live migration',
+    ],
+    bottleneckIndicatorsKo: [
+      '하이퍼바이저 CPU 오버커밋 비율 4:1 초과로 인한 경합',
+      '혼합 읽기/쓰기 워크로드에서 스토리지 I/O 포화',
+      'VM 라이브 마이그레이션 중 내부 네트워크 대역폭 포화',
+    ],
+    optimizationTipsKo: [
+      'CPU 오버커밋 비율을 워크로드 특성에 맞게 조정합니다 (일반 3:1, 고성능 1:1)',
+      '올플래시 스토리지로 I/O 성능을 확보하고 스토리지 QoS를 적용합니다',
+      '라이브 마이그레이션 전용 네트워크를 분리합니다',
+    ],
+    tags: ['cloud', 'private-cloud', 'performance', 'hypervisor'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(NIST_800_125, 'Section 4 - Virtualization Performance'),
+        withSection(NIST_800_144, 'Section 3 - Cloud Computing Characteristics'),
+      ],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
+// SASE/SOC Performance — PERF-SASE
+// ---------------------------------------------------------------------------
+
+const SASE_PROFILES: PerformanceProfile[] = [
+  {
+    id: 'PERF-SASE-001',
+    type: 'performance',
+    component: 'sase-gateway' as InfraNodeType,
+    nameKo: 'SASE 게이트웨이 성능 프로파일',
+    latencyRange: { min: 5, max: 50, unit: 'ms' },
+    throughputRange: { typical: '1~10 Gbps', max: '100 Gbps (global aggregate)' },
+    scalingStrategy: 'horizontal',
+    bottleneckIndicators: [
+      'SSL/TLS inspection throughput saturation',
+      'PoP capacity utilization above 80%',
+      'Increased latency from distant PoP routing',
+    ],
+    bottleneckIndicatorsKo: [
+      'SSL/TLS 검사 처리량 포화',
+      'PoP 용량 사용률 80% 초과',
+      '원거리 PoP 라우팅으로 인한 지연 증가',
+    ],
+    optimizationTipsKo: [
+      '지역별 PoP 활용으로 최근접 접속점 확보',
+      'SSL 검사 예외 규칙으로 신뢰 트래픽 바이패스',
+      'SD-WAN QoS 정책으로 중요 트래픽 우선 처리',
+    ],
+    tags: ['sase', 'gateway', 'ssl-inspection', 'pop'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(NIST_800_207, 'Section 4 - Deployment Models')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'PERF-SASE-002',
+    type: 'performance',
+    component: 'siem' as InfraNodeType,
+    nameKo: 'SIEM 성능 프로파일',
+    latencyRange: { min: 100, max: 5000, unit: 'ms' },
+    throughputRange: { typical: '10K~100K EPS', max: '1M EPS (enterprise)' },
+    scalingStrategy: 'horizontal',
+    bottleneckIndicators: [
+      'Log ingestion queue depth increasing',
+      'Search/query response time exceeding 30 seconds',
+      'Storage IOPS saturation',
+      'Correlation rule processing lag',
+    ],
+    bottleneckIndicatorsKo: [
+      '로그 수집 큐 깊이 증가',
+      '검색/쿼리 응답 시간 30초 초과',
+      '스토리지 IOPS 포화',
+      '상관분석 규칙 처리 지연',
+    ],
+    optimizationTipsKo: [
+      '핫/웜/콜드 스토리지 티어링으로 비용 최적화',
+      '로그 사전 필터링으로 불필요한 이벤트 제거',
+      '인덱싱 전략 최적화로 검색 성능 개선',
+      '상관분석 규칙 주기적 튜닝으로 False Positive 감소',
+    ],
+    tags: ['siem', 'log-ingestion', 'correlation', 'monitoring'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(CIS_V8_13, 'Network Monitoring and Defense')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+  {
+    id: 'PERF-SASE-003',
+    type: 'performance',
+    component: 'soar' as InfraNodeType,
+    nameKo: 'SOAR 성능 프로파일',
+    latencyRange: { min: 500, max: 30000, unit: 'ms' },
+    throughputRange: { typical: '100~1K playbook runs/hour', max: '10K playbook runs/hour' },
+    scalingStrategy: 'vertical',
+    bottleneckIndicators: [
+      'Playbook execution queue backlog',
+      'API rate limits from integrated tools',
+      'Memory exhaustion from parallel playbook runs',
+    ],
+    bottleneckIndicatorsKo: [
+      '플레이북 실행 큐 백로그',
+      '연동 도구의 API 속도 제한',
+      '병렬 플레이북 실행으로 인한 메모리 고갈',
+    ],
+    optimizationTipsKo: [
+      '플레이북 동시 실행 수 제한으로 리소스 보호',
+      '외부 도구 API 호출 캐싱 및 배치 처리',
+      '단순 반복 플레이북과 복잡 조사 플레이북 분리 운영',
+    ],
+    tags: ['soar', 'playbook', 'automation', 'incident-response'],
+    trust: {
+      confidence: 0.80,
+      sources: [withSection(NIST_800_53, 'IR-4 - Incident Handling')],
+      upvotes: 0,
+      downvotes: 0,
+      lastReviewedAt: '2026-02-10',
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Aggregated export
 // ---------------------------------------------------------------------------
 
@@ -1269,6 +1525,8 @@ export const PERFORMANCE_PROFILES: readonly PerformanceProfile[] = Object.freeze
   ...STORAGE_PROFILES,
   ...AUTH_PROFILES,
   ...TELECOM_PROFILES,
+  ...CLOUD_PROFILES,
+  ...SASE_PROFILES,
 ]);
 
 /** Alias for convenience */

@@ -29,3 +29,13 @@ export {
   type WhatIfChange,
   type WhatIfImpact,
 } from './complianceChecker';
+
+export {
+  getIndustryPreset,
+  getAllIndustryPresets,
+  analyzeComplianceGap,
+  type IndustryType,
+  type IndustryPreset,
+  type IndustryComplianceReport,
+  type ComplianceGap,
+} from './industryCompliance';

@@ -80,3 +80,32 @@ export {
   enrichContext,
   buildKnowledgePromptSection,
 } from './contextEnricher';
+
+// Vulnerabilities
+export {
+  VULNERABILITIES,
+  getVulnerabilitiesForType,
+  getCriticalVulnerabilities,
+  getVulnerabilitiesForSpec,
+  getVulnerabilityStats,
+} from './vulnerabilities';
+export type { VulnerabilityEntry as VulnEntry, CVESeverity } from './vulnerabilities';
+
+// Cloud Catalog
+export {
+  CLOUD_SERVICES,
+  getCloudServices,
+  getDeprecationWarnings,
+  compareServices,
+  getAlternatives,
+} from './cloudCatalog';
+
+// Benchmarks
+export {
+  TRAFFIC_PROFILES,
+  SIZING_MATRIX,
+  getTrafficProfiles,
+  recommendSizing,
+  estimateCapacity,
+  findBottlenecks,
+} from './benchmarks';

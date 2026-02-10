@@ -151,6 +151,11 @@ resource "aws_vpn_gateway" "${sanitizeId(node.id)}" {
   },
   'nac': (node) => `# NAC: ${node.label} - Network Access Control configuration`,
   'dlp': (node) => `# DLP: ${node.label} - Data Loss Prevention configuration`,
+  'sase-gateway': (node) => `# SASE Gateway: ${node.label} - Secure Access Service Edge gateway`,
+  'ztna-broker': (node) => `# ZTNA Broker: ${node.label} - Zero Trust Network Access broker`,
+  'casb': (node) => `# CASB: ${node.label} - Cloud Access Security Broker`,
+  'siem': (node) => `# SIEM: ${node.label} - Security Information and Event Management`,
+  'soar': (node) => `# SOAR: ${node.label} - Security Orchestration, Automation and Response`,
 
   // Network
   'router': (node, provider) => {

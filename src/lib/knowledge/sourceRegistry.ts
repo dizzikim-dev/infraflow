@@ -256,6 +256,85 @@ export const ETSI_NFV_MAN = vendor('ETSI GS NFV-MAN 001: Network Functions Virtu
 export const KT_5G_ARCH = vendor('KT 5G Network Architecture Reference (Netmanias)', 'https://www.netmanias.com/en/post/reports/14808/5g-kt-kt-5g-network-architecture');
 
 // ---------------------------------------------------------------------------
+// Cloud & Container Standards
+// ---------------------------------------------------------------------------
+
+export const AWS_WAF_OPS = vendor(
+  'AWS Well-Architected Framework - Operational Excellence Pillar',
+  'https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/',
+);
+
+export const GCP_ARCH_FRAMEWORK = vendor(
+  'Google Cloud Architecture Framework',
+  'https://cloud.google.com/architecture/framework',
+);
+
+export const NIST_800_145 = nist(
+  'SP 800-145',
+  'The NIST Definition of Cloud Computing',
+  'https://csrc.nist.gov/pubs/sp/800/145/final',
+  '2011-09',
+);
+
+export const CIS_KUBERNETES = cis(
+  'CIS Kubernetes Benchmark v1.8',
+  'https://www.cisecurity.org/benchmark/kubernetes',
+  '5.2 - Pod Security Standards',
+);
+
+export const K8S_DOCS = vendor(
+  'Kubernetes Official Documentation - Security Best Practices',
+  'https://kubernetes.io/docs/concepts/security/',
+);
+
+export const NIST_800_207 = nist(
+  'SP 800-207',
+  'Zero Trust Architecture',
+  'https://csrc.nist.gov/pubs/sp/800/207/final',
+  '2020-08',
+);
+
+// ---------------------------------------------------------------------------
+// Vulnerability / CVE Sources
+// ---------------------------------------------------------------------------
+
+export const NIST_NVD = nist(
+  'NVD',
+  'National Vulnerability Database',
+  'https://nvd.nist.gov/',
+  '2024-01',
+);
+
+export const MITRE_CVE = industry(
+  'MITRE CVE Program',
+  'https://cve.mitre.org/',
+);
+
+export const GITHUB_ADVISORY = vendor(
+  'GitHub Security Advisories',
+  'https://github.com/advisories',
+);
+
+// ---------------------------------------------------------------------------
+// Cloud Service Catalog Sources
+// ---------------------------------------------------------------------------
+
+export const AWS_SERVICE_CATALOG = vendor(
+  'AWS Service Catalog & Pricing',
+  'https://aws.amazon.com/products/',
+);
+
+export const AZURE_SERVICE_CATALOG = vendor(
+  'Azure Service Catalog & Pricing',
+  'https://azure.microsoft.com/products/',
+);
+
+export const GCP_SERVICE_CATALOG = vendor(
+  'Google Cloud Service Catalog & Pricing',
+  'https://cloud.google.com/products',
+);
+
+// ---------------------------------------------------------------------------
 // Utility: get source with section override
 // ---------------------------------------------------------------------------
 
@@ -270,14 +349,18 @@ export function withSection(source: KnowledgeSource, section: string): Knowledge
 export const ALL_SOURCES: KnowledgeSource[] = [
   NIST_800_41, NIST_800_44, NIST_800_53, NIST_800_63B, NIST_800_77,
   NIST_800_81, NIST_800_94, NIST_800_123, NIST_800_144, NIST_800_125,
+  NIST_800_145, NIST_800_207,
   RFC_7230, RFC_8446, RFC_1034, RFC_2818, RFC_7540,
   RFC_3031, RFC_4364, RFC_5036, RFC_7348, RFC_4381,
-  CIS_V8, CIS_V8_12, CIS_V8_13,
+  CIS_V8, CIS_V8_12, CIS_V8_13, CIS_KUBERNETES,
   OWASP_TOP10, OWASP_WSTG, OWASP_API_TOP10,
-  AWS_WAF_REL, AWS_WAF_SEC, AWS_WAF_PERF, AZURE_CAF,
+  AWS_WAF_REL, AWS_WAF_SEC, AWS_WAF_PERF, AWS_WAF_OPS, AZURE_CAF,
+  GCP_ARCH_FRAMEWORK, K8S_DOCS,
   SANS_CIS_TOP20, CNCF_SECURITY, SANS_FIREWALL,
   ITU_G984, ITU_Y3183, THREEGPP_23002, THREEGPP_38401,
   MEF_4, ETSI_NFV_MAN, KT_5G_ARCH,
+  NIST_NVD, MITRE_CVE, GITHUB_ADVISORY,
+  AWS_SERVICE_CATALOG, AZURE_SERVICE_CATALOG, GCP_SERVICE_CATALOG,
 ];
 
 /** Validate that a source type maps to a known confidence level */

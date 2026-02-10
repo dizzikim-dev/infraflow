@@ -36,6 +36,11 @@ export const nodeTypePatterns: NodeTypePattern[] = [
   { pattern: /vpn|가상사설망/i, type: 'vpn-gateway', label: 'VPN Gateway', labelKo: 'VPN 게이트웨이' },
   { pattern: /nac|네트워크.*접근.*제어/i, type: 'nac', label: 'NAC', labelKo: 'NAC' },
   { pattern: /dlp|데이터.*유출.*방지/i, type: 'dlp', label: 'DLP', labelKo: 'DLP' },
+  { pattern: /sase.*gateway|sase.*게이트웨이|sase\s*gw/i, type: 'sase-gateway', label: 'SASE Gateway', labelKo: 'SASE 게이트웨이' },
+  { pattern: /ztna|zero\s*trust\s*network\s*access|제로\s*트러스트\s*접근/i, type: 'ztna-broker', label: 'ZTNA Broker', labelKo: 'ZTNA 브로커' },
+  { pattern: /casb|cloud\s*access\s*security/i, type: 'casb', label: 'CASB', labelKo: 'CASB' },
+  { pattern: /siem(?!\w)|보안\s*정보.*관리|보안.*이벤트.*관리/i, type: 'siem', label: 'SIEM', labelKo: 'SIEM' },
+  { pattern: /soar(?!\w)|보안.*자동화.*대응|보안.*오케스트레이션/i, type: 'soar', label: 'SOAR', labelKo: 'SOAR' },
 
   // Network
   { pattern: /cdn|content.*delivery/i, type: 'cdn', label: 'CDN', labelKo: 'CDN' },

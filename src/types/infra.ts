@@ -18,7 +18,12 @@ export type SecurityNodeType =
   | 'ids-ips'
   | 'vpn-gateway'
   | 'nac'
-  | 'dlp';
+  | 'dlp'
+  | 'sase-gateway'     // SASE 게이트웨이
+  | 'ztna-broker'      // ZTNA 브로커
+  | 'casb'             // Cloud Access Security Broker
+  | 'siem'             // Security Information & Event Management
+  | 'soar';            // Security Orchestration, Automation & Response
 
 // Network Equipment
 export type NetworkNodeType =

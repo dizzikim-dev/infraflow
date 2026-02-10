@@ -27,6 +27,8 @@ const categoryColors: Record<string, { bg: string; border: string; text: string 
   cloud: { bg: 'bg-purple-500/10', border: 'border-purple-500/30', text: 'text-purple-400' },
   storage: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400' },
   auth: { bg: 'bg-cyan-500/10', border: 'border-cyan-500/30', text: 'text-cyan-400' },
+  telecom: { bg: 'bg-teal-500/10', border: 'border-teal-500/30', text: 'text-teal-400' },
+  wan: { bg: 'bg-indigo-500/10', border: 'border-indigo-500/30', text: 'text-indigo-400' },
   external: { bg: 'bg-zinc-500/10', border: 'border-zinc-500/30', text: 'text-zinc-400' },
 };
 

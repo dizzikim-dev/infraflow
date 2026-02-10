@@ -22,7 +22,9 @@ import {
   NIST_800_94,
   NIST_800_123,
   NIST_800_144,
+  NIST_800_145,
   NIST_800_125,
+  NIST_800_207,
   RFC_7230,
   RFC_7540,
   RFC_3031,
@@ -30,12 +32,15 @@ import {
   CIS_V8,
   CIS_V8_12,
   CIS_V8_13,
+  CIS_KUBERNETES,
   OWASP_TOP10,
   OWASP_API_TOP10,
   AWS_WAF_REL,
   AWS_WAF_SEC,
   AWS_WAF_PERF,
   AZURE_CAF,
+  GCP_ARCH_FRAMEWORK,
+  K8S_DOCS,
   CNCF_SECURITY,
   SANS_CIS_TOP20,
   SANS_FIREWALL,
@@ -1221,12 +1226,410 @@ const telecomPatterns: ArchitecturePattern[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Kubernetes Patterns (PAT-K8S-001 ~ PAT-K8S-002)
+// ---------------------------------------------------------------------------
+
+const k8sPatterns: ArchitecturePattern[] = [
+  {
+    id: 'PAT-K8S-001',
+    type: 'pattern',
+    name: 'Service Mesh',
+    nameKo: '서비스 메시 아키텍처',
+    description:
+      'A dedicated infrastructure layer for managing service-to-service communication using sidecar proxies, providing observability, traffic management, and security for microservices.',
+    descriptionKo:
+      '사이드카 프록시를 사용하여 서비스 간 통신을 관리하는 전용 인프라 계층으로, 마이크로서비스에 관찰성, 트래픽 관리, 보안을 제공합니다.',
+    requiredComponents: [
+      { type: 'kubernetes', minCount: 1 },
+      { type: 'container', minCount: 2 },
+      { type: 'load-balancer', minCount: 1 },
+    ],
+    optionalComponents: [
+      { type: 'dns', benefit: 'Service discovery and name resolution', benefitKo: '서비스 디스커버리 및 이름 해석' },
+      { type: 'cache', benefit: 'Distributed caching for microservices', benefitKo: '마이크로서비스용 분산 캐싱' },
+      { type: 'iam', benefit: 'mTLS certificate management and RBAC', benefitKo: 'mTLS 인증서 관리 및 RBAC' },
+      { type: 'ids-ips', benefit: 'Network-level threat detection', benefitKo: '네트워크 수준 위협 탐지' },
+    ],
+    scalability: 'auto',
+    complexity: 4,
+    bestForKo: [
+      '대규모 마이크로서비스 아키텍처 (20+ 서비스)',
+      '서비스 간 통신 보안이 중요한 환경',
+      '트래픽 라우팅과 A/B 테스트가 필요한 시스템',
+      '분산 추적과 관찰성이 필요한 환경',
+    ],
+    notSuitableForKo: [
+      '소규모 모놀리식 애플리케이션',
+      '5개 미만의 마이크로서비스',
+      '사이드카 오버헤드를 감당할 수 없는 저사양 환경',
+    ],
+    evolvesTo: [],
+    evolvesFrom: ['PAT-006'],
+    tags: ['kubernetes', 'service-mesh', 'microservices', 'istio', 'envoy'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(CNCF_SECURITY, 'Service Mesh Architecture'),
+        withSection(K8S_DOCS, 'Service Mesh'),
+      ],
+      lastReviewedAt: '2026-02-10',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'PAT-K8S-002',
+    type: 'pattern',
+    name: 'GitOps CI/CD',
+    nameKo: 'GitOps CI/CD 파이프라인',
+    description:
+      'Infrastructure and application deployment managed through Git as single source of truth, with automated reconciliation of desired state in Kubernetes clusters.',
+    descriptionKo:
+      'Git을 단일 진실 소스(SSoT)로 사용하여 인프라와 애플리케이션 배포를 관리하고, Kubernetes 클러스터의 원하는 상태를 자동으로 조정합니다.',
+    requiredComponents: [
+      { type: 'kubernetes', minCount: 1 },
+      { type: 'container', minCount: 1 },
+    ],
+    optionalComponents: [
+      { type: 'load-balancer', benefit: 'Blue-green and canary deployment traffic routing', benefitKo: '블루-그린 및 카나리 배포 트래픽 라우팅' },
+      { type: 'iam', benefit: 'CI/CD pipeline authentication and authorization', benefitKo: 'CI/CD 파이프라인 인증 및 인가' },
+      { type: 'firewall', benefit: 'Cluster network policy enforcement', benefitKo: '클러스터 네트워크 정책 적용' },
+      { type: 'dns', benefit: 'External DNS for dynamic endpoint management', benefitKo: '동적 엔드포인트 관리를 위한 External DNS' },
+    ],
+    scalability: 'auto',
+    complexity: 3,
+    bestForKo: [
+      '빈번한 배포가 필요한 애플리케이션',
+      '멀티 클러스터 관리 환경',
+      '감사 추적과 롤백이 중요한 시스템',
+      'DevOps 성숙도가 높은 조직',
+    ],
+    notSuitableForKo: [
+      'Git 기반 워크플로우에 익숙하지 않은 팀',
+      '단일 서버 배포 환경',
+      '수동 배포 프로세스가 필수인 규정 환경',
+    ],
+    evolvesTo: [],
+    evolvesFrom: ['PAT-007'],
+    tags: ['kubernetes', 'gitops', 'cicd', 'argocd', 'flux'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(CNCF_SECURITY, 'Supply Chain Security - GitOps'),
+        withSection(CIS_KUBERNETES, '5.2 - Pod Security Standards'),
+      ],
+      lastReviewedAt: '2026-02-10',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'PAT-K8S-003',
+    type: 'pattern',
+    name: 'Blue-Green / Canary Deployment',
+    nameKo: '블루-그린 / 카나리 배포',
+    description:
+      'Deployment strategy that maintains two identical production environments (Blue-Green) or gradually shifts traffic to a new version (Canary), enabling zero-downtime releases and instant rollbacks.',
+    descriptionKo:
+      '두 개의 동일한 운영 환경을 유지(블루-그린)하거나, 새 버전으로 트래픽을 점진적으로 이동(카나리)하여 무중단 배포와 즉시 롤백을 가능하게 하는 배포 전략입니다.',
+    requiredComponents: [
+      { type: 'kubernetes', minCount: 1 },
+      { type: 'container', minCount: 2 },
+      { type: 'load-balancer', minCount: 1 },
+    ],
+    optionalComponents: [
+      { type: 'dns', benefit: 'Weighted DNS routing for traffic splitting', benefitKo: '가중치 DNS 라우팅으로 트래픽 분할' },
+      { type: 'iam', benefit: 'Deployment pipeline authorization', benefitKo: '배포 파이프라인 인가' },
+      { type: 'cache', benefit: 'Session affinity during migration', benefitKo: '마이그레이션 중 세션 친화성' },
+      { type: 'ids-ips', benefit: 'Monitor for anomalies during rollout', benefitKo: '롤아웃 중 이상 징후 모니터링' },
+    ],
+    scalability: 'auto',
+    complexity: 3,
+    bestForKo: [
+      '무중단 배포가 필수인 프로덕션 서비스',
+      '새 버전의 점진적 검증이 필요한 환경',
+      'SLA 99.9% 이상 서비스',
+      'A/B 테스트와 배포를 결합하려는 팀',
+    ],
+    notSuitableForKo: [
+      '단일 인스턴스로 충분한 개발/스테이징 환경',
+      '데이터베이스 스키마 변경이 빈번한 시스템 (별도 전략 필요)',
+      '리소스 제약이 있는 환경 (2배 인프라 필요)',
+    ],
+    evolvesTo: [],
+    evolvesFrom: ['PAT-K8S-002'],
+    tags: ['kubernetes', 'blue-green', 'canary', 'zero-downtime', 'deployment'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(K8S_DOCS, 'Deployment Strategies'),
+        withSection(CNCF_SECURITY, 'Supply Chain Security - Progressive Delivery'),
+      ],
+      lastReviewedAt: '2026-02-10',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Security Patterns Extension (PAT-SEC-016 ~ PAT-SEC-018)
+// ---------------------------------------------------------------------------
+
+const securityExtPatterns: ArchitecturePattern[] = [
+  {
+    id: 'PAT-SEC-016',
+    type: 'pattern',
+    name: 'Zero Trust Network Access',
+    nameKo: '제로 트러스트 네트워크 접근',
+    description:
+      'Security architecture that eliminates implicit trust, requiring continuous verification of every user, device, and connection regardless of network location.',
+    descriptionKo:
+      '암묵적 신뢰를 제거하고, 네트워크 위치와 관계없이 모든 사용자, 디바이스, 연결에 대해 지속적 검증을 요구하는 보안 아키텍처입니다.',
+    requiredComponents: [
+      { type: 'firewall', minCount: 1 },
+      { type: 'iam', minCount: 1 },
+      { type: 'mfa', minCount: 1 },
+    ],
+    optionalComponents: [
+      { type: 'sso', benefit: 'Centralized identity verification', benefitKo: '중앙 집중 ID 검증' },
+      { type: 'nac', benefit: 'Device posture assessment and compliance', benefitKo: '디바이스 상태 평가 및 컴플라이언스' },
+      { type: 'ids-ips', benefit: 'Continuous threat monitoring and micro-segmentation', benefitKo: '지속적 위협 모니터링 및 마이크로 세그먼테이션' },
+      { type: 'vpn-gateway', benefit: 'Encrypted remote access as transitional component', benefitKo: '전환기 구성요소로서의 암호화된 원격 접근' },
+    ],
+    scalability: 'high',
+    complexity: 4,
+    bestForKo: [
+      '원격/하이브리드 근무 환경',
+      '클라우드 네이티브 인프라',
+      '높은 보안 요구사항의 금융/의료 조직',
+      '멀티 클라우드 환경',
+    ],
+    notSuitableForKo: [
+      '인증 인프라가 전혀 없는 초기 단계',
+      '레거시 애플리케이션만 운영하는 환경',
+      '보안 팀이 없는 소규모 조직',
+    ],
+    evolvesTo: [],
+    evolvesFrom: ['PAT-012', 'PAT-013'],
+    tags: ['security', 'zero-trust', 'ztna', 'identity', 'micro-segmentation'],
+    trust: {
+      confidence: 0.95,
+      sources: [
+        withSection(NIST_800_207, 'Section 2 - Zero Trust Basics'),
+        withSection(NIST_800_207, 'Section 3 - Zero Trust Architecture Components'),
+      ],
+      lastReviewedAt: '2026-02-10',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'PAT-SEC-017',
+    type: 'pattern',
+    name: 'SASE Architecture',
+    nameKo: 'SASE 아키텍처',
+    description:
+      'Secure Access Service Edge combines network security (FWaaS, SWG, CASB) with WAN capabilities (SD-WAN) delivered as a cloud service for distributed enterprise environments.',
+    descriptionKo:
+      'SASE는 네트워크 보안(FWaaS, SWG, CASB)과 WAN 기능(SD-WAN)을 결합하여 분산 기업 환경에 클라우드 서비스로 제공하는 아키텍처입니다.',
+    requiredComponents: [
+      { type: 'sase-gateway', minCount: 1 },
+      { type: 'sd-wan', minCount: 1 },
+      { type: 'iam', minCount: 1 },
+    ],
+    optionalComponents: [
+      { type: 'ztna-broker', benefit: 'Zero Trust application-level access', benefitKo: '제로 트러스트 애플리케이션 수준 접근' },
+      { type: 'casb', benefit: 'Cloud application visibility and control', benefitKo: '클라우드 애플리케이션 가시성 및 제어' },
+      { type: 'firewall', benefit: 'On-premise firewall for hybrid SASE', benefitKo: '하이브리드 SASE를 위한 온프레미스 방화벽' },
+      { type: 'mfa', benefit: 'Strong authentication for SASE access', benefitKo: 'SASE 접근을 위한 강력한 인증' },
+      { type: 'dns', benefit: 'DNS-layer security filtering', benefitKo: 'DNS 계층 보안 필터링' },
+    ],
+    scalability: 'auto',
+    complexity: 5,
+    bestForKo: [
+      '지사/원격 사무실이 많은 분산 기업',
+      '클라우드 우선 전략을 채택한 조직',
+      'MPLS 회선을 SD-WAN으로 전환하는 기업',
+      '글로벌 사용자 접근이 필요한 환경',
+    ],
+    notSuitableForKo: [
+      '단일 사무실 소규모 기업',
+      '온프레미스만 운영하는 환경',
+      'WAN 연결이 필요 없는 로컬 서비스',
+    ],
+    evolvesTo: ['PAT-SEC-018'],
+    evolvesFrom: ['PAT-015'],
+    tags: ['security', 'sase', 'sd-wan', 'zero-trust', 'cloud-security'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(NIST_800_207, 'Section 4 - Deployment Models'),
+        withSection(NIST_800_53, 'SC-7 - Boundary Protection'),
+      ],
+      lastReviewedAt: '2026-02-10',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'PAT-SEC-018',
+    type: 'pattern',
+    name: 'SOC Operations Architecture',
+    nameKo: 'SOC 운영 아키텍처',
+    description:
+      'Security Operations Center architecture that integrates SIEM, SOAR, and threat intelligence for centralized security monitoring, incident detection, and automated response.',
+    descriptionKo:
+      'SIEM, SOAR, 위협 인텔리전스를 통합하여 중앙 집중 보안 모니터링, 사고 탐지 및 자동 대응을 구현하는 보안 운영 센터 아키텍처입니다.',
+    requiredComponents: [
+      { type: 'siem', minCount: 1 },
+      { type: 'firewall', minCount: 1 },
+      { type: 'ids-ips', minCount: 1 },
+    ],
+    optionalComponents: [
+      { type: 'soar', benefit: 'Automated incident response and playbooks', benefitKo: '자동 사고 대응 및 플레이북' },
+      { type: 'dlp', benefit: 'Data exfiltration detection and log correlation', benefitKo: '데이터 유출 탐지 및 로그 상관분석' },
+      { type: 'nac', benefit: 'Network-level containment actions', benefitKo: '네트워크 수준 격리 조치' },
+      { type: 'waf', benefit: 'Web attack detection and WAF log analysis', benefitKo: '웹 공격 탐지 및 WAF 로그 분석' },
+      { type: 'casb', benefit: 'Cloud security event correlation', benefitKo: '클라우드 보안 이벤트 상관분석' },
+    ],
+    scalability: 'high',
+    complexity: 4,
+    bestForKo: [
+      '24/7 보안 모니터링이 필요한 조직',
+      '규정 준수 감사가 필요한 금융/의료 기업',
+      '보안 사고 대응 시간(MTTR) 단축이 필요한 환경',
+      '다수의 보안 장비를 통합 관리하는 대규모 조직',
+    ],
+    notSuitableForKo: [
+      '보안 운영 인력이 없는 소규모 기업',
+      '보안 장비가 3대 미만인 환경',
+      'MSSP 서비스로 대체 가능한 경우',
+    ],
+    evolvesTo: [],
+    evolvesFrom: ['PAT-SEC-017'],
+    tags: ['security', 'soc', 'siem', 'soar', 'incident-response', 'monitoring'],
+    trust: {
+      confidence: 0.90,
+      sources: [
+        withSection(NIST_800_53, 'AU-6 - Audit Review, Analysis, and Reporting'),
+        withSection(CIS_V8_13, 'Network Monitoring and Defense'),
+      ],
+      lastReviewedAt: '2026-02-10',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Hybrid/Multi-Cloud Patterns (PAT-HYB-001 ~ PAT-HYB-002)
+// ---------------------------------------------------------------------------
+
+const hybridPatterns: ArchitecturePattern[] = [
+  {
+    id: 'PAT-HYB-001',
+    type: 'pattern',
+    name: 'Hybrid Cloud DR',
+    nameKo: '하이브리드 클라우드 DR',
+    description:
+      'Disaster recovery architecture that uses public cloud as a DR site for on-premise infrastructure, enabling cost-effective warm/hot standby with automated failover.',
+    descriptionKo:
+      '온프레미스 인프라의 DR 사이트로 퍼블릭 클라우드를 활용하여 비용 효율적인 웜/핫 대기와 자동 페일오버를 구현하는 재해 복구 아키텍처입니다.',
+    requiredComponents: [
+      { type: 'private-cloud', minCount: 1 },
+      { type: 'backup', minCount: 1 },
+      { type: 'vpn-gateway', minCount: 1 },
+    ],
+    optionalComponents: [
+      { type: 'aws-vpc', benefit: 'AWS as DR target with automated recovery', benefitKo: '자동 복구 기능의 AWS DR 대상' },
+      { type: 'azure-vnet', benefit: 'Azure Site Recovery integration', benefitKo: 'Azure Site Recovery 통합' },
+      { type: 'dns', benefit: 'DNS failover for automatic traffic redirection', benefitKo: '자동 트래픽 리디렉션을 위한 DNS 페일오버' },
+      { type: 'load-balancer', benefit: 'Cross-site traffic distribution', benefitKo: '크로스 사이트 트래픽 분산' },
+    ],
+    scalability: 'high',
+    complexity: 4,
+    bestForKo: [
+      'RPO/RTO가 중요한 미션 크리티컬 시스템',
+      '자체 DR 센터 구축 비용이 부담되는 기업',
+      '클라우드 마이그레이션 과도기에 있는 조직',
+      '규정 준수로 온프레미스 유지가 필요한 환경',
+    ],
+    notSuitableForKo: [
+      '이미 멀티 리전 클라우드 네이티브 아키텍처인 경우',
+      '네트워크 지연에 극도로 민감한 실시간 시스템',
+      'WAN 대역폭이 데이터 복제를 감당할 수 없는 경우',
+    ],
+    evolvesTo: ['PAT-HYB-002'],
+    evolvesFrom: ['PAT-018'],
+    tags: ['hybrid', 'disaster-recovery', 'cloud', 'failover', 'backup'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(AWS_WAF_REL, 'Disaster Recovery Strategies'),
+        withSection(NIST_800_145, 'Section 3 - Cloud Deployment Models'),
+      ],
+      lastReviewedAt: '2026-02-10',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'PAT-HYB-002',
+    type: 'pattern',
+    name: 'Multi-Cloud Active-Active',
+    nameKo: '멀티 클라우드 Active-Active',
+    description:
+      'Architecture that distributes workloads across multiple cloud providers simultaneously, eliminating vendor lock-in and providing maximum availability through geographic and provider diversity.',
+    descriptionKo:
+      '여러 클라우드 공급자에 워크로드를 동시에 분산하여 벤더 종속을 제거하고, 지리적/공급자 다양성을 통해 최대 가용성을 제공하는 아키텍처입니다.',
+    requiredComponents: [
+      { type: 'load-balancer', minCount: 1 },
+      { type: 'dns', minCount: 1 },
+      { type: 'firewall', minCount: 1 },
+    ],
+    optionalComponents: [
+      { type: 'aws-vpc', benefit: 'AWS as one of the active cloud sites', benefitKo: 'Active 클라우드 사이트 중 하나로 AWS' },
+      { type: 'azure-vnet', benefit: 'Azure as one of the active cloud sites', benefitKo: 'Active 클라우드 사이트 중 하나로 Azure' },
+      { type: 'gcp-network', benefit: 'GCP as one of the active cloud sites', benefitKo: 'Active 클라우드 사이트 중 하나로 GCP' },
+      { type: 'iam', benefit: 'Cross-cloud identity federation', benefitKo: '크로스 클라우드 ID 페더레이션' },
+    ],
+    scalability: 'auto',
+    complexity: 5,
+    bestForKo: [
+      '99.99% 이상 가용성이 필요한 글로벌 서비스',
+      '벤더 종속 탈피가 필요한 조직',
+      '지역별 규정 준수가 필요한 글로벌 기업',
+      '특정 클라우드의 장점을 선택적으로 활용하려는 환경',
+    ],
+    notSuitableForKo: [
+      '운영 인력이 제한적인 소규모 팀',
+      '단일 리전 서비스',
+      '데이터 주권 규정으로 단일 클라우드 사용이 강제되는 경우',
+    ],
+    evolvesTo: [],
+    evolvesFrom: ['PAT-HYB-001', 'PAT-016'],
+    tags: ['hybrid', 'multi-cloud', 'active-active', 'vendor-diversity', 'global'],
+    trust: {
+      confidence: 0.85,
+      sources: [
+        withSection(NIST_800_145, 'Section 3 - Cloud Deployment Models'),
+        withSection(AZURE_CAF, 'Multi-Cloud Strategy'),
+      ],
+      lastReviewedAt: '2026-02-10',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Aggregated data
 // ---------------------------------------------------------------------------
 
 /**
  * All architecture patterns — frozen readonly array.
- * 24 patterns across 5 categories: Basic, Extended, Security, Cloud, Telecom.
+ * 30 patterns across 8 categories: Basic, Extended, Security, Cloud, Telecom, K8s, SecurityExt, Hybrid.
  */
 export const ARCHITECTURE_PATTERNS: readonly ArchitecturePattern[] = Object.freeze([
   ...basicPatterns,
@@ -1234,6 +1637,9 @@ export const ARCHITECTURE_PATTERNS: readonly ArchitecturePattern[] = Object.free
   ...securityPatterns,
   ...cloudPatterns,
   ...telecomPatterns,
+  ...k8sPatterns,
+  ...securityExtPatterns,
+  ...hybridPatterns,
 ]);
 
 /** Alias for index.ts compatibility */

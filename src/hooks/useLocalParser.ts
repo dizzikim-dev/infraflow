@@ -25,6 +25,8 @@ interface UseLocalParserConfig {
   onLoadingChange: (loading: boolean) => void;
   requestIdRef: React.MutableRefObject<number>;
   abortControllerRef: React.MutableRefObject<AbortController | null>;
+  /** Called when a diagram is successfully generated (for feedback collection) */
+  onDiagramGenerated?: (spec: InfraSpec, source: 'local-parser' | 'template', prompt?: string) => void;
 }
 
 /**
@@ -58,6 +60,7 @@ export function useLocalParser(config: UseLocalParserConfig): UseLocalParserRetu
     onLoadingChange,
     requestIdRef,
     abortControllerRef,
+    onDiagramGenerated,
   } = config;
 
   /**
@@ -139,10 +142,15 @@ export function useLocalParser(config: UseLocalParserConfig): UseLocalParserRetu
             templateUsed: result.templateUsed,
             confidence: result.confidence,
             commandType: result.commandType,
+            warnings: result.warnings,
+            suggestions: result.suggestions,
           });
 
           // Update conversation context
           onContextUpdate(trimmedPrompt, result);
+
+          // Notify feedback system
+          onDiagramGenerated?.(result.spec, 'local-parser', trimmedPrompt);
         } else {
           // Handle parse failure
           const errorMessage = result.error || '프롬프트를 해석할 수 없습니다.';
@@ -180,7 +188,7 @@ export function useLocalParser(config: UseLocalParserConfig): UseLocalParserRetu
         }
       }
     },
-    [context, currentSpec, onNodesUpdate, onEdgesUpdate, onSpecUpdate, onPolicyReset, onResultUpdate, onContextUpdate, onLoadingChange, requestIdRef, abortControllerRef]
+    [context, currentSpec, onNodesUpdate, onEdgesUpdate, onSpecUpdate, onPolicyReset, onResultUpdate, onContextUpdate, onLoadingChange, requestIdRef, abortControllerRef, onDiagramGenerated]
   );
 
   /**
@@ -205,6 +213,9 @@ export function useLocalParser(config: UseLocalParserConfig): UseLocalParserRetu
           commandType: 'template',
         });
 
+        // Notify feedback system
+        onDiagramGenerated?.(template.spec, 'template');
+
         // Reset animation
         onAnimationReset?.();
       } catch (error) {
@@ -215,7 +226,7 @@ export function useLocalParser(config: UseLocalParserConfig): UseLocalParserRetu
         });
       }
     },
-    [onNodesUpdate, onEdgesUpdate, onSpecUpdate, onAnimationReset, onResultUpdate]
+    [onNodesUpdate, onEdgesUpdate, onSpecUpdate, onAnimationReset, onResultUpdate, onDiagramGenerated]
   );
 
   return {

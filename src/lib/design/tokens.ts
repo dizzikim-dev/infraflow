@@ -51,6 +51,22 @@ export const colors = {
       border: 'rgba(236, 72, 153, 0.3)',
       glow: '0 0 20px rgba(236, 72, 153, 0.3)',
     },
+    telecom: {
+      primary: '#14b8a6',    // teal-500
+      secondary: '#99f6e4',  // teal-200
+      gradient: 'from-teal-500 to-cyan-600',
+      bg: 'rgba(20, 184, 166, 0.1)',
+      border: 'rgba(20, 184, 166, 0.3)',
+      glow: '0 0 20px rgba(20, 184, 166, 0.3)',
+    },
+    wan: {
+      primary: '#6366f1',    // indigo-500
+      secondary: '#c7d2fe',  // indigo-200
+      gradient: 'from-indigo-500 to-blue-600',
+      bg: 'rgba(99, 102, 241, 0.1)',
+      border: 'rgba(99, 102, 241, 0.3)',
+      glow: '0 0 20px rgba(99, 102, 241, 0.3)',
+    },
     external: {
       primary: '#6b7280',    // gray-500
       secondary: '#e5e7eb',  // gray-200
@@ -89,6 +105,11 @@ export const nodeCategories: Record<string, keyof typeof colors.categories> = {
   'vpn-gateway': 'security',
   'nac': 'security',
   'dlp': 'security',
+  'sase-gateway': 'security',
+  'ztna-broker': 'security',
+  'casb': 'security',
+  'siem': 'security',
+  'soar': 'security',
 
   // Network
   'router': 'network',
@@ -126,6 +147,27 @@ export const nodeCategories: Record<string, keyof typeof colors.categories> = {
   'mfa': 'auth',
   'iam': 'auth',
 
+  // Telecom
+  'central-office': 'telecom',
+  'base-station': 'telecom',
+  'olt': 'telecom',
+  'customer-premise': 'telecom',
+  'idc': 'telecom',
+
+  // WAN
+  'pe-router': 'wan',
+  'p-router': 'wan',
+  'mpls-network': 'wan',
+  'dedicated-line': 'wan',
+  'metro-ethernet': 'wan',
+  'corporate-internet': 'wan',
+  'vpn-service': 'wan',
+  'sd-wan-service': 'wan',
+  'private-5g': 'wan',
+  'core-network': 'wan',
+  'upf': 'wan',
+  'ring-network': 'wan',
+
   // External
   'user': 'external',
   'internet': 'external',
@@ -149,6 +191,11 @@ export const nodeIcons: Record<string, string> = {
   'waf': 'M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 01-.67 0C7.5 20.5 4 18 4 13V6a1 1 0 01.5-.87l7-4a1 1 0 011 0l7 4A1 1 0 0120 6v7zM12 8v4m0 4h.01',
   'vpn-gateway': 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4',
   'dlp': 'M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9 10h.01M15 10h.01M9.5 15a3.5 3.5 0 005 0',
+  'sase-gateway': 'M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10zM12 12v4m0-8v.01M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+  'ztna-broker': 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM12 8a3 3 0 100 6 3 3 0 000-6z',
+  'casb': 'M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10zM9 12l2 2 4-4',
+  'siem': 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+  'soar': 'M13 10V3L4 14h7v7l9-11h-7z',
 
   // Network
   'router': 'M5 12h14M12 5l7 7-7 7',
@@ -180,6 +227,27 @@ export const nodeIcons: Record<string, string> = {
   // External
   'user': 'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z',
   'internet': 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07',
+
+  // Telecom
+  'central-office': 'M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4M9 9h.01M15 9h.01M9 13h.01M15 13h.01',
+  'base-station': 'M12 20V10M8 20h8M4.93 4.93l2.83 2.83M16.24 7.76l2.83-2.83M8 10a4 4 0 018 0M5 10a7 7 0 0114 0',
+  'olt': 'M2 12h4l2-3 2 6 2-6 2 3h4M6 8h12v8H6zM2 12h4m12 0h4',
+  'customer-premise': 'M3 12l9-7 9 7M5 10v10h14V10M10 20v-6h4v6',
+  'idc': 'M4 4h16v16H4zM4 8h16M4 12h16M8 4v16M12 4v16M16 4v16',
+
+  // WAN
+  'pe-router': 'M12 2L2 7l10 5 10-5-10-5zM2 12l10 5 10-5M2 17l10 5 10-5',
+  'p-router': 'M5 12h14M12 5l7 7-7 7M5 5l14 14M19 5L5 19',
+  'mpls-network': 'M12 3a9 9 0 110 18 9 9 0 010-18zM12 3v18M3 12h18M5.63 5.63l12.74 12.74M18.37 5.63L5.63 18.37',
+  'dedicated-line': 'M5 12h14M8 8l-3 4 3 4M16 8l3 4-3 4M2 12h3m14 0h3',
+  'metro-ethernet': 'M4 6h16v12H4zM4 10h16M8 6v4m4-4v4m4-4v4M8 14h2m4 0h2',
+  'corporate-internet': 'M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.66 0 3-4.03 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4.03-3-9s1.34-9 3-9',
+  'vpn-service': 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM12 8v4l2 2M8 12h4',
+  'sd-wan-service': 'M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10zM12 12v4m0-8v.01',
+  'private-5g': 'M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01',
+  'core-network': 'M12 2a10 10 0 110 20 10 10 0 010-20zM12 8a4 4 0 110 8 4 4 0 010-8zM12 2v6m0 8v6M2 12h6m8 0h6',
+  'upf': 'M4 4h16v16H4zM12 4v16M4 12h16M7 7l10 10M17 7L7 17',
+  'ring-network': 'M12 2a10 10 0 110 20 10 10 0 010-20zM12 6a6 6 0 110 12 6 6 0 010-12zM12 2v4m0 12v4M2 12h4m12 0h4',
 };
 
 // Tier 색상 (레이아웃/계층 표시용)

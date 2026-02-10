@@ -129,6 +129,11 @@ spec:
   'vpn-gateway': () => `# VPN Gateway: Managed externally or via service mesh`,
   'nac': () => `# NAC: Implemented via NetworkPolicy and service mesh`,
   'dlp': () => `# DLP: Implemented via custom admission controller`,
+  'sase-gateway': () => `# SASE Gateway: Implemented via service mesh and network policies`,
+  'ztna-broker': () => `# ZTNA Broker: Implemented via identity-aware proxy`,
+  'casb': () => `# CASB: Implemented via API gateway policies and admission controllers`,
+  'siem': () => `# SIEM: Use Fluentd/Fluent Bit DaemonSet for log collection`,
+  'soar': () => `# SOAR: Implemented via event-driven automation (Argo Events, Tekton)`,
 
   // Network nodes
   'router': () => `# Router: Kubernetes networking handled by CNI plugin`,

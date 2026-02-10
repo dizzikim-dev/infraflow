@@ -99,6 +99,8 @@ const categoryColors: Record<string, string> = {
   cloud: 'text-purple-600',
   storage: 'text-yellow-600',
   auth: 'text-indigo-600',
+  telecom: 'text-teal-600',
+  wan: 'text-indigo-600',
   external: 'text-gray-600',
 };
 

@@ -24,6 +24,8 @@ interface UseLLMModifierConfig {
   onLoadingChange: (loading: boolean) => void;
   requestIdRef: React.MutableRefObject<number>;
   abortControllerRef: React.MutableRefObject<AbortController | null>;
+  /** Called when a diagram is successfully modified (for feedback collection) */
+  onDiagramGenerated?: (spec: InfraSpec, source: 'llm-modify', prompt?: string) => void;
 }
 
 /**
@@ -57,6 +59,7 @@ export function useLLMModifier(config: UseLLMModifierConfig): UseLLMModifierRetu
     onLoadingChange,
     requestIdRef,
     abortControllerRef,
+    onDiagramGenerated,
   } = config;
 
   const [llmAvailable, setLlmAvailable] = useState(false);
@@ -162,6 +165,9 @@ export function useLLMModifier(config: UseLLMModifierConfig): UseLLMModifierRetu
             operations: result.operations,
           });
 
+          // Notify feedback system
+          onDiagramGenerated?.(result.spec, 'llm-modify', trimmedPrompt);
+
           // Update conversation context
           onContextUpdate(trimmedPrompt, {
             success: true,
@@ -211,7 +217,7 @@ export function useLLMModifier(config: UseLLMModifierConfig): UseLLMModifierRetu
         }
       }
     },
-    [currentSpec, currentNodes, currentEdges, onNodesUpdate, onEdgesUpdate, onSpecUpdate, onResultUpdate, onContextUpdate, onLoadingChange, requestIdRef, abortControllerRef]
+    [currentSpec, currentNodes, currentEdges, onNodesUpdate, onEdgesUpdate, onSpecUpdate, onResultUpdate, onContextUpdate, onLoadingChange, requestIdRef, abortControllerRef, onDiagramGenerated]
   );
 
   return {

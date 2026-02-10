@@ -71,6 +71,8 @@ export function CostEstimatorPanel({ spec, onClose }: CostEstimatorPanelProps) {
     cloud: 'bg-purple-500/20 text-purple-400',
     storage: 'bg-yellow-500/20 text-yellow-400',
     auth: 'bg-cyan-500/20 text-cyan-400',
+    telecom: 'bg-teal-500/20 text-teal-400',
+    wan: 'bg-indigo-500/20 text-indigo-400',
     external: 'bg-gray-500/20 text-gray-400',
   };
 
@@ -269,6 +271,9 @@ export function CostEstimatorPanel({ spec, onClose }: CostEstimatorPanelProps) {
         </button>
         <p className="text-xs text-gray-500 text-center mt-2">
           * 예상 비용이며 실제 비용과 다를 수 있습니다
+        </p>
+        <p className="text-xs text-cyan-400/60 text-center mt-1">
+          트래픽 기반 사이징 추천은 성능 벤치마크 패널을 참고하세요
         </p>
       </div>
     </motion.div>

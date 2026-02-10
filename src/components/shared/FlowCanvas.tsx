@@ -38,6 +38,8 @@ const NODE_CATEGORY_COLORS: Record<string, string> = {
   cloud: '#a855f7',     // Purple 500
   storage: '#f59e0b',   // Amber 500
   auth: '#ec4899',      // Pink 500
+  telecom: '#14b8a6',   // Teal 500
+  wan: '#6366f1',       // Indigo 500
 };
 
 const DEFAULT_NODE_COLOR = '#71717a'; // Zinc 500

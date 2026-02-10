@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { Node, Edge } from '@xyflow/react';
 import type { InfraSpec, InfraNodeData } from '@/types/infra';
 import { buildContext } from '@/lib/parser/contextBuilder';
-import { SYSTEM_PROMPT, formatUserMessage } from '@/lib/parser/prompts';
+import { buildSystemPrompt, formatUserMessage } from '@/lib/parser/prompts';
 import { applyOperations, type Operation } from '@/lib/parser/diffApplier';
 import {
   parseAndValidateLLMResponse,
@@ -23,6 +23,14 @@ import { checkRateLimit, LLM_RATE_LIMIT } from '@/lib/middleware/rateLimiter';
 import { createLogger } from '@/lib/utils/logger';
 import { addRateLimitHeaders } from '@/lib/llm/rateLimitHeaders';
 import { detectLLMProvider, type LLMProviderType } from '@/lib/llm/providers';
+import {
+  enrichContext,
+  buildKnowledgePromptSection,
+  RELATIONSHIPS,
+  ANTIPATTERNS,
+  FAILURES,
+} from '@/lib/knowledge';
+import { assessChangeRisk, type ChangeRiskAssessment } from '@/lib/parser/changeRiskAssessor';
 
 const log = createLogger('Modify API');
 
@@ -44,6 +52,7 @@ export interface ModifyResponse {
   spec?: InfraSpec;
   reasoning?: string;
   operations?: Operation[];
+  riskAssessment?: ChangeRiskAssessment;
   error?: {
     code: string;
     userMessage: string;
@@ -333,15 +342,27 @@ export async function POST(request: NextRequest): Promise<NextResponse<ModifyRes
     // Format user message
     const userMessage = formatUserMessage(context, prompt);
 
+    // Enrich with knowledge graph
+    const enriched = enrichContext(context, [...RELATIONSHIPS], {
+      spec: currentSpec,
+      antiPatterns: [...ANTIPATTERNS],
+      failureScenarios: [...FAILURES],
+    });
+    const knowledgeSection = buildKnowledgePromptSection(enriched);
+    const systemPrompt = buildSystemPrompt(knowledgeSection || undefined);
+
     const modelName = llmProvider.provider === 'openai'
       ? LLM_CONFIG.openaiModel
       : LLM_CONFIG.anthropicModel;
     log.info(`Calling ${llmProvider.provider} (${modelName})...`);
     log.debug('Context summary', { summary: context.summary });
+    if (knowledgeSection) {
+      log.debug('Knowledge section injected', { length: knowledgeSection.length });
+    }
 
     // Call LLM (auto-detect provider)
     const llmResponse = await callLLM(
-      SYSTEM_PROMPT,
+      systemPrompt,
       userMessage,
       llmProvider.provider,
       llmProvider.apiKey
@@ -375,12 +396,17 @@ export async function POST(request: NextRequest): Promise<NextResponse<ModifyRes
       return addRateLimitHeaders(response, info);
     }
 
+    // Assess change risk
+    const riskAssessment = assessChangeRisk(currentSpec, result.newSpec);
+    log.info('Risk assessment', { level: riskAssessment.level, factors: riskAssessment.factors.length });
+
     // Success
     const response = NextResponse.json<ModifyResponse>({
       success: true,
       spec: result.newSpec,
       reasoning: validatedResponse.reasoning,
       operations,
+      riskAssessment,
       rateLimit: rateLimitInfo,
     });
     return addRateLimitHeaders(response, info);

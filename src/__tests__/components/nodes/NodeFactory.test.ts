@@ -175,7 +175,7 @@ describe('NodeFactory', () => {
 
 describe('Node Configuration Integrity', () => {
   it('should have valid category for all nodes', () => {
-    const validCategories = ['security', 'network', 'compute', 'cloud', 'storage', 'auth', 'external', 'zone'];
+    const validCategories = ['security', 'network', 'compute', 'cloud', 'storage', 'auth', 'external', 'zone', 'telecom', 'wan'];
     nodeConfigs.forEach((config) => {
       expect(validCategories).toContain(config.category);
     });

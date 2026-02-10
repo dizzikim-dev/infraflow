@@ -204,4 +204,36 @@ export interface EnrichedKnowledge {
   suggestions: ComponentRelationship[];
   risks: FailureScenario[];
   tips: QuickTip[];
+  vulnerabilities?: VulnerabilityEntry[];
+  complianceGaps?: ComplianceGap[];
+}
+
+// Re-exported from vulnerabilities.ts and industryCompliance.ts (circular-safe forward references)
+// Actual definitions live in their respective modules.
+export interface VulnerabilityEntry {
+  id: string;
+  cveId?: string;
+  affectedComponents: InfraNodeType[];
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  cvssScore?: number;
+  title: string;
+  titleKo: string;
+  description: string;
+  descriptionKo: string;
+  mitigation: string;
+  mitigationKo: string;
+  publishedDate: string;
+  references: string[];
+  trust: TrustMetadata;
+}
+
+export interface ComplianceGap {
+  framework: string;
+  frameworkKo: string;
+  missingComponents: InfraNodeType[];
+  remediation: string;
+  remediationKo: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  estimatedEffort: string;
+  estimatedEffortKo: string;
 }

@@ -5,6 +5,7 @@ import { Node, Edge } from '@xyflow/react';
 import { ConversationContext } from '@/lib/parser';
 import { InfraSpec, InfraNodeData } from '@/types';
 import type { Operation } from '@/lib/parser/diffApplier';
+import type { KnowledgeWarning, KnowledgeSuggestion } from '@/lib/parser/specBuilder';
 import { useParserContext } from './useParserContext';
 import { useLocalParser } from './useLocalParser';
 import { useLLMModifier } from './useLLMModifier';
@@ -19,6 +20,10 @@ export interface ParseResultInfo {
   reasoning?: string;
   /** Applied operations */
   operations?: Operation[];
+  /** Knowledge graph warnings (conflicts, anti-patterns) */
+  warnings?: KnowledgeWarning[];
+  /** Knowledge graph suggestions (missing dependencies) */
+  suggestions?: KnowledgeSuggestion[];
 }
 
 export interface UsePromptParserReturn {
@@ -45,6 +50,8 @@ interface UsePromptParserConfig {
   onSpecUpdate: React.Dispatch<React.SetStateAction<InfraSpec | null>>;
   onAnimationReset?: () => void;
   onPolicyReset?: () => void;
+  /** Called when a diagram is generated/modified (for feedback collection) */
+  onDiagramGenerated?: (spec: InfraSpec, source: 'local-parser' | 'llm-modify' | 'template', prompt?: string) => void;
 }
 
 /**
@@ -67,6 +74,7 @@ export function usePromptParser(config: UsePromptParserConfig): UsePromptParserR
     onSpecUpdate,
     onAnimationReset,
     onPolicyReset,
+    onDiagramGenerated,
   } = config;
 
   // Shared state
@@ -94,6 +102,7 @@ export function usePromptParser(config: UsePromptParserConfig): UsePromptParserR
     onLoadingChange: setIsLoading,
     requestIdRef,
     abortControllerRef,
+    onDiagramGenerated,
   });
 
   // LLM modifier (diagram modification via API)
@@ -109,6 +118,7 @@ export function usePromptParser(config: UsePromptParserConfig): UsePromptParserR
     onLoadingChange: setIsLoading,
     requestIdRef,
     abortControllerRef,
+    onDiagramGenerated,
   });
 
   /**

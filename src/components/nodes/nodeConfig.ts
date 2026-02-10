@@ -42,6 +42,11 @@ export const defaultNodeConfigs: NodeConfig[] = [
   { id: 'vpn-gateway', name: 'VPN Gateway', category: 'security', color: 'red', icon: '🔐' },
   { id: 'nac', name: 'NAC', category: 'security', color: 'red', icon: '🚧' },
   { id: 'dlp', name: 'DLP', category: 'security', color: 'red', icon: '📋' },
+  { id: 'sase-gateway', name: 'SASE Gateway', category: 'security', color: 'red', icon: '☁️' },
+  { id: 'ztna-broker', name: 'ZTNA Broker', category: 'security', color: 'red', icon: '🔑' },
+  { id: 'casb', name: 'CASB', category: 'security', color: 'red', icon: '🔒' },
+  { id: 'siem', name: 'SIEM', category: 'security', color: 'red', icon: '📊' },
+  { id: 'soar', name: 'SOAR', category: 'security', color: 'red', icon: '⚡' },
 
   // ============================================================
   // Network Nodes
@@ -95,6 +100,31 @@ export const defaultNodeConfigs: NodeConfig[] = [
   { id: 'sso', name: 'SSO', category: 'auth', color: 'pink', icon: '🎫' },
   { id: 'mfa', name: 'MFA', category: 'auth', color: 'pink', icon: '📱' },
   { id: 'iam', name: 'IAM', category: 'auth', color: 'pink', icon: '👥' },
+
+  // ============================================================
+  // Telecom Nodes
+  // ============================================================
+  { id: 'central-office', name: 'Central Office', category: 'telecom', color: 'teal', icon: '🏢' },
+  { id: 'base-station', name: 'Base Station', category: 'telecom', color: 'teal', icon: '📶' },
+  { id: 'olt', name: 'OLT', category: 'telecom', color: 'teal', icon: '💡' },
+  { id: 'customer-premise', name: 'Customer Premise', category: 'telecom', color: 'teal', icon: '🏠' },
+  { id: 'idc', name: 'IDC', category: 'telecom', color: 'teal', icon: '🏗️' },
+
+  // ============================================================
+  // WAN Nodes
+  // ============================================================
+  { id: 'pe-router', name: 'PE Router', category: 'wan', color: 'indigo', icon: '🔀' },
+  { id: 'p-router', name: 'P Router', category: 'wan', color: 'indigo', icon: '🔁' },
+  { id: 'mpls-network', name: 'MPLS Network', category: 'wan', color: 'indigo', icon: '🌐' },
+  { id: 'dedicated-line', name: 'Dedicated Line', category: 'wan', color: 'indigo', icon: '🔗' },
+  { id: 'metro-ethernet', name: 'Metro Ethernet', category: 'wan', color: 'indigo', icon: '🔌' },
+  { id: 'corporate-internet', name: 'Corporate Internet', category: 'wan', color: 'indigo', icon: '🌍' },
+  { id: 'vpn-service', name: 'VPN Service', category: 'wan', color: 'indigo', icon: '🔐' },
+  { id: 'sd-wan-service', name: 'SD-WAN Service', category: 'wan', color: 'indigo', icon: '☁️' },
+  { id: 'private-5g', name: 'Private 5G', category: 'wan', color: 'indigo', icon: '📡' },
+  { id: 'core-network', name: 'Core Network', category: 'wan', color: 'indigo', icon: '⚡' },
+  { id: 'upf', name: 'UPF', category: 'wan', color: 'indigo', icon: '🔄' },
+  { id: 'ring-network', name: 'Ring Network', category: 'wan', color: 'indigo', icon: '⭕' },
 
   // ============================================================
   // Zone

@@ -6,7 +6,7 @@
  * The output can be injected into LLM prompts to produce more informed responses.
  */
 
-import type { AntiPattern, ComponentRelationship, EnrichedKnowledge, FailureScenario } from './types';
+import type { AntiPattern, ComponentRelationship, EnrichedKnowledge, FailureScenario, VulnerabilityEntry, ComplianceGap } from './types';
 import type { DiagramContext } from '../parser/prompts';
 import type { InfraSpec, InfraNodeType } from '@/types/infra';
 
@@ -31,7 +31,13 @@ const OFFICIAL_CONFIDENCE_THRESHOLD = 0.85;
 export function enrichContext(
   context: DiagramContext,
   relationships: ComponentRelationship[],
-  options?: { spec?: InfraSpec; antiPatterns?: AntiPattern[]; failureScenarios?: FailureScenario[] },
+  options?: {
+    spec?: InfraSpec;
+    antiPatterns?: AntiPattern[];
+    failureScenarios?: FailureScenario[];
+    vulnerabilities?: VulnerabilityEntry[];
+    complianceGaps?: ComplianceGap[];
+  },
 ): EnrichedKnowledge {
   // 1. Extract all unique component types present in the diagram
   const presentTypes = new Set(context.nodes.map((n) => n.type));
@@ -51,6 +57,9 @@ export function enrichContext(
   // 6. Find relevant failure scenarios for present component types
   const risks = findRelevantFailures(presentTypes, options?.failureScenarios);
 
+  // 7. Filter vulnerabilities relevant to present component types
+  const vulnerabilities = filterVulnerabilities(presentTypes, options?.vulnerabilities);
+
   // Combine conflicts and suggestions into a single list for the output.
   // Conflicts are surfaced as relationships in the main relationships array as well.
   const allRelevant = [...relevantRelationships, ...conflicts];
@@ -61,6 +70,8 @@ export function enrichContext(
     suggestions: sortSuggestions(dedup(suggestions)),
     risks,
     tips: [], // Quick tips are handled separately (Phase 4)
+    vulnerabilities: vulnerabilities.length > 0 ? vulnerabilities : undefined,
+    complianceGaps: options?.complianceGaps?.length ? options.complianceGaps : undefined,
   };
 }
 
@@ -88,7 +99,7 @@ export function buildKnowledgePromptSection(
   // Filter by minimum confidence
   const filtered = allEntries.filter((entry) => entry.trust.confidence >= minConfidence);
 
-  if (filtered.length === 0 && !hasViolations(enriched) && enriched.risks.length === 0) {
+  if (filtered.length === 0 && !hasViolations(enriched) && enriched.risks.length === 0 && !enriched.vulnerabilities?.length && !enriched.complianceGaps?.length) {
     return '';
   }
 
@@ -146,6 +157,26 @@ export function buildKnowledgePromptSection(
   if (riskLines.length > 0) {
     sections.push('### 💥 잠재적 장애 시나리오');
     for (const line of riskLines) {
+      sections.push(line);
+    }
+    sections.push('');
+  }
+
+  // Vulnerability warnings section
+  const vulnLines = buildVulnerabilityLines(enriched);
+  if (vulnLines.length > 0) {
+    sections.push('### 🔒 보안 취약점 경고');
+    for (const line of vulnLines) {
+      sections.push(line);
+    }
+    sections.push('');
+  }
+
+  // Compliance gap section
+  const gapLines = buildComplianceGapLines(enriched);
+  if (gapLines.length > 0) {
+    sections.push('### 📋 컴플라이언스 갭');
+    for (const line of gapLines) {
       sections.push(line);
     }
     sections.push('');
@@ -405,5 +436,53 @@ function buildRiskLines(enriched: EnrichedKnowledge): string[] {
     }
   }
 
+  return lines;
+}
+
+/**
+ * Filter vulnerabilities relevant to present component types.
+ * Returns critical and high severity first, limited to top 10.
+ */
+function filterVulnerabilities(
+  presentTypes: Set<string>,
+  vulnerabilities?: VulnerabilityEntry[],
+): VulnerabilityEntry[] {
+  if (!vulnerabilities || vulnerabilities.length === 0) return [];
+  const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+  return vulnerabilities
+    .filter((v) => v.affectedComponents.some((c) => presentTypes.has(c)))
+    .sort((a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9))
+    .slice(0, 10);
+}
+
+/**
+ * Build vulnerability warning lines for LLM prompt.
+ * Limits to top 5 to avoid prompt bloat.
+ */
+function buildVulnerabilityLines(enriched: EnrichedKnowledge): string[] {
+  const MAX_VULNS = 5;
+  if (!enriched.vulnerabilities?.length) return [];
+  const lines: string[] = [];
+  const topVulns = enriched.vulnerabilities.slice(0, MAX_VULNS);
+  for (const vuln of topVulns) {
+    const icon = vuln.severity === 'critical' ? '🔴' : vuln.severity === 'high' ? '🟠' : '🟡';
+    const cveTag = vuln.cveId ? ` (${vuln.cveId})` : '';
+    lines.push(`- ${icon} [${vuln.severity.toUpperCase()}] ${vuln.titleKo}${cveTag}`);
+    lines.push(`  대응: ${vuln.mitigationKo}`);
+  }
+  return lines;
+}
+
+/**
+ * Build compliance gap lines for LLM prompt.
+ */
+function buildComplianceGapLines(enriched: EnrichedKnowledge): string[] {
+  if (!enriched.complianceGaps?.length) return [];
+  const lines: string[] = [];
+  for (const gap of enriched.complianceGaps) {
+    const icon = gap.priority === 'critical' ? '🔴' : gap.priority === 'high' ? '🟠' : '🟡';
+    lines.push(`- ${icon} [${gap.frameworkKo}] 누락 컴포넌트: ${gap.missingComponents.join(', ')}`);
+    lines.push(`  조치: ${gap.remediationKo}`);
+  }
   return lines;
 }
