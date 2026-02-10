@@ -10,8 +10,10 @@ export { default as BilingualField } from './BilingualField';
 export { default as SeverityBadge } from './SeverityBadge';
 export { default as JsonFieldEditor } from './JsonFieldEditor';
 export { default as KnowledgePageLayout } from './KnowledgePageLayout';
+export { default as KnowledgeListPage } from './KnowledgeListPage';
 
 // Re-export types
 export type { ColumnDef } from './KnowledgeDataTable';
 export type { FilterDef } from './KnowledgeSearchFilter';
+export type { KnowledgeListConfig } from './KnowledgeListPage';
 export type { TrustMetadataInput } from './TrustMetadataEditor';
