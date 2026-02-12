@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useState, useCallback, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play,
   LayoutGrid,
@@ -18,6 +18,8 @@ import {
   BarChart3,
   Undo2,
   Redo2,
+  Search,
+  ChevronDown,
 } from 'lucide-react';
 import type { ParseResultInfo } from '@/hooks';
 import { UserMenu } from '@/components/auth/UserMenu';
@@ -32,6 +34,7 @@ function formatTimeSince(date: Date): string {
 }
 
 export interface HeaderProps {
+  sidebarOpen?: boolean;
   hasNodes: boolean;
   lastResult: ParseResultInfo | null;
   onAnimateClick: () => void;
@@ -58,6 +61,7 @@ export interface HeaderProps {
 }
 
 export const Header = memo(function Header({
+  sidebarOpen,
   hasNodes,
   lastResult,
   onAnimateClick,
@@ -84,6 +88,20 @@ export const Header = memo(function Header({
   const [editTitle, setEditTitle] = useState(title || '');
   const titleInputRef = useRef<HTMLInputElement>(null);
   const [savedTimeText, setSavedTimeText] = useState('');
+  const [analyzeOpen, setAnalyzeOpen] = useState(false);
+  const analyzeRef = useRef<HTMLDivElement>(null);
+
+  // Close analyze dropdown on outside click
+  useEffect(() => {
+    if (!analyzeOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (analyzeRef.current && !analyzeRef.current.contains(e.target as Node)) {
+        setAnalyzeOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [analyzeOpen]);
 
   // Update editTitle when title prop changes
   useEffect(() => {
@@ -116,8 +134,8 @@ export const Header = memo(function Header({
   }, [editTitle, title, onTitleChange]);
 
   return (
-    <header className="absolute top-0 left-0 right-0 z-10">
-      <div className="mx-4 mt-4">
+    <header className="absolute top-0 left-0 right-0 z-50">
+      <div className={`mt-4 mr-4 transition-[margin] duration-300 ${sidebarOpen ? 'ml-[296px]' : 'ml-16'}`}>
         <div className="
           flex items-center justify-between
           px-4 py-2.5
@@ -248,7 +266,7 @@ export const Header = memo(function Header({
               </div>
             )}
 
-            {/* Animation Button */}
+            {/* Animate */}
             <button
               onClick={onAnimateClick}
               disabled={!hasNodes}
@@ -265,7 +283,7 @@ export const Header = memo(function Header({
               <span className="hidden sm:inline">Animate</span>
             </button>
 
-            {/* Compare Button */}
+            {/* Compare */}
             {onCompareClick && (
               <button
                 onClick={onCompareClick}
@@ -284,10 +302,10 @@ export const Header = memo(function Header({
               </button>
             )}
 
-            {/* Health Check Button */}
-            {onHealthCheckClick && (
+            {/* Analyze Dropdown */}
+            <div ref={analyzeRef} className="relative">
               <button
-                onClick={onHealthCheckClick}
+                onClick={() => setAnalyzeOpen(prev => !prev)}
                 disabled={!hasNodes}
                 className={`
                   flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium
@@ -298,105 +316,54 @@ export const Header = memo(function Header({
                   }
                 `}
               >
-                <AlertCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">Diagnose</span>
+                <Search className="w-4 h-4" />
+                <span className="hidden sm:inline">Analyze</span>
+                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${analyzeOpen ? 'rotate-180' : ''}`} />
               </button>
-            )}
 
-            {/* Insights Button */}
-            {onInsightsClick && (
-              <button
-                onClick={onInsightsClick}
-                disabled={!hasNodes}
-                className={`
-                  flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium
-                  transition-all duration-200
-                  ${hasNodes
-                    ? 'bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border border-cyan-500/20'
-                    : 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed border border-transparent'
-                  }
-                `}
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Insights</span>
-              </button>
-            )}
-
-            {/* Vulnerability Button */}
-            {onVulnerabilityClick && (
-              <button
-                onClick={onVulnerabilityClick}
-                disabled={!hasNodes}
-                className={`
-                  flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium
-                  transition-all duration-200
-                  ${hasNodes
-                    ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
-                    : 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed border border-transparent'
-                  }
-                `}
-              >
-                <ShieldAlert className="w-4 h-4" />
-                <span className="hidden lg:inline">CVE</span>
-              </button>
-            )}
-
-            {/* Cloud Catalog Button */}
-            {onCloudCatalogClick && (
-              <button
-                onClick={onCloudCatalogClick}
-                disabled={!hasNodes}
-                className={`
-                  flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium
-                  transition-all duration-200
-                  ${hasNodes
-                    ? 'bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 border border-sky-500/20'
-                    : 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed border border-transparent'
-                  }
-                `}
-              >
-                <Cloud className="w-4 h-4" />
-                <span className="hidden lg:inline">Cloud</span>
-              </button>
-            )}
-
-            {/* Compliance Button */}
-            {onComplianceClick && (
-              <button
-                onClick={onComplianceClick}
-                disabled={!hasNodes}
-                className={`
-                  flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium
-                  transition-all duration-200
-                  ${hasNodes
-                    ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
-                    : 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed border border-transparent'
-                  }
-                `}
-              >
-                <ClipboardCheck className="w-4 h-4" />
-                <span className="hidden lg:inline">Comply</span>
-              </button>
-            )}
-
-            {/* Benchmark Button */}
-            {onBenchmarkClick && (
-              <button
-                onClick={onBenchmarkClick}
-                disabled={!hasNodes}
-                className={`
-                  flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium
-                  transition-all duration-200
-                  ${hasNodes
-                    ? 'bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 border border-violet-500/20'
-                    : 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed border border-transparent'
-                  }
-                `}
-              >
-                <BarChart3 className="w-4 h-4" />
-                <span className="hidden lg:inline">Bench</span>
-              </button>
-            )}
+              <AnimatePresence>
+                {analyzeOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="
+                      absolute right-0 top-full mt-2 z-50
+                      w-56 py-1.5
+                      bg-zinc-900/95 backdrop-blur-xl
+                      border border-zinc-700/50
+                      rounded-xl shadow-2xl shadow-black/40
+                    "
+                  >
+                    {([
+                      { onClick: onHealthCheckClick, icon: AlertCircle, label: 'Diagnose', desc: '안티패턴 탐지 · 헬스체크', color: 'amber' },
+                      { onClick: onInsightsClick, icon: CheckCircle2, label: 'Insights', desc: '패턴 사용 빈도 분석', color: 'cyan' },
+                      { onClick: onVulnerabilityClick, icon: ShieldAlert, label: 'CVE', desc: '취약점 DB 조회', color: 'red' },
+                      { onClick: onCloudCatalogClick, icon: Cloud, label: 'Cloud', desc: '클라우드 서비스 카탈로그', color: 'sky' },
+                      { onClick: onComplianceClick, icon: ClipboardCheck, label: 'Comply', desc: '산업별 컴플라이언스', color: 'emerald' },
+                      { onClick: onBenchmarkClick, icon: BarChart3, label: 'Bench', desc: '컴포넌트 사이징 벤치마크', color: 'violet' },
+                    ]).filter(item => item.onClick).map(({ onClick, icon: Icon, label, desc, color }) => (
+                      <button
+                        key={label}
+                        onClick={() => { onClick?.(); setAnalyzeOpen(false); }}
+                        className="
+                          w-full flex items-center gap-3 px-3 py-2.5
+                          text-left text-sm
+                          hover:bg-zinc-800/70 transition-colors duration-150
+                        "
+                      >
+                        <Icon className={`w-4 h-4 text-${color}-400 shrink-0`} />
+                        <div>
+                          <div className="text-zinc-200 font-medium">{label}</div>
+                          <div className="text-[11px] text-zinc-500">{desc}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Templates Button */}
             <button

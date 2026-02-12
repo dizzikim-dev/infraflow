@@ -156,6 +156,10 @@ resource "aws_vpn_gateway" "${sanitizeId(node.id)}" {
   'casb': (node) => `# CASB: ${node.label} - Cloud Access Security Broker`,
   'siem': (node) => `# SIEM: ${node.label} - Security Information and Event Management`,
   'soar': (node) => `# SOAR: ${node.label} - Security Orchestration, Automation and Response`,
+  'cctv-camera': (node) => `# CCTV Camera: ${node.label} - IP surveillance camera`,
+  'nvr': (node) => `# NVR: ${node.label} - Network Video Recorder`,
+  'video-server': (node) => `# Video Server: ${node.label} - Video Management System`,
+  'access-control': (node) => `# Access Control: ${node.label} - Physical access control system`,
 
   // Network
   'router': (node, provider) => {

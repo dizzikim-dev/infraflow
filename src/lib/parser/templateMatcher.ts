@@ -8,6 +8,7 @@ import type { InfraSpec } from '@/types';
 import { infraTemplates, templateKeywords } from './templates';
 import { getTemplatesFromRegistry } from './pluginIntegration';
 import { parseCustomPrompt } from './componentDetector';
+import { buildExplanation } from './explanationBuilder';
 
 export interface ParseResult {
   success: boolean;
@@ -15,6 +16,10 @@ export interface ParseResult {
   templateUsed?: string;
   error?: string;
   confidence: number;
+  /** True when the result is a low-confidence fallback (confidence ≤ 0.3) */
+  isFallback?: boolean;
+  /** Human-readable explanation of why this infrastructure was generated */
+  explanation?: string;
 }
 
 export interface ParseLocalOptions {
@@ -71,16 +76,19 @@ export function parsePromptLocal(
         success: true,
         spec: parsedSpec,
         confidence: 0.5,
+        explanation: buildExplanation(normalizedPrompt, parsedSpec),
       };
     }
   }
 
-  // Default fallback
+  // Default fallback — low confidence, flagged as fallback
   return {
-    success: true,
+    success: false,
+    isFallback: true,
     spec: templates['simple-waf'] || infraTemplates['simple-waf'],
     templateUsed: 'simple-waf',
     confidence: 0.3,
+    error: '입력하신 내용을 정확히 인식하지 못했습니다.',
   };
 }
 
@@ -101,6 +109,7 @@ function matchTemplateByKeywords(
             spec: template,
             templateUsed: templateId,
             confidence: 0.8,
+            explanation: buildExplanation(normalizedPrompt, template, templateId),
           };
         }
       }
@@ -118,11 +127,13 @@ function matchTemplateById(
 ): ParseResult | null {
   for (const templateId of Object.keys(templates)) {
     if (normalizedPrompt.includes(templateId.toLowerCase())) {
+      const template = templates[templateId];
       return {
         success: true,
-        spec: templates[templateId],
+        spec: template,
         templateUsed: templateId,
         confidence: 0.8,
+        explanation: buildExplanation(normalizedPrompt, template, templateId),
       };
     }
   }

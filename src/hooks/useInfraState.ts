@@ -205,6 +205,9 @@ export function useInfraState() {
     deleteEdge,
     reverseEdge,
 
+    // Result management
+    setLastResult,
+
     // Feedback
     feedback,
   };

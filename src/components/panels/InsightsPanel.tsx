@@ -56,7 +56,7 @@ export function InsightsPanel({ onClose }: InsightsPanelProps) {
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 100, opacity: 0 }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-      className="fixed top-0 right-0 h-full w-[480px] z-50 flex flex-col bg-zinc-900/95 backdrop-blur-xl border-l border-zinc-800"
+      className="fixed top-[4.5rem] right-0 h-[calc(100vh-4.5rem)] w-[480px] z-40 flex flex-col bg-zinc-900/95 backdrop-blur-xl border-l border-zinc-800 rounded-tl-2xl"
       data-testid="insights-panel"
     >
       {/* Header */}

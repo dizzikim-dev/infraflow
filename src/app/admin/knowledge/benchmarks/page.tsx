@@ -7,6 +7,7 @@
 import Link from 'next/link';
 import { KnowledgeListPage } from '@/components/admin/knowledge';
 import type { ColumnDef, FilterDef, KnowledgeListConfig } from '@/components/admin/knowledge';
+import { TRAFFIC_TIER_COLORS, TRAFFIC_TIER_LABELS } from '@/lib/admin/badgeThemes';
 
 interface BenchmarkItem {
   id: string;
@@ -26,20 +27,6 @@ interface BenchmarkItem {
   createdAt: string;
   updatedAt: string;
 }
-
-const trafficTierColors: Record<string, string> = {
-  small: 'bg-green-100 text-green-800',
-  medium: 'bg-blue-100 text-blue-800',
-  large: 'bg-orange-100 text-orange-800',
-  enterprise: 'bg-purple-100 text-purple-800',
-};
-
-const trafficTierLabels: Record<string, string> = {
-  small: 'Small',
-  medium: 'Medium',
-  large: 'Large',
-  enterprise: 'Enterprise',
-};
 
 function formatCost(cost?: number): string {
   if (cost === undefined || cost === null) return '-';
@@ -71,10 +58,10 @@ const columns: ColumnDef<BenchmarkItem>[] = [
     render: (item) => (
       <span
         className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-          trafficTierColors[item.trafficTier] || 'bg-gray-100 text-gray-800'
+          TRAFFIC_TIER_COLORS[item.trafficTier] || 'bg-gray-100 text-gray-800'
         }`}
       >
-        {trafficTierLabels[item.trafficTier] || item.trafficTier}
+        {TRAFFIC_TIER_LABELS[item.trafficTier] || item.trafficTier}
       </span>
     ),
   },

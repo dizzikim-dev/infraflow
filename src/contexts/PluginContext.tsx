@@ -17,6 +17,9 @@ import React, {
 } from 'react';
 import { PluginRegistry, pluginRegistry } from '@/lib/plugins/registry';
 import { corePlugin } from '@/lib/plugins/core-plugin';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('PluginContext');
 import type {
   InfraFlowPlugin,
   PluginState,
@@ -163,6 +166,9 @@ export function PluginProvider({
   const [error, setError] = useState<string | null>(null);
   const [currentThemeId, setCurrentThemeId] = useState<string | null>(defaultThemeId ?? null);
 
+  // 싱글톤 레지스트리를 state로 래핑 → React deps에 안전하게 포함 가능
+  const [registry] = useState(() => pluginRegistry);
+
   // 상태 변경 추적용
   const [updateTrigger, setUpdateTrigger] = useState(0);
 
@@ -176,16 +182,16 @@ export function PluginProvider({
 
     try {
       // 코어 플러그인 등록 및 활성화
-      if (!pluginRegistry.getPlugin('core')) {
-        await pluginRegistry.register(corePlugin);
-        await pluginRegistry.activate('core');
+      if (!registry.getPlugin('core')) {
+        await registry.register(corePlugin);
+        await registry.activate('core');
       }
 
       // 추가 플러그인 등록 및 활성화
       for (const plugin of additionalPlugins) {
-        if (!pluginRegistry.getPlugin(plugin.metadata.id)) {
-          await pluginRegistry.register(plugin);
-          await pluginRegistry.activate(plugin.metadata.id);
+        if (!registry.getPlugin(plugin.metadata.id)) {
+          await registry.register(plugin);
+          await registry.activate(plugin.metadata.id);
         }
       }
 
@@ -193,57 +199,58 @@ export function PluginProvider({
       setUpdateTrigger((prev) => prev + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to initialize plugin system');
-      console.error('[PluginContext] Initialization error:', err);
+      log.error('Plugin system initialization failed', err instanceof Error ? err : undefined);
     } finally {
       setLoading(false);
     }
-  }, [additionalPlugins]);
+  }, [additionalPlugins, registry]);
 
   useEffect(() => {
     if (autoInitialize && !initialized) {
       initialize();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoInitialize]);
+  }, [autoInitialize, initialize, initialized]);
 
   // ============================================================
   // Event Listener
   // ============================================================
 
   useEffect(() => {
-    const unsubscribe = pluginRegistry.addEventListener((event: RegistryEvent) => {
+    const unsubscribe = registry.addEventListener((event: RegistryEvent) => {
       // 상태 변경 시 리렌더링 트리거
       setUpdateTrigger((prev) => prev + 1);
 
       // 에러 이벤트 처리
       if (event.type === 'plugin:error') {
-        console.error('[PluginContext] Plugin error:', event.pluginId, event.data);
+        const errData = event.data as Record<string, unknown> | undefined;
+        const errValue = errData?.error;
+        log.error(`Plugin error: ${event.pluginId}`, errValue instanceof Error ? errValue : undefined);
       }
     });
 
     return unsubscribe;
-  }, []);
+  }, [registry]);
 
   // ============================================================
   // Plugin Management
   // ============================================================
 
   const registerPlugin = useCallback(async (plugin: InfraFlowPlugin) => {
-    await pluginRegistry.register(plugin);
-    await pluginRegistry.activate(plugin.metadata.id);
-  }, []);
+    await registry.register(plugin);
+    await registry.activate(plugin.metadata.id);
+  }, [registry]);
 
   const activatePlugin = useCallback(async (pluginId: string) => {
-    await pluginRegistry.activate(pluginId);
-  }, []);
+    await registry.activate(pluginId);
+  }, [registry]);
 
   const deactivatePlugin = useCallback(async (pluginId: string) => {
-    await pluginRegistry.deactivate(pluginId);
-  }, []);
+    await registry.deactivate(pluginId);
+  }, [registry]);
 
   const unregisterPlugin = useCallback(async (pluginId: string) => {
-    await pluginRegistry.unregister(pluginId);
-  }, []);
+    await registry.unregister(pluginId);
+  }, [registry]);
 
   const reinitialize = useCallback(async () => {
     PluginRegistry.resetInstance();
@@ -254,72 +261,71 @@ export function PluginProvider({
   // Memoized Values
   // ============================================================
 
-  // updateTrigger를 dependency array로 사용하여 레지스트리 변경 시 재계산
+  // updateTrigger + registry를 dependency array로 사용하여 레지스트리 변경 시 재계산
   const plugins = useMemo(
-    () => pluginRegistry.getAllPlugins(),
-    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+    () => registry.getAllPlugins(),
+    [registry, updateTrigger]
   );
 
   const pluginStates = useMemo(
-    () => pluginRegistry.getAllPluginStates(),
-    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+    () => registry.getAllPluginStates(),
+    [registry, updateTrigger]
   );
 
   const nodeConfigs = useMemo(
-    () => pluginRegistry.getAllNodeConfigs(),
-    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+    () => registry.getAllNodeConfigs(),
+    [registry, updateTrigger]
   );
 
   const getNodeConfig = useCallback(
-    (nodeId: string) => pluginRegistry.getNodeConfig(nodeId),
-    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+    (nodeId: string) => registry.getNodeConfig(nodeId),
+    [registry, updateTrigger]
   );
 
   const categoryStyles = useMemo(
-    () => pluginRegistry.getCategoryStyles(),
-    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+    () => registry.getCategoryStyles(),
+    [registry, updateTrigger]
   );
 
   const exporters = useMemo(
-    () => pluginRegistry.getAllExporters(),
-    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+    () => registry.getAllExporters(),
+    [registry, updateTrigger]
   );
 
   const getExporter = useCallback(
-    (format: string) => pluginRegistry.getExporter(format),
-    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+    (format: string) => registry.getExporter(format),
+    [registry, updateTrigger]
   );
 
   const supportedExportFormats = useMemo(
-    () => pluginRegistry.getSupportedExportFormats(),
-    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+    () => registry.getSupportedExportFormats(),
+    [registry, updateTrigger]
   );
 
   const panels = useMemo(
-    () => pluginRegistry.getAllPanels(),
-    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+    () => registry.getAllPanels(),
+    [registry, updateTrigger]
   );
 
   const getPanelsByPosition = useCallback(
-    (position: PanelExtension['position']) => pluginRegistry.getPanelsByPosition(position),
-    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+    (position: PanelExtension['position']) => registry.getPanelsByPosition(position),
+    [registry, updateTrigger]
   );
 
   const themes = useMemo(
-    () => pluginRegistry.getAllThemes(),
-    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+    () => registry.getAllThemes(),
+    [registry, updateTrigger]
   );
 
   const getTheme = useCallback(
-    (themeId: string) => pluginRegistry.getTheme(themeId),
-    [updateTrigger] // eslint-disable-line react-hooks/exhaustive-deps
+    (themeId: string) => registry.getTheme(themeId),
+    [registry, updateTrigger]
   );
 
   const currentTheme = useMemo(() => {
     if (!currentThemeId) return null;
-    return pluginRegistry.getTheme(currentThemeId) ?? null;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentThemeId, updateTrigger]);
+    return registry.getTheme(currentThemeId) ?? null;
+  }, [registry, currentThemeId, updateTrigger]);
 
   const setTheme = useCallback((themeId: string) => {
     setCurrentThemeId(themeId);
@@ -331,7 +337,7 @@ export function PluginProvider({
 
   const value = useMemo<PluginContextValue>(
     () => ({
-      registry: pluginRegistry,
+      registry,
       initialized,
       loading,
       error,

@@ -122,7 +122,37 @@ export function useLocalParser(config: UseLocalParserConfig): UseLocalParserRetu
           return;
         }
 
-        if (result.success && result.spec) {
+        if (result.isFallback) {
+          // Fallback: show warning UI, do NOT generate diagram
+          log.warn('Fallback triggered', { confidence: result.confidence, prompt: trimmedPrompt });
+
+          // Race condition check
+          if (currentRequestId !== requestIdRef.current) {
+            return;
+          }
+
+          onResultUpdate({
+            confidence: result.confidence,
+            commandType: result.commandType,
+            error: result.error || '입력하신 내용을 정확히 인식하지 못했습니다.',
+            isFallback: true,
+            fallbackSpec: result.spec,
+          });
+
+          // Fire-and-forget: log unrecognized query for admin review
+          try {
+            fetch('/api/log-unrecognized', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                query: trimmedPrompt,
+                confidence: result.confidence,
+              }),
+            }).catch(() => {/* ignore logging failures */});
+          } catch {
+            // Ignore — logging is best-effort
+          }
+        } else if (result.success && result.spec) {
           // Validate spec before using
           if (!result.spec.nodes || !Array.isArray(result.spec.nodes)) {
             throw new Error('Invalid spec: nodes array is missing');
@@ -144,6 +174,7 @@ export function useLocalParser(config: UseLocalParserConfig): UseLocalParserRetu
             commandType: result.commandType,
             warnings: result.warnings,
             suggestions: result.suggestions,
+            explanation: result.explanation,
           });
 
           // Update conversation context

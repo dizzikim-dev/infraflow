@@ -46,25 +46,29 @@ export default function KnowledgeDataTable<T extends object>({
   isLoading = false,
   emptyMessage = '데이터가 없습니다.',
 }: KnowledgeDataTableProps<T>) {
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const getId = (item: T): string => {
+    return (item as Record<string, unknown>).id as string ?? '';
+  };
 
   const toggleSelectAll = useCallback(() => {
     if (selectedIds.size === data.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(data.map((_, i) => i)));
+      setSelectedIds(new Set(data.map((item) => getId(item))));
     }
   }, [data, selectedIds.size]);
 
-  const toggleSelect = useCallback((index: number) => {
+  const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
+      if (next.has(id)) {
+        next.delete(id);
       } else {
-        next.add(index);
+        next.add(id);
       }
       return next;
     });
@@ -215,16 +219,18 @@ export default function KnowledgeDataTable<T extends object>({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {data.map((item, index) => (
+            {data.map((item) => {
+              const itemId = getId(item);
+              return (
               <tr
-                key={index}
-                className={`hover:bg-gray-50 ${selectedIds.has(index) ? 'bg-blue-50' : ''}`}
+                key={itemId}
+                className={`hover:bg-gray-50 ${selectedIds.has(itemId) ? 'bg-blue-50' : ''}`}
               >
                 <td className="px-4 py-4">
                   <input
                     type="checkbox"
-                    checked={selectedIds.has(index)}
-                    onChange={() => toggleSelect(index)}
+                    checked={selectedIds.has(itemId)}
+                    onChange={() => toggleSelect(itemId)}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                 </td>
@@ -256,7 +262,8 @@ export default function KnowledgeDataTable<T extends object>({
                   </td>
                 )}
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -10,6 +10,7 @@ import {
   TrustBadge,
 } from '@/components/admin/knowledge';
 import type { ColumnDef, FilterDef, KnowledgeListConfig } from '@/components/admin/knowledge';
+import { SEVERITY_COLORS, SEVERITY_LABELS } from '@/lib/admin/badgeThemes';
 
 interface AntiPatternItem {
   id: string;
@@ -28,20 +29,6 @@ interface AntiPatternItem {
   createdAt: string;
   updatedAt: string;
 }
-
-const severityColors: Record<string, string> = {
-  critical: 'bg-red-100 text-red-800',
-  high: 'bg-orange-100 text-orange-800',
-  medium: 'bg-yellow-100 text-yellow-800',
-  low: 'bg-gray-100 text-gray-800',
-};
-
-const severityLabels: Record<string, string> = {
-  critical: '심각',
-  high: '높음',
-  medium: '중간',
-  low: '낮음',
-};
 
 const columns: ColumnDef<AntiPatternItem>[] = [
   {
@@ -74,10 +61,10 @@ const columns: ColumnDef<AntiPatternItem>[] = [
     render: (item) => (
       <span
         className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-          severityColors[item.severity] || 'bg-gray-100 text-gray-800'
+          SEVERITY_COLORS[item.severity] || 'bg-gray-100 text-gray-800'
         }`}
       >
-        {severityLabels[item.severity] || item.severity}
+        {SEVERITY_LABELS[item.severity] || item.severity}
       </span>
     ),
   },

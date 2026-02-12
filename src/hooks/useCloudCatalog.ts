@@ -5,7 +5,7 @@
  * Data processing runs server-side to reduce client bundle size.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import type { InfraSpec, InfraNodeType } from '@/types/infra';
 import type {
   DeprecationWarning,
@@ -13,6 +13,7 @@ import type {
   CloudService,
   CloudProvider,
 } from '@/lib/knowledge/cloudCatalog';
+import { useFetchAnalysis } from './useFetchAnalysis';
 
 export interface UseCloudCatalogResult {
   deprecationWarnings: DeprecationWarning[];
@@ -22,35 +23,15 @@ export interface UseCloudCatalogResult {
 }
 
 export function useCloudCatalog(spec: InfraSpec | null): UseCloudCatalogResult {
-  const [deprecationWarnings, setDeprecationWarnings] = useState<DeprecationWarning[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const requestIdRef = useRef(0);
-
-  useEffect(() => {
-    if (!spec || spec.nodes.length === 0) {
-      setDeprecationWarnings([]);
-      return;
-    }
-
-    const currentId = ++requestIdRef.current;
-    setIsLoading(true);
-
-    fetch('/api/analyze/cloud', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ spec, action: 'deprecations' }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (currentId !== requestIdRef.current) return;
-        setDeprecationWarnings(data.deprecationWarnings ?? []);
-        setIsLoading(false);
-      })
-      .catch(() => {
-        if (currentId !== requestIdRef.current) return;
-        setIsLoading(false);
-      });
-  }, [spec]);
+  const { result: deprecationWarnings, isLoading } = useFetchAnalysis<DeprecationWarning[]>(
+    spec,
+    {
+      endpoint: '/api/analyze/cloud',
+      buildBody: () => ({ spec, action: 'deprecations' }),
+      extractResult: (data) => (data.deprecationWarnings as DeprecationWarning[]) ?? [],
+      defaultResult: [],
+    },
+  );
 
   const getServicesForType = useCallback(
     async (type: InfraNodeType, provider?: CloudProvider): Promise<CloudService[]> => {

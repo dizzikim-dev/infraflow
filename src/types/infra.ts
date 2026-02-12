@@ -23,7 +23,11 @@ export type SecurityNodeType =
   | 'ztna-broker'      // ZTNA 브로커
   | 'casb'             // Cloud Access Security Broker
   | 'siem'             // Security Information & Event Management
-  | 'soar';            // Security Orchestration, Automation & Response
+  | 'soar'             // Security Orchestration, Automation & Response
+  | 'cctv-camera'      // CCTV 카메라
+  | 'nvr'              // 네트워크 비디오 레코더 (NVR)
+  | 'video-server'     // 영상관제 서버 (VMS)
+  | 'access-control';  // 출입통제 시스템
 
 // Network Equipment
 export type NetworkNodeType =

@@ -5,7 +5,7 @@
  * Data processing runs server-side to reduce client bundle size.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import type { InfraSpec } from '@/types/infra';
 import type {
   TrafficTier,
@@ -13,6 +13,19 @@ import type {
   CapacityEstimate,
   BottleneckInfo,
 } from '@/lib/knowledge/benchmarks';
+import { useFetchAnalysis } from './useFetchAnalysis';
+
+interface BenchmarkData {
+  recommendations: SizingRecommendation[];
+  capacity: CapacityEstimate | null;
+  bottlenecks: BottleneckInfo[];
+}
+
+const DEFAULT_BENCHMARK: BenchmarkData = {
+  recommendations: [],
+  capacity: null,
+  bottlenecks: [],
+};
 
 export interface UseBenchmarkResult {
   selectedTier: TrafficTier;
@@ -25,41 +38,28 @@ export interface UseBenchmarkResult {
 
 export function useBenchmark(spec: InfraSpec | null): UseBenchmarkResult {
   const [selectedTier, setTier] = useState<TrafficTier>('medium');
-  const [recommendations, setRecommendations] = useState<SizingRecommendation[]>([]);
-  const [capacity, setCapacity] = useState<CapacityEstimate | null>(null);
-  const [bottlenecks, setBottlenecks] = useState<BottleneckInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const requestIdRef = useRef(0);
 
-  useEffect(() => {
-    if (!spec || spec.nodes.length === 0) {
-      setRecommendations([]);
-      setCapacity(null);
-      setBottlenecks([]);
-      return;
-    }
+  const { result, isLoading } = useFetchAnalysis<BenchmarkData>(
+    spec,
+    {
+      endpoint: '/api/analyze/benchmarks',
+      buildBody: () => ({ spec, tier: selectedTier }),
+      extractResult: (data) => ({
+        recommendations: (data.recommendations as SizingRecommendation[]) ?? [],
+        capacity: (data.capacity as CapacityEstimate) ?? null,
+        bottlenecks: (data.bottlenecks as BottleneckInfo[]) ?? [],
+      }),
+      defaultResult: DEFAULT_BENCHMARK,
+    },
+    [selectedTier],
+  );
 
-    const currentId = ++requestIdRef.current;
-    setIsLoading(true);
-
-    fetch('/api/analyze/benchmarks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ spec, tier: selectedTier }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (currentId !== requestIdRef.current) return;
-        setRecommendations(data.recommendations ?? []);
-        setCapacity(data.capacity ?? null);
-        setBottlenecks(data.bottlenecks ?? []);
-        setIsLoading(false);
-      })
-      .catch(() => {
-        if (currentId !== requestIdRef.current) return;
-        setIsLoading(false);
-      });
-  }, [spec, selectedTier]);
-
-  return { selectedTier, setTier, recommendations, capacity, bottlenecks, isLoading };
+  return {
+    selectedTier,
+    setTier,
+    recommendations: result.recommendations,
+    capacity: result.capacity,
+    bottlenecks: result.bottlenecks,
+    isLoading,
+  };
 }

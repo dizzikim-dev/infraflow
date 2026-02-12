@@ -7,11 +7,12 @@
  * and sizing recommendations.
  */
 
-import { motion } from 'framer-motion';
-import { X, Gauge, AlertTriangle, CheckCircle2, TrendingUp } from 'lucide-react';
+import { Gauge, AlertTriangle, CheckCircle2, TrendingUp } from 'lucide-react';
 import type { InfraSpec } from '@/types';
 import { useBenchmark } from '@/hooks/useBenchmark';
 import { TRAFFIC_PROFILES, type TrafficTier } from '@/lib/knowledge/benchmarks';
+import { PanelContainer } from './PanelContainer';
+import { PanelHeader } from './PanelHeader';
 
 // ============================================================
 // Types
@@ -30,26 +31,8 @@ export function BenchmarkPanel({ spec, onClose }: BenchmarkPanelProps) {
   const { selectedTier, setTier, recommendations, capacity, bottlenecks } = useBenchmark(spec);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 100 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 100 }}
-      className="fixed top-0 right-0 h-full w-[480px] bg-zinc-900/95 backdrop-blur-sm border-l border-white/10 z-50 flex flex-col"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
-        <div className="flex items-center gap-2">
-          <Gauge className="w-5 h-5 text-cyan-400" />
-          <h2 className="text-lg font-semibold text-white">성능 벤치마크</h2>
-        </div>
-        <button
-          onClick={onClose}
-          className="p-1 rounded hover:bg-white/10 text-zinc-400 hover:text-white"
-          aria-label="닫기"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+    <PanelContainer>
+      <PanelHeader icon={Gauge} iconColor="text-cyan-400" title="성능 벤치마크" onClose={onClose} />
 
       {/* Traffic Tier Selector */}
       <div className="p-4 border-b border-white/10">
@@ -202,6 +185,6 @@ export function BenchmarkPanel({ spec, onClose }: BenchmarkPanelProps) {
           <span>벤치마크 데이터는 일반적인 클라우드 환경 기준이며 실제와 다를 수 있습니다.</span>
         </div>
       )}
-    </motion.div>
+    </PanelContainer>
   );
 }

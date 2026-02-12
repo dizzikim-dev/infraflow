@@ -1,13 +1,12 @@
 // Client-side LLM utilities
 export {
   parseWithLLM,
-  parseWithClaude,
-  parseWithOpenAI,
-  isLLMConfigured,
-  getDefaultLLMConfig,
   type LLMConfig,
   type LLMParseResult,
 } from './llmParser';
+
+// Model name constants
+export { LLM_MODELS, type LLMModelId } from './models';
 
 // Server-side shared modules
 export { addRateLimitHeaders } from './rateLimitHeaders';

@@ -2,7 +2,7 @@
  * Feedback Store — IndexedDB wrapper for learning data
  *
  * Uses native IndexedDB with Promise wrapper.
- * DB name: 'infraflow-learning', version 1
+ * DB name: 'infraflow-learning', version 2
  * Stores: 'feedback-records'
  *
  * Adapter pattern: FeedbackStoreAdapter interface allows
@@ -15,7 +15,7 @@ import { createLogger } from '@/lib/utils/logger';
 const log = createLogger('FeedbackStore');
 
 const DB_NAME = 'infraflow-learning';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const FEEDBACK_STORE = 'feedback-records';
 const MAX_RECORDS = 1000;
 
@@ -45,6 +45,19 @@ function openDB(): Promise<IDBDatabase> {
         store.createIndex('timestamp', 'timestamp', { unique: false });
         store.createIndex('sessionId', 'sessionId', { unique: false });
         store.createIndex('diagramSource', 'diagramSource', { unique: false });
+      }
+      // v1 stores (may be created by other modules)
+      if (!db.objectStoreNames.contains('usage-events')) {
+        const usageStore = db.createObjectStore('usage-events', { keyPath: 'id' });
+        usageStore.createIndex('timestamp', 'timestamp', { unique: false });
+        usageStore.createIndex('sessionId', 'sessionId', { unique: false });
+        usageStore.createIndex('eventType', 'eventType', { unique: false });
+      }
+      // v2 store
+      if (!db.objectStoreNames.contains('antipattern-interactions')) {
+        const apStore = db.createObjectStore('antipattern-interactions', { keyPath: 'id' });
+        apStore.createIndex('antiPatternId', 'antiPatternId', { unique: false });
+        apStore.createIndex('timestamp', 'timestamp', { unique: false });
       }
     };
 

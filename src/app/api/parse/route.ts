@@ -284,6 +284,16 @@ export async function POST(
   request: NextRequest
 ): Promise<NextResponse<SmartParseResponse>> {
   try {
+    // CSRF protection — check Origin header
+    const origin = request.headers.get('origin');
+    const host = request.headers.get('host');
+    if (origin && host && !origin.includes(host)) {
+      return NextResponse.json(
+        { success: false, error: '허용되지 않은 요청입니다.' },
+        { status: 403 }
+      );
+    }
+
     const rawBody = await request.json();
     const parsed = ParseRequestSchema.safeParse(rawBody);
 

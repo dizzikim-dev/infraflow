@@ -254,7 +254,7 @@ export function exportWithPlugin(
 ): string | Blob | null {
   const registry = getExporterRegistry();
   if (!registry) {
-    console.error('[exportUtils] ExporterRegistry not available');
+    logger.warn('ExporterRegistry not available for plugin export');
     return null;
   }
 
@@ -328,7 +328,7 @@ export async function exportUnified(
   // 이미지/PDF 형식은 element가 필요
   if (['png', 'svg', 'pdf'].includes(format)) {
     if (!element) {
-      console.error(`[exportUtils] Element required for ${format} export`);
+      logger.error(`Element required for ${format} export`);
       return null;
     }
     try {
@@ -338,7 +338,7 @@ export async function exportUnified(
         background,
       });
     } catch (error) {
-      console.error(`[exportUtils] Failed to export as ${format}:`, error);
+      logger.error(`Failed to export as ${format}`, error instanceof Error ? error : undefined);
       return null;
     }
   }

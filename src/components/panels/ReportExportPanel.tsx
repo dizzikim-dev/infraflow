@@ -94,7 +94,7 @@ export function ReportExportPanel({ spec, canvasRef, onClose }: ReportExportPane
 
       setStatus({ type: 'success', message: 'PDF 보고서가 생성되었습니다' });
     } catch (error) {
-      console.error('Report generation failed:', error);
+      logger.error('Report generation failed', error instanceof Error ? error : undefined);
       setStatus({ type: 'error', message: '보고서 생성에 실패했습니다' });
     }
 

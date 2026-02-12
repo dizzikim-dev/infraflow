@@ -2,6 +2,9 @@
 
 import React, { createContext, useContext, useRef, useEffect, useMemo } from 'react';
 import { AnimationEngine } from '@/lib/animation/animationEngine';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('AnimationContext');
 
 interface AnimationContextValue {
   engine: AnimationEngine | null;
@@ -59,7 +62,7 @@ export function useAnimationEngine(): AnimationEngine | null {
   const context = useContext(AnimationContext);
 
   if (!context) {
-    console.warn(
+    log.warn(
       'useAnimationEngine must be used within an AnimationProvider. ' +
       'Falling back to creating a new engine instance.'
     );

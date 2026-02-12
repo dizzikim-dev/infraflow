@@ -570,6 +570,29 @@ model KnowledgeIndustryPreset {
   @@map("knowledge_industry_presets")
 }
 
+/// 미인식 쿼리 (fallback 로깅)
+model UnrecognizedQuery {
+  id         String   @id @default(cuid())
+  query      String   @db.Text
+  confidence Float    @default(0.3)
+  sessionId  String?
+  userAgent  String?
+
+  isResolved    Boolean   @default(false)
+  adminNotes    String?   @db.Text
+  suggestedType String?
+  resolvedAt    DateTime?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isResolved])
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("unrecognized_queries")
+}
+
 /// 지식 출처 레지스트리
 model KnowledgeSourceEntry {
   id            String     @id @default(cuid())

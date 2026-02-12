@@ -7,90 +7,26 @@ import { XYPosition, Node, Edge } from '@xyflow/react';
 import { FlowCanvas } from '@/components/shared';
 import { Header, EmptyState } from '@/components/layout';
 import { PromptPanel } from '@/components/panels';
+import { HistorySidebar, SidebarToggle } from '@/components/sidebar';
 import {
   CanvasContextMenu,
   NodeContextMenu,
   EdgeContextMenu,
   ComponentPicker,
 } from '@/components/contextMenu';
+import { EditorPanels } from './EditorPanels';
 import { useInfraState, useModalManager, useContextMenu, useComparisonMode, useHistory, type ComponentData } from '@/hooks';
 import { useDiagramPersistence } from '@/hooks/useDiagramPersistence';
+import { useSidebar } from '@/hooks/useSidebar';
+import { useLocalHistory } from '@/hooks/useLocalHistory';
+import { useDbHistory } from '@/hooks/useDbHistory';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { InfraNodeType, InfraSpec } from '@/types';
 import { isInfraNodeData } from '@/types/guards';
 
-// Dynamic imports for conditionally rendered heavy components
-const AnimationControlPanel = dynamic(
-  () => import('@/components/panels/AnimationControlPanel').then(mod => ({ default: mod.AnimationControlPanel })),
-  { ssr: false }
-);
-
-const PolicyOverlay = dynamic(
-  () => import('@/components/panels/PolicyOverlay').then(mod => ({ default: mod.PolicyOverlay })),
-  { ssr: false }
-);
-
-const ScenarioSelector = dynamic(
-  () => import('@/components/panels/ScenarioSelector').then(mod => ({ default: mod.ScenarioSelector })),
-  { ssr: false }
-);
-
-const TemplateGallery = dynamic(
-  () => import('@/components/panels/TemplateGallery').then(mod => ({ default: mod.TemplateGallery })),
-  { ssr: false }
-);
-
-const ExportPanel = dynamic(
-  () => import('@/components/panels/ExportPanel').then(mod => ({ default: mod.ExportPanel })),
-  { ssr: false }
-);
-
-const SaveTemplateDialog = dynamic(
-  () => import('@/components/panels/SaveTemplateDialog').then(mod => ({ default: mod.SaveTemplateDialog })),
-  { ssr: false }
-);
-
-const NodeDetailPanel = dynamic(
-  () => import('@/components/panels/NodeDetailPanel').then(mod => ({ default: mod.NodeDetailPanel })),
-  { ssr: false }
-);
-
 const ComparisonView = dynamic(
   () => import('@/components/comparison/ComparisonView').then(mod => ({ default: mod.ComparisonView })),
-  { ssr: false }
-);
-
-const HealthCheckPanel = dynamic(
-  () => import('@/components/panels/HealthCheckPanel').then(mod => ({ default: mod.HealthCheckPanel })),
-  { ssr: false }
-);
-
-const FeedbackRating = dynamic(
-  () => import('@/components/feedback/FeedbackRating').then(mod => ({ default: mod.FeedbackRating })),
-  { ssr: false }
-);
-
-const InsightsPanel = dynamic(
-  () => import('@/components/panels/InsightsPanel').then(mod => ({ default: mod.InsightsPanel })),
-  { ssr: false }
-);
-
-const VulnerabilityPanel = dynamic(
-  () => import('@/components/panels/VulnerabilityPanel').then(mod => ({ default: mod.VulnerabilityPanel })),
-  { ssr: false }
-);
-
-const CloudCatalogPanel = dynamic(
-  () => import('@/components/panels/CloudCatalogPanel').then(mod => ({ default: mod.CloudCatalogPanel })),
-  { ssr: false }
-);
-
-const IndustryCompliancePanel = dynamic(
-  () => import('@/components/panels/IndustryCompliancePanel').then(mod => ({ default: mod.IndustryCompliancePanel })),
-  { ssr: false }
-);
-
-const BenchmarkPanel = dynamic(
-  () => import('@/components/panels/BenchmarkPanel').then(mod => ({ default: mod.BenchmarkPanel })),
   { ssr: false }
 );
 
@@ -146,6 +82,8 @@ export function InfraEditor({
     // LLM Modification
     handleLLMModify,
     llmAvailable,
+    // Result management
+    setLastResult,
     // Feedback
     feedback,
   } = useInfraState();
@@ -153,46 +91,36 @@ export function InfraEditor({
   // Undo/Redo history
   const { undo, redo, canUndo, canRedo } = useHistory(nodes, edges, setNodes, setEdges);
 
+  // ── Title state management ──
+  // On /diagram/[id] page: `title` + `onTitleChange` are provided by parent
+  // On home page (/): we manage title locally
+  const [localTitle, setLocalTitle] = useState<string>('');
+  const effectiveTitle = title ?? localTitle;
+
+  const handleTitleChange = useCallback((newTitle: string) => {
+    if (onTitleChange) {
+      onTitleChange(newTitle); // External management (diagram page)
+    } else {
+      setLocalTitle(newTitle); // Local management (home page)
+    }
+  }, [onTitleChange]);
+
   // Load initial spec once on mount
   const loadedRef = useRef(false);
   useEffect(() => {
     if (loadedRef.current || !initialSpec) return;
     loadedRef.current = true;
+    justLoadedRef.current = true; // Don't trigger auto-save for initial load
     loadFromSpec(initialSpec, initialNodes, initialEdges);
   }, [initialSpec, initialNodes, initialEdges, loadFromSpec]);
 
-  // Diagram persistence (auto-save)
+  // Diagram persistence (auto-save for /diagram/[id] pages)
   const persistence = useDiagramPersistence({
     diagramId,
     spec: currentSpec,
     nodes,
     edges,
   });
-
-  // Save handler for new (unsaved) diagrams
-  const [isSavingNew, setIsSavingNew] = useState(false);
-  const handleSaveNew = useCallback(async () => {
-    if (!currentSpec || isSavingNew) return;
-    setIsSavingNew(true);
-    try {
-      const res = await fetch('/api/diagrams', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: title || '새 다이어그램',
-          spec: currentSpec,
-          nodesJson: nodes,
-          edgesJson: edges,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        onFirstSave?.(data.diagram.id);
-      }
-    } finally {
-      setIsSavingNew(false);
-    }
-  }, [currentSpec, nodes, edges, title, isSavingNew, onFirstSave]);
 
   // Ref for prompt textarea focus
   const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -231,6 +159,114 @@ export function InfraEditor({
     toggleModal,
   } = useModalManager();
 
+  // Auth state for hybrid history (localStorage vs DB)
+  const { status: sessionStatus } = useSession();
+  const isAuthenticated = sessionStatus === 'authenticated';
+  const router = useRouter();
+
+  // Sidebar + History
+  const sidebar = useSidebar();
+  const localHistory = useLocalHistory();
+  const dbHistory = useDbHistory(isAuthenticated, diagramId);
+
+  // Unified history entries for sidebar
+  const historyEntries = isAuthenticated ? dbHistory.entries : localHistory.entries;
+  const historyActiveId = isAuthenticated ? dbHistory.activeId : localHistory.activeId;
+  const historyLoading = isAuthenticated ? dbHistory.loading : false;
+
+  // ── Auto-save on spec OR title change ──
+  const prevSpecRef = useRef<InfraSpec | null>(null);
+  const prevTitleRef = useRef<string>('');
+  // Skip auto-save once after selecting/loading an existing diagram
+  const justLoadedRef = useRef(false);
+
+  useEffect(() => {
+    // Must have actual nodes on canvas (not just stale spec)
+    if (!nodes.length) return;
+    if (!currentSpec?.nodes?.length) return;
+
+    const specChanged = currentSpec !== prevSpecRef.current;
+    // Title change only counts when going from non-empty to non-empty
+    // (prevents ghost saves when clearing title via "새 다이어그램")
+    const titleChanged = effectiveTitle !== prevTitleRef.current
+      && prevTitleRef.current !== ''
+      && effectiveTitle !== '';
+
+    if (!specChanged && !titleChanged) return;
+
+    prevSpecRef.current = currentSpec;
+    prevTitleRef.current = effectiveTitle;
+
+    // When loading an existing diagram, skip the save (just update refs)
+    if (justLoadedRef.current) {
+      justLoadedRef.current = false;
+      return;
+    }
+
+    if (isAuthenticated && !diagramId) {
+      dbHistory.saveSession(currentSpec, effectiveTitle || undefined, nodes, edges);
+    } else if (!isAuthenticated) {
+      localHistory.saveSession(currentSpec, effectiveTitle || undefined);
+    }
+    // When diagramId is set, useDiagramPersistence handles DB auto-save
+  }, [currentSpec, effectiveTitle, isAuthenticated, diagramId, localHistory, dbHistory, nodes, edges]);
+
+  // ── Auto-title from first prompt (GPT-like: first message = thread title) ──
+  const wrappedPromptSubmit = useCallback((prompt: string) => {
+    if (!effectiveTitle) {
+      const autoTitle = prompt.length > 60 ? prompt.slice(0, 57) + '...' : prompt;
+      handleTitleChange(autoTitle);
+    }
+    handlePromptSubmit(prompt);
+  }, [effectiveTitle, handleTitleChange, handlePromptSubmit]);
+
+  // Select a diagram from sidebar
+  const handleDiagramSelect = useCallback(async (id: string) => {
+    // Flag: loading existing diagram — don't trigger auto-save
+    justLoadedRef.current = true;
+    if (isAuthenticated) {
+      const diagram = await dbHistory.selectSession(id);
+      if (diagram) {
+        loadFromSpec(diagram.spec, diagram.nodesJson ?? undefined, diagram.edgesJson ?? undefined);
+        setLocalTitle(diagram.title);
+      }
+    } else {
+      const entry = localHistory.selectSession(id);
+      if (entry) {
+        loadFromSpec(entry.spec);
+        setLocalTitle(entry.title);
+      }
+    }
+  }, [isAuthenticated, dbHistory, localHistory, loadFromSpec]);
+
+  // New diagram from sidebar
+  const handleNewDiagram = useCallback(() => {
+    if (isAuthenticated) {
+      dbHistory.startNewSession();
+    } else {
+      localHistory.startNewSession();
+    }
+    // Reset refs to prevent ghost saves (title clear / spec clear triggering auto-save)
+    prevSpecRef.current = null;
+    prevTitleRef.current = '';
+    setLocalTitle('');
+    setNodes([]);
+    setEdges([]);
+    // If on /diagram/[id] page, navigate to home so diagramId clears
+    if (diagramId) {
+      router.push('/');
+    }
+  }, [isAuthenticated, dbHistory, localHistory, setNodes, setEdges, diagramId, router]);
+
+  // Delete a diagram from sidebar
+  const handleDiagramDelete = useCallback((id: string) => {
+    if (isAuthenticated) {
+      dbHistory.deleteEntry(id);
+    } else {
+      localHistory.deleteEntry(id);
+    }
+  }, [isAuthenticated, dbHistory, localHistory]);
+
   // Handle scenario selection with modal management
   const onScenarioSelect = useCallback((type: Parameters<typeof handleScenarioSelect>[0]) => {
     handleScenarioSelect(type);
@@ -244,6 +280,15 @@ export function InfraEditor({
     closeModal('templateGallery');
     closeModal('animationControls');
   }, [handleTemplateSelect, closeModal]);
+
+  // Fallback handlers: accept fallback spec or dismiss and retry
+  const handleAcceptFallback = useCallback((spec: InfraSpec) => {
+    loadFromSpec(spec);
+  }, [loadFromSpec]);
+
+  const handleDismissFallback = useCallback(() => {
+    setLastResult(null);
+  }, [setLastResult]);
 
   // Focus prompt input via ref
   const focusPromptInput = useCallback(() => {
@@ -317,6 +362,16 @@ export function InfraEditor({
     [addNode]
   );
 
+  // Receive node position changes from FlowCanvas (e.g. drag)
+  const handleNodesChangeFromCanvas = useCallback((updatedNodes: Node[]) => {
+    setNodes(updatedNodes);
+  }, [setNodes]);
+
+  // Receive edge changes from FlowCanvas (e.g. new connection)
+  const handleEdgesChangeFromCanvas = useCallback((updatedEdges: Edge[]) => {
+    setEdges(updatedEdges);
+  }, [setEdges]);
+
   // Enter comparison mode handler
   const handleEnterComparisonMode = useCallback(() => {
     comparison.enterComparisonMode(currentSpec, nodes, edges);
@@ -346,11 +401,33 @@ export function InfraEditor({
   })();
 
   const hasNodes = nodes.length > 0;
+  const sidebarOpen = sidebar.isOpen;
 
   return (
     <div className="w-screen h-screen relative overflow-hidden bg-[#0a0a0b]">
+      {/* Sidebar Toggle (when sidebar closed) */}
+      {!sidebarOpen && (
+        <SidebarToggle onClick={sidebar.open} />
+      )}
+
+      {/* History Sidebar — localStorage when unauthenticated, DB when authenticated */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <HistorySidebar
+            entries={historyEntries}
+            activeId={historyActiveId}
+            loading={historyLoading}
+            onClose={sidebar.close}
+            onSelect={handleDiagramSelect}
+            onDelete={handleDiagramDelete}
+            onNewDiagram={handleNewDiagram}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <Header
+        sidebarOpen={sidebarOpen}
         hasNodes={hasNodes}
         lastResult={lastResult}
         onAnimateClick={() => toggleModal('scenarioSelector')}
@@ -368,12 +445,11 @@ export function InfraEditor({
         onRedo={redo}
         canUndo={canUndo()}
         canRedo={canRedo()}
-        // Save/title props
-        isSaving={diagramId ? persistence.isSaving : undefined}
-        lastSavedAt={diagramId ? persistence.lastSavedAt : undefined}
-        title={title}
-        onTitleChange={onTitleChange}
-        onSave={!diagramId ? handleSaveNew : undefined}
+        // Save/title — always show title (effectiveTitle), use DB save status when authenticated
+        isSaving={diagramId ? persistence.isSaving : (isAuthenticated ? dbHistory.isSaving : undefined)}
+        lastSavedAt={diagramId ? persistence.lastSavedAt : (isAuthenticated ? dbHistory.lastSavedAt : undefined)}
+        title={effectiveTitle}
+        onTitleChange={handleTitleChange}
       />
 
       {/* Flow Canvas */}
@@ -381,6 +457,8 @@ export function InfraEditor({
         <FlowCanvas
           initialNodes={nodes}
           initialEdges={edges}
+          onNodesChange={handleNodesChangeFromCanvas}
+          onEdgesChange={handleEdgesChangeFromCanvas}
           onNodeClick={handleNodeClick}
           onNodeDataUpdate={updateNodeData}
           onCanvasContextMenu={handleCanvasContextMenu}
@@ -397,166 +475,37 @@ export function InfraEditor({
         />
       )}
 
-      {/* Scenario Selector */}
-      <AnimatePresence>
-        {showScenarioSelector && (
-          <ScenarioSelector
-            onSelect={onScenarioSelect}
-            onClose={() => closeModal('scenarioSelector')}
-            currentScenario={currentScenario || undefined}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Animation Controls */}
-      <AnimatePresence>
-        {showAnimationControls && animationSequence && (
-          <AnimationControlPanel
-            sequence={animationSequence}
-            onClose={() => closeModal('animationControls')}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Policy Overlay */}
-      <AnimatePresence>
-        {selectedNodePolicy && (
-          <PolicyOverlay
-            nodeName={selectedNodePolicy.name}
-            nodeType={selectedNodePolicy.type}
-            policies={selectedNodePolicy.policies}
-            position={selectedNodePolicy.position}
-            onClose={() => setSelectedNodePolicy(null)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Node Detail Panel */}
-      <AnimatePresence>
-        {selectedNodeDetail && (
-          <NodeDetailPanel
-            nodeId={selectedNodeDetail.id}
-            nodeName={selectedNodeDetail.name}
-            nodeType={selectedNodeDetail.nodeType as InfraNodeType}
-            tier={selectedNodeDetail.tier}
-            zone={selectedNodeDetail.zone}
-            description={selectedNodeDetail.description}
-            onClose={() => setSelectedNodeDetail(null)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Health Check Panel */}
-      <AnimatePresence>
-        {showHealthCheck && (
-          <HealthCheckPanel
-            spec={currentSpec}
-            onClose={() => closeModal('healthCheck')}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Insights Panel */}
-      <AnimatePresence>
-        {showInsights && (
-          <InsightsPanel
-            onClose={() => closeModal('insights')}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Vulnerability Panel */}
-      <AnimatePresence>
-        {showVulnerability && (
-          <VulnerabilityPanel
-            spec={currentSpec}
-            onClose={() => closeModal('vulnerability')}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Cloud Catalog Panel */}
-      <AnimatePresence>
-        {showCloudCatalog && (
-          <CloudCatalogPanel
-            spec={currentSpec}
-            onClose={() => closeModal('cloudCatalog')}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Industry Compliance Panel */}
-      <AnimatePresence>
-        {showCompliance && (
-          <IndustryCompliancePanel
-            spec={currentSpec}
-            onClose={() => closeModal('compliance')}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Benchmark Panel */}
-      <AnimatePresence>
-        {showBenchmark && (
-          <BenchmarkPanel
-            spec={currentSpec}
-            onClose={() => closeModal('benchmark')}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Template Gallery Modal */}
-      <AnimatePresence>
-        {showTemplateGallery && (
-          <TemplateGallery
-            onSelect={onTemplateSelect}
-            onClose={() => closeModal('templateGallery')}
-            onSaveCurrent={() => {
-              closeModal('templateGallery');
-              openModal('saveDialog');
-            }}
-            hasCurrentSpec={!!currentSpec}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Export Panel Modal */}
-      <AnimatePresence>
-        {showExportPanel && (
-          <ExportPanel
-            onClose={() => closeModal('exportPanel')}
-            canvasRef={canvasRef as React.RefObject<HTMLElement>}
-            currentSpec={currentSpec}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Save Template Dialog */}
-      <AnimatePresence>
-        {showSaveDialog && currentSpec && (
-          <SaveTemplateDialog
-            spec={currentSpec}
-            onClose={() => closeModal('saveDialog')}
-            onSaved={() => {
-              // Optionally refresh or show success message
-            }}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Feedback Rating */}
-      {feedback.isAvailable && (
-        <FeedbackRating
-          show={feedback.hasPendingFeedback}
-          onRate={feedback.submitRating}
-          onDismiss={() => {}}
-          submitted={feedback.ratingSubmitted}
-        />
-      )}
+      {/* All Panels (Scenario, Animation, Policy, NodeDetail, Health, etc.) */}
+      <EditorPanels
+        showScenarioSelector={showScenarioSelector}
+        showAnimationControls={showAnimationControls}
+        showHealthCheck={showHealthCheck}
+        showInsights={showInsights}
+        showVulnerability={showVulnerability}
+        showCloudCatalog={showCloudCatalog}
+        showCompliance={showCompliance}
+        showBenchmark={showBenchmark}
+        showTemplateGallery={showTemplateGallery}
+        showExportPanel={showExportPanel}
+        showSaveDialog={showSaveDialog}
+        currentSpec={currentSpec}
+        currentScenario={currentScenario}
+        animationSequence={animationSequence}
+        selectedNodeDetail={selectedNodeDetail}
+        selectedNodePolicy={selectedNodePolicy}
+        canvasRef={canvasRef as React.RefObject<HTMLElement>}
+        feedback={feedback}
+        onScenarioSelect={onScenarioSelect}
+        onTemplateSelect={onTemplateSelect}
+        closeModal={closeModal}
+        openModal={openModal}
+        setSelectedNodeDetail={setSelectedNodeDetail}
+        setSelectedNodePolicy={setSelectedNodePolicy}
+      />
 
       {/* Prompt Panel */}
       <PromptPanel
-        onSubmit={handlePromptSubmit}
+        onSubmit={wrappedPromptSubmit}
         onModify={handleLLMModify}
         isLoading={isLoading}
         hasExistingDiagram={hasNodes}
@@ -564,6 +513,10 @@ export function InfraEditor({
         lastOperations={lastResult?.operations}
         llmAvailable={llmAvailable}
         textareaRef={promptTextareaRef}
+        sidebarOpen={sidebarOpen}
+        lastResult={lastResult}
+        onAcceptFallback={handleAcceptFallback}
+        onDismissFallback={handleDismissFallback}
       />
 
       {/* Comparison View */}

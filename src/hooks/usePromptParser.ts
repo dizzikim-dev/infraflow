@@ -24,6 +24,12 @@ export interface ParseResultInfo {
   warnings?: KnowledgeWarning[];
   /** Knowledge graph suggestions (missing dependencies) */
   suggestions?: KnowledgeSuggestion[];
+  /** True when the parser fell back to a low-confidence template */
+  isFallback?: boolean;
+  /** The fallback spec (available when isFallback is true so user can opt-in) */
+  fallbackSpec?: InfraSpec;
+  /** Human-readable explanation of why this infrastructure was generated */
+  explanation?: string;
 }
 
 export interface UsePromptParserReturn {

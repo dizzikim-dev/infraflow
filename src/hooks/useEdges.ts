@@ -4,6 +4,9 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { Edge, Node, XYPosition } from '@xyflow/react';
 import { InfraNodeType, InfraSpec } from '@/types';
 import { ComponentData } from './useNodes';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('useEdges');
 
 export interface UseEdgesReturn {
   edges: Edge[];
@@ -126,7 +129,7 @@ export function useEdges(config: UseEdgesConfig): UseEdgesReturn {
       addNodeFn?: AddNodeFunction
     ): string | null => {
       if (!addNodeFn) {
-        console.warn('insertNodeBetween requires addNodeFn');
+        log.warn('insertNodeBetween requires addNodeFn');
         return null;
       }
 

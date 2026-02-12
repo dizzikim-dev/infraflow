@@ -34,6 +34,7 @@ import { addRateLimitHeaders } from '@/lib/llm/rateLimitHeaders';
 import { getProviderStatus } from '@/lib/llm/providers';
 import { parseJSONFromLLMResponse } from '@/lib/llm/jsonParser';
 import { matchFallbackTemplate } from '@/lib/llm/fallbackTemplates';
+import { LLM_MODELS } from '@/lib/llm/models';
 import { LLMRequestSchema } from '@/lib/validations/api';
 
 const log = createLogger('LLM');
@@ -116,7 +117,7 @@ Only output valid JSON. No explanations.`;
 async function callClaudeOnce(
   prompt: string,
   apiKey: string,
-  model: string = 'claude-3-haiku-20240307'
+  model: string = LLM_MODELS.ANTHROPIC_DEFAULT
 ): Promise<LLMResponse> {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -173,7 +174,7 @@ async function callClaudeOnce(
 async function callClaude(
   prompt: string,
   apiKey: string,
-  model: string = 'claude-3-haiku-20240307'
+  model: string = LLM_MODELS.ANTHROPIC_DEFAULT
 ): Promise<LLMResponse> {
   const result = await withRetry(
     () => callClaudeOnce(prompt, apiKey, model),
@@ -210,7 +211,7 @@ async function callClaude(
 async function callOpenAIOnce(
   prompt: string,
   apiKey: string,
-  model: string = 'gpt-4o-mini'
+  model: string = LLM_MODELS.OPENAI_DEFAULT
 ): Promise<LLMResponse> {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -267,7 +268,7 @@ async function callOpenAIOnce(
 async function callOpenAI(
   prompt: string,
   apiKey: string,
-  model: string = 'gpt-4o-mini'
+  model: string = LLM_MODELS.OPENAI_DEFAULT
 ): Promise<LLMResponse> {
   const result = await withRetry(
     () => callOpenAIOnce(prompt, apiKey, model),
@@ -370,13 +371,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
       );
     }
 
-    // Rate limit info to include in response
-    const rateLimitInfo = {
-      limit: info.limit,
-      remaining: info.remaining,
-      dailyUsage: info.dailyUsage,
-      dailyLimit: info.dailyLimit,
-    };
+    // Pick only client-relevant rate limit fields
+    const { limit, remaining, dailyUsage, dailyLimit } = info;
+    const rateLimitInfo = { limit, remaining, dailyUsage, dailyLimit };
 
     // If LLM call failed and fallback is enabled, use template
     if (!result.success && useFallback) {

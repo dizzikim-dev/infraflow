@@ -42,6 +42,12 @@ export const nodeTypePatterns: NodeTypePattern[] = [
   { pattern: /siem(?!\w)|보안\s*정보.*관리|보안.*이벤트.*관리/i, type: 'siem', label: 'SIEM', labelKo: 'SIEM' },
   { pattern: /soar(?!\w)|보안.*자동화.*대응|보안.*오케스트레이션/i, type: 'soar', label: 'SOAR', labelKo: 'SOAR' },
 
+  // Physical Security
+  { pattern: /cctv|씨씨티비|폐쇄회로|감시.*카메라|방범.*카메라|보안.*카메라/i, type: 'cctv-camera', label: 'CCTV Camera', labelKo: 'CCTV 카메라' },
+  { pattern: /nvr|네트워크.*비디오.*레코더|영상.*녹화/i, type: 'nvr', label: 'NVR', labelKo: 'NVR' },
+  { pattern: /vms|영상.*관제|비디오.*관리|video.*management/i, type: 'video-server', label: 'Video Server', labelKo: '영상관제 서버' },
+  { pattern: /출입.*통제|access.*control.*system|출입.*관리|카드.*리더/i, type: 'access-control', label: 'Access Control', labelKo: '출입통제' },
+
   // Network
   { pattern: /cdn|content.*delivery/i, type: 'cdn', label: 'CDN', labelKo: 'CDN' },
   { pattern: /load ?balancer|로드 ?밸런서|lb(?!\w)|부하분산/i, type: 'load-balancer', label: 'Load Balancer', labelKo: '로드밸런서' },
@@ -297,7 +303,10 @@ const quickMatchKeywords: Set<string> = new Set([
   'olt', 'optical', 'cpe', 'premise', 'idc',
   'pe', 'mpls', 'dedicated', 'line', 'leased', 'metro', 'ethernet', 'mef',
   'kornet', 'corporate', '5g', 'upf', 'ring', 'core',
+  // Physical Security English keywords
+  'cctv', 'nvr', 'vms', 'video',
   // Korean keywords
+  '씨씨티비', '폐쇄회로', '감시', '방범', '영상', '녹화', '관제', '출입', '통제', '카드',
   '사용자', '유저', '클라이언트', '인터넷', '외부망', '웹방화벽', '방화벽',
   '침입', '탐지', '방지', '가상사설망', '네트워크', '접근', '제어',
   '데이터', '유출', '로드', '밸런서', '부하분산', '라우터', '스위치',

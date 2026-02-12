@@ -38,7 +38,9 @@ export function createStateSnapshot(nodes: Node[], edges: Edge[]): StateSnapshot
  * Useful for debouncing history saves.
  */
 export function generateStateHash(nodes: Node[], edges: Edge[]): string {
-  const nodesHash = nodes.map((n) => `${n.id}:${n.position.x}:${n.position.y}`).join(',');
+  const nodesHash = nodes.map((n) =>
+    `${n.id}:${Math.round(n.position.x)}:${Math.round(n.position.y)}:${n.data?.label || ''}:${n.data?.nodeType || ''}`
+  ).join(',');
   const edgesHash = edges.map((e) => `${e.id}:${e.source}:${e.target}`).join(',');
   return `${nodes.length}-${nodesHash}-${edges.length}-${edgesHash}`;
 }

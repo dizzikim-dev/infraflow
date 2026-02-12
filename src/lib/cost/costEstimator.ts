@@ -105,6 +105,30 @@ const BASE_COSTS: Record<InfraNodeType, {
     gcp: { service: 'Chronicle SOAR', cost: 300, tier: 'Standard' },
     onprem: { service: 'SOAR Platform', cost: 900, tier: 'Estimated' },
   },
+  'cctv-camera': {
+    aws: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    onprem: { service: 'IP Camera', cost: 300, tier: 'Per Unit' },
+  },
+  nvr: {
+    aws: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    onprem: { service: 'Network Video Recorder', cost: 800, tier: 'Per Unit' },
+  },
+  'video-server': {
+    aws: { service: 'Amazon Kinesis Video Streams', cost: 200, tier: 'Standard' },
+    azure: { service: 'Azure Video Analyzer', cost: 250, tier: 'Standard' },
+    gcp: { service: 'Vertex AI Vision', cost: 200, tier: 'Standard' },
+    onprem: { service: 'VMS Server', cost: 2000, tier: 'Estimated' },
+  },
+  'access-control': {
+    aws: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    onprem: { service: 'Access Control System', cost: 500, tier: 'Per Door' },
+  },
 
   // Network
   router: {

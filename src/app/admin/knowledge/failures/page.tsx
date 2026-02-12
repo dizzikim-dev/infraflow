@@ -10,6 +10,7 @@ import {
   TrustBadge,
 } from '@/components/admin/knowledge';
 import type { ColumnDef, FilterDef, KnowledgeListConfig } from '@/components/admin/knowledge';
+import { IMPACT_COLORS, IMPACT_LABELS, LIKELIHOOD_COLORS, LIKELIHOOD_LABELS } from '@/lib/admin/badgeThemes';
 
 interface FailureItem {
   id: string;
@@ -29,32 +30,6 @@ interface FailureItem {
   createdAt: string;
   updatedAt: string;
 }
-
-const impactColors: Record<string, string> = {
-  service_down: 'bg-red-100 text-red-800',
-  degraded: 'bg-orange-100 text-orange-800',
-  data_loss: 'bg-yellow-100 text-yellow-800',
-  security_breach: 'bg-purple-100 text-purple-800',
-};
-
-const impactLabels: Record<string, string> = {
-  service_down: '서비스 중단',
-  degraded: '성능 저하',
-  data_loss: '데이터 손실',
-  security_breach: '보안 침해',
-};
-
-const likelihoodColors: Record<string, string> = {
-  high: 'bg-red-100 text-red-800',
-  medium: 'bg-yellow-100 text-yellow-800',
-  low: 'bg-green-100 text-green-800',
-};
-
-const likelihoodLabels: Record<string, string> = {
-  high: '높음',
-  medium: '중간',
-  low: '낮음',
-};
 
 const columns: ColumnDef<FailureItem>[] = [
   {
@@ -91,10 +66,10 @@ const columns: ColumnDef<FailureItem>[] = [
     render: (item) => (
       <span
         className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-          impactColors[item.impact] || 'bg-gray-100 text-gray-800'
+          IMPACT_COLORS[item.impact] || 'bg-gray-100 text-gray-800'
         }`}
       >
-        {impactLabels[item.impact] || item.impact}
+        {IMPACT_LABELS[item.impact] || item.impact}
       </span>
     ),
   },
@@ -104,10 +79,10 @@ const columns: ColumnDef<FailureItem>[] = [
     render: (item) => (
       <span
         className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-          likelihoodColors[item.likelihood] || 'bg-gray-100 text-gray-800'
+          LIKELIHOOD_COLORS[item.likelihood] || 'bg-gray-100 text-gray-800'
         }`}
       >
-        {likelihoodLabels[item.likelihood] || item.likelihood}
+        {LIKELIHOOD_LABELS[item.likelihood] || item.likelihood}
       </span>
     ),
   },

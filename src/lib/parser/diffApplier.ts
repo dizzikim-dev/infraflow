@@ -13,6 +13,9 @@ import type {
 import { nanoid } from 'nanoid';
 import { inferTier } from './contextBuilder';
 import { getLabelForType } from '@/lib/data';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('DiffApplier');
 
 // Operation types
 export interface ReplaceOperation {
@@ -129,7 +132,9 @@ export function applyOperations(currentSpec: InfraSpec, operations: Operation[])
           errors.push(`Unknown operation type: ${(op as Operation).type}`);
       }
     } catch (error) {
-      errors.push(error instanceof Error ? error.message : String(error));
+      const msg = error instanceof Error ? error.message : String(error);
+      log.warn(`Failed to apply operation: ${msg}`, { error: msg });
+      errors.push(msg);
     }
   }
 

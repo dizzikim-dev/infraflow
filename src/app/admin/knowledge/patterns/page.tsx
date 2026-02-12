@@ -10,6 +10,7 @@ import {
   TrustBadge,
 } from '@/components/admin/knowledge';
 import type { ColumnDef, FilterDef, KnowledgeListConfig } from '@/components/admin/knowledge';
+import { SCALABILITY_COLORS } from '@/lib/admin/badgeThemes';
 
 interface PatternItem {
   id: string;
@@ -24,13 +25,6 @@ interface PatternItem {
   trustMetadata: { confidence: number } | null;
   createdAt: string;
 }
-
-const scalabilityBadgeColors: Record<string, string> = {
-  low: 'bg-gray-100 text-gray-800',
-  medium: 'bg-blue-100 text-blue-800',
-  high: 'bg-green-100 text-green-800',
-  auto: 'bg-purple-100 text-purple-800',
-};
 
 function renderStars(complexity: number) {
   return (
@@ -93,7 +87,7 @@ const columns: ColumnDef<PatternItem>[] = [
     render: (item) => (
       <span
         className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-          scalabilityBadgeColors[item.scalability] || 'bg-gray-100 text-gray-800'
+          SCALABILITY_COLORS[item.scalability] || 'bg-gray-100 text-gray-800'
         }`}
       >
         {item.scalability}

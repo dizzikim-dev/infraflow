@@ -229,6 +229,16 @@ export const builtInTemplates: Template[] = [
     tags: ['IDC', '이중화', 'DR', '데이터센터'],
     isBuiltIn: true,
   },
+  {
+    id: 'infraflow',
+    name: 'InfraFlow AI 플랫폼',
+    description: 'Next.js + Vercel 기반 AI 인프라 시각화 플랫폼 — Claude API, PostgreSQL, Redis, OAuth 연동',
+    category: 'cloud',
+    icon: '✨',
+    spec: infraTemplates['infraflow'],
+    tags: ['Next.js', 'Vercel', 'AI', 'Claude', 'SaaS', 'InfraFlow'],
+    isBuiltIn: true,
+  },
 ];
 
 const STORAGE_KEY = 'infraflow-templates';

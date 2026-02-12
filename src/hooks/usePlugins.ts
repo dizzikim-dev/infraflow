@@ -21,6 +21,9 @@ import type {
   CategoryStyle,
 } from '@/types/plugin';
 import type { NodeConfig } from '@/components/nodes/nodeConfig';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('usePlugins');
 
 // ============================================================
 // Main Hook
@@ -190,14 +193,14 @@ export function useExport() {
     ): string | Blob | null => {
       const exporter = getExporter(format);
       if (!exporter) {
-        console.error(`[useExport] Exporter not found for format: ${format}`);
+        log.error(`Exporter not found for format: ${format}`);
         return null;
       }
 
       try {
         return exporter.export(spec, options);
       } catch (error) {
-        console.error(`[useExport] Export failed for format: ${format}`, error);
+        log.error(`Export failed for format: ${format}`, error instanceof Error ? error : undefined);
         return null;
       }
     },

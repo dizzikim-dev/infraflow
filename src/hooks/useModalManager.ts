@@ -49,10 +49,26 @@ export function useModalManager() {
   });
 
   /**
-   * Open a specific modal
+   * Analyze group — only one can be open at a time
+   */
+  const ANALYZE_GROUP: readonly ModalType[] = [
+    'healthCheck', 'insights', 'vulnerability', 'cloudCatalog', 'compliance', 'benchmark',
+  ];
+
+  /**
+   * Open a specific modal.
+   * For analyze-group panels, closes any other open analyze panel first.
    */
   const openModal = useCallback((modal: ModalType) => {
-    setModals(prev => ({ ...prev, [modal]: true }));
+    setModals(prev => {
+      const next = { ...prev, [modal]: true };
+      if (ANALYZE_GROUP.includes(modal)) {
+        for (const m of ANALYZE_GROUP) {
+          if (m !== modal) next[m] = false;
+        }
+      }
+      return next;
+    });
   }, []);
 
   /**
@@ -63,10 +79,20 @@ export function useModalManager() {
   }, []);
 
   /**
-   * Toggle a specific modal
+   * Toggle a specific modal.
+   * For analyze-group panels, closes any other open analyze panel first.
    */
   const toggleModal = useCallback((modal: ModalType) => {
-    setModals(prev => ({ ...prev, [modal]: !prev[modal] }));
+    setModals(prev => {
+      const opening = !prev[modal];
+      const next = { ...prev, [modal]: opening };
+      if (opening && ANALYZE_GROUP.includes(modal)) {
+        for (const m of ANALYZE_GROUP) {
+          if (m !== modal) next[m] = false;
+        }
+      }
+      return next;
+    });
   }, []);
 
   /**

@@ -9,6 +9,9 @@ import {
 } from '@/lib/animation/animationEngine';
 import { useAnimationEngine } from '@/contexts/AnimationContext';
 import { AnimationSequence } from '@/types';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('useAnimation');
 
 export interface UseAnimationReturn {
   // State
@@ -52,7 +55,7 @@ export function useAnimation(): UseAnimationReturn {
   useEffect(() => {
     const engine = contextEngine;
     if (!engine) {
-      console.warn('Animation engine not available from context');
+      log.warn('Animation engine not available from context');
       return;
     }
 
@@ -71,7 +74,7 @@ export function useAnimation(): UseAnimationReturn {
           setParticles([]);
         }
       } catch (error) {
-        console.error('Error handling animation event:', error);
+        log.error('Error handling animation event', error instanceof Error ? error : undefined);
       }
     };
 
@@ -118,7 +121,7 @@ export function useAnimation(): UseAnimationReturn {
   const loadSequence = useCallback((sequence: AnimationSequence) => {
     const engine = engineRef.current;
     if (!engine) {
-      console.warn('Cannot load sequence: Animation engine not initialized');
+      log.warn('Cannot load sequence: Animation engine not initialized');
       return;
     }
 
@@ -126,7 +129,7 @@ export function useAnimation(): UseAnimationReturn {
       engine.loadSequence(sequence);
       setState(engine.getState());
     } catch (error) {
-      console.error('Failed to load animation sequence:', error);
+      log.error('Failed to load animation sequence', error instanceof Error ? error : undefined);
     }
   }, []);
 

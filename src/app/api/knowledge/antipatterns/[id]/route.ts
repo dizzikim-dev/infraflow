@@ -1,196 +1,24 @@
 /**
- * 단일 Knowledge AntiPattern API 엔드포인트
- *
- * GET    /api/knowledge/antipatterns/[id] - 단일 안티패턴 조회
- * PUT    /api/knowledge/antipatterns/[id] - 안티패턴 수정
- * DELETE /api/knowledge/antipatterns/[id] - 안티패턴 삭제 (소프트 삭제)
+ * Knowledge AntiPattern API - 단일 조회 / 수정 / 삭제
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
-import { Prisma } from '@/generated/prisma';
-import { requireAdmin, AuthError } from '@/lib/auth/authHelpers';
-import { createLogger } from '@/lib/utils/logger';
-import { UpdateAntiPatternSchema } from '@/lib/validations/knowledge';
+import { createKnowledgeDetailRoute } from '@/lib/api/knowledgeRouteFactory';
+import {
+  AntiPatternQuerySchema,
+  CreateAntiPatternSchema,
+  UpdateAntiPatternSchema,
+} from '@/lib/validations/knowledge';
 
-const log = createLogger('KnowledgeAPI:AntiPattern');
-
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
-
-/**
- * GET /api/knowledge/antipatterns/[id]
- * 단일 안티패턴 조회
- */
-export async function GET(
-  _request: NextRequest,
-  context: RouteContext
-) {
-  try {
-    await requireAdmin();
-    const { id } = await context.params;
-
-    const antiPattern = await prisma.knowledgeAntiPattern.findUnique({
-      where: { id },
-    });
-
-    if (!antiPattern) {
-      const byAntiPatternId = await prisma.knowledgeAntiPattern.findUnique({
-        where: { antiPatternId: id },
-      });
-
-      if (!byAntiPatternId) {
-        return NextResponse.json(
-          { error: '안티패턴을 찾을 수 없습니다' },
-          { status: 404 }
-        );
-      }
-
-      return NextResponse.json(byAntiPatternId);
-    }
-
-    return NextResponse.json(antiPattern);
-  } catch (error) {
-    if (error instanceof AuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    log.error('안티패턴 조회 실패', error instanceof Error ? error : undefined);
-    return NextResponse.json(
-      { error: '안티패턴 조회에 실패했습니다' },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * PUT /api/knowledge/antipatterns/[id]
- * 안티패턴 수정
- */
-export async function PUT(
-  request: NextRequest,
-  context: RouteContext
-) {
-  try {
-    await requireAdmin();
-    const { id } = await context.params;
-    const body = await request.json();
-
-    const validationResult = UpdateAntiPatternSchema.safeParse(body);
-
-    if (!validationResult.success) {
-      return NextResponse.json(
-        { error: '유효하지 않은 입력 데이터', details: validationResult.error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    const data = validationResult.data;
-
-    const existing = await prisma.knowledgeAntiPattern.findUnique({
-      where: { id },
-    });
-
-    if (!existing) {
-      return NextResponse.json(
-        { error: '안티패턴을 찾을 수 없습니다' },
-        { status: 404 }
-      );
-    }
-
-    if (data.antiPatternId && data.antiPatternId !== existing.antiPatternId) {
-      const duplicate = await prisma.knowledgeAntiPattern.findUnique({
-        where: { antiPatternId: data.antiPatternId },
-      });
-
-      if (duplicate) {
-        return NextResponse.json(
-          { error: `antiPatternId '${data.antiPatternId}'가 이미 존재합니다` },
-          { status: 409 }
-        );
-      }
-    }
-
-    const antiPattern = await prisma.knowledgeAntiPattern.update({
-      where: { id },
-      data: {
-        ...(data.antiPatternId && { antiPatternId: data.antiPatternId }),
-        ...(data.name && { name: data.name }),
-        ...(data.nameKo && { nameKo: data.nameKo }),
-        ...(data.severity && { severity: data.severity }),
-        ...(data.detectionRuleId && { detectionRuleId: data.detectionRuleId }),
-        ...(data.detectionDescriptionKo && { detectionDescriptionKo: data.detectionDescriptionKo }),
-        ...(data.problemKo && { problemKo: data.problemKo }),
-        ...(data.impactKo && { impactKo: data.impactKo }),
-        ...(data.solutionKo && { solutionKo: data.solutionKo }),
-        ...(data.tags && { tags: data.tags }),
-        ...(data.trustMetadata && { trustMetadata: data.trustMetadata as Prisma.InputJsonValue }),
-      },
-    });
-
-    return NextResponse.json(antiPattern);
-  } catch (error) {
-    if (error instanceof AuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    log.error('안티패턴 수정 실패', error instanceof Error ? error : undefined);
-    return NextResponse.json(
-      { error: '안티패턴 수정에 실패했습니다' },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * DELETE /api/knowledge/antipatterns/[id]
- * 안티패턴 소프트 삭제 (isActive = false)
- */
-export async function DELETE(
-  request: NextRequest,
-  context: RouteContext
-) {
-  try {
-    await requireAdmin();
-    const { id } = await context.params;
-    const { searchParams } = new URL(request.url);
-    const hard = searchParams.get('hard') === 'true';
-
-    const existing = await prisma.knowledgeAntiPattern.findUnique({
-      where: { id },
-    });
-
-    if (!existing) {
-      return NextResponse.json(
-        { error: '안티패턴을 찾을 수 없습니다' },
-        { status: 404 }
-      );
-    }
-
-    if (hard) {
-      await prisma.knowledgeAntiPattern.delete({
-        where: { id },
-      });
-
-      return NextResponse.json({ message: '안티패턴이 영구 삭제되었습니다' });
-    } else {
-      const antiPattern = await prisma.knowledgeAntiPattern.update({
-        where: { id },
-        data: { isActive: false },
-      });
-
-      return NextResponse.json({
-        message: '안티패턴이 비활성화되었습니다',
-        data: antiPattern,
-      });
-    }
-  } catch (error) {
-    if (error instanceof AuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    log.error('안티패턴 삭제 실패', error instanceof Error ? error : undefined);
-    return NextResponse.json(
-      { error: '안티패턴 삭제에 실패했습니다' },
-      { status: 500 }
-    );
-  }
-}
+export const { GET, PUT, DELETE } = createKnowledgeDetailRoute({
+  modelName: 'knowledgeAntiPattern',
+  resourceNameKo: '안티패턴',
+  loggerName: 'AntiPattern',
+  querySchema: AntiPatternQuerySchema,
+  createSchema: CreateAntiPatternSchema,
+  updateSchema: UpdateAntiPatternSchema,
+  filters: [],
+  searchFields: [],
+  uniqueKey: { field: 'antiPatternId' },
+  semanticIdField: 'antiPatternId',
+  jsonFields: ['trustMetadata'],
+});

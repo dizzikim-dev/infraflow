@@ -7,6 +7,7 @@
 import Link from 'next/link';
 import { KnowledgeListPage } from '@/components/admin/knowledge';
 import type { ColumnDef, FilterDef, KnowledgeListConfig } from '@/components/admin/knowledge';
+import { SOURCE_TYPE_COLORS, SOURCE_TYPE_LABELS } from '@/lib/admin/badgeThemes';
 
 interface SourceItem {
   id: string;
@@ -21,30 +22,6 @@ interface SourceItem {
   createdAt: string;
   updatedAt: string;
 }
-
-const sourceTypeColors: Record<string, string> = {
-  rfc: 'bg-blue-100 text-blue-800',
-  nist: 'bg-indigo-100 text-indigo-800',
-  cis: 'bg-green-100 text-green-800',
-  owasp: 'bg-red-100 text-red-800',
-  vendor: 'bg-purple-100 text-purple-800',
-  academic: 'bg-teal-100 text-teal-800',
-  industry: 'bg-amber-100 text-amber-800',
-  user_verified: 'bg-emerald-100 text-emerald-800',
-  user_unverified: 'bg-gray-100 text-gray-800',
-};
-
-const sourceTypeLabels: Record<string, string> = {
-  rfc: 'RFC',
-  nist: 'NIST',
-  cis: 'CIS',
-  owasp: 'OWASP',
-  vendor: 'Vendor',
-  academic: 'Academic',
-  industry: 'Industry',
-  user_verified: '검증됨',
-  user_unverified: '미검증',
-};
 
 function truncateUrl(url: string, max: number): string {
   if (url.length <= max) return url;
@@ -71,10 +48,10 @@ const columns: ColumnDef<SourceItem>[] = [
     render: (item) => (
       <span
         className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-          sourceTypeColors[item.sourceType] || 'bg-gray-100 text-gray-800'
+          SOURCE_TYPE_COLORS[item.sourceType] || 'bg-gray-100 text-gray-800'
         }`}
       >
-        {sourceTypeLabels[item.sourceType] || item.sourceType}
+        {SOURCE_TYPE_LABELS[item.sourceType] || item.sourceType}
       </span>
     ),
   },

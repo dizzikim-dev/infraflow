@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDeprecationWarnings, getCloudServices, compareServices } from '@/lib/knowledge/cloudCatalog';
+import { getDeprecationWarnings, getCloudServices, compareServices, type CloudProvider } from '@/lib/knowledge/cloudCatalog';
 import { isInfraSpec } from '@/types/guards';
 import type { InfraNodeType } from '@/types/infra';
+import { validateAnalyzeRequest } from '@/lib/api/analyzeRouteUtils';
 
 export async function POST(request: NextRequest) {
+  // CSRF + rate-limit check
+  const check = validateAnalyzeRequest(request);
+  if (!check.passed) return check.errorResponse!;
+
+  let body: unknown;
   try {
-    const body = await request.json();
-    const { spec, action, componentType, provider } = body;
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  try {
+    const { spec, action, componentType, provider } = body as Record<string, unknown>;
 
     if (action === 'deprecations') {
       if (!spec || !isInfraSpec(spec)) {
@@ -17,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'services' && componentType) {
-      const services = getCloudServices(componentType as InfraNodeType, provider);
+      const services = getCloudServices(componentType as InfraNodeType, provider as CloudProvider | undefined);
       return NextResponse.json({ services });
     }
 

@@ -22,6 +22,9 @@ import type {
   ValidationResult,
 } from '@/types/plugin';
 import type { InfraSpec, NodeCategory } from '@/types/infra';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('PluginRegistry');
 
 /**
  * 플러그인 레지스트리 클래스
@@ -434,7 +437,7 @@ export class PluginRegistry {
       try {
         listener(event);
       } catch (error) {
-        console.error('Plugin registry event listener error:', error);
+        log.warn('Plugin registry event listener error', { error: error instanceof Error ? error.message : String(error) });
       }
     }
   }

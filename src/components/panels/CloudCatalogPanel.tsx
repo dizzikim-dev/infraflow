@@ -8,11 +8,13 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { X, Cloud, AlertTriangle, CheckCircle2, Search } from 'lucide-react';
+import { Cloud, AlertTriangle, CheckCircle2, Search } from 'lucide-react';
 import type { InfraSpec, InfraNodeType } from '@/types';
 import { useCloudCatalog } from '@/hooks/useCloudCatalog';
 import type { CloudProvider, CloudService, ServiceComparison } from '@/lib/knowledge/cloudCatalog';
+import { PanelContainer } from './PanelContainer';
+import { PanelHeader } from './PanelHeader';
+import { PanelTabs } from './PanelTabs';
 
 // ============================================================
 // Types
@@ -67,52 +69,15 @@ export function CloudCatalogPanel({ spec, onClose }: CloudCatalogPanelProps) {
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 100 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 100 }}
-      className="fixed top-0 right-0 h-full w-[480px] bg-zinc-900/95 backdrop-blur-sm border-l border-white/10 z-50 flex flex-col"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
-        <div className="flex items-center gap-2">
-          <Cloud className="w-5 h-5 text-blue-400" />
-          <h2 className="text-lg font-semibold text-white">클라우드 서비스 카탈로그</h2>
-        </div>
-        <button
-          onClick={onClose}
-          className="p-1 rounded hover:bg-white/10 text-zinc-400 hover:text-white"
-          aria-label="닫기"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+    <PanelContainer>
+      <PanelHeader icon={Cloud} iconColor="text-blue-400" title="클라우드 서비스 카탈로그" onClose={onClose} />
 
       {/* Tabs */}
-      <div className="flex border-b border-white/10">
-        {tabs.map(({ key, label, count }) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className={`flex-1 px-3 py-3 text-sm font-medium transition-colors ${
-              activeTab === key
-                ? 'text-blue-400 border-b-2 border-blue-400 bg-blue-500/10'
-                : 'text-zinc-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-1.5">
-              <span>{label}</span>
-              {count !== undefined && count > 0 && (
-                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                  activeTab === key ? 'bg-blue-500/20 text-blue-300' : 'bg-white/10 text-zinc-400'
-                }`}>
-                  {count}
-                </span>
-              )}
-            </div>
-          </button>
-        ))}
-      </div>
+      <PanelTabs
+        tabs={tabs}
+        active={activeTab}
+        onChange={setActiveTab}
+      />
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -220,7 +185,7 @@ export function CloudCatalogPanel({ spec, onClose }: CloudCatalogPanelProps) {
           <span>출처: AWS, Azure, GCP 공식 서비스 카탈로그</span>
         </div>
       )}
-    </motion.div>
+    </PanelContainer>
   );
 }
 

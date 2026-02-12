@@ -7,6 +7,7 @@
 import Link from 'next/link';
 import { KnowledgeListPage } from '@/components/admin/knowledge';
 import type { ColumnDef, FilterDef, KnowledgeListConfig } from '@/components/admin/knowledge';
+import { SCALING_STRATEGY_COLORS } from '@/lib/admin/badgeThemes';
 
 interface LatencyRange {
   min: number;
@@ -32,12 +33,6 @@ interface PerformanceItem {
   trustMetadata: { confidence: number } | null;
   createdAt: string;
 }
-
-const scalingStrategyColors: Record<string, string> = {
-  horizontal: 'bg-blue-100 text-blue-800',
-  vertical: 'bg-purple-100 text-purple-800',
-  both: 'bg-green-100 text-green-800',
-};
 
 const filters: FilterDef[] = [
   {
@@ -112,7 +107,7 @@ const columns: ColumnDef<PerformanceItem>[] = [
     render: (item) => (
       <span
         className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-          scalingStrategyColors[item.scalingStrategy] || 'bg-gray-100 text-gray-800'
+          SCALING_STRATEGY_COLORS[item.scalingStrategy] || 'bg-gray-100 text-gray-800'
         }`}
       >
         {item.scalingStrategy}

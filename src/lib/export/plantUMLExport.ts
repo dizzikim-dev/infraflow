@@ -26,6 +26,10 @@ const c4ElementMap: Record<InfraNodeType, { stereotype: string; shape: string }>
   'casb': { stereotype: 'Security', shape: 'Container' },
   'siem': { stereotype: 'Security', shape: 'Container' },
   'soar': { stereotype: 'Security', shape: 'Container' },
+  'cctv-camera': { stereotype: 'Security', shape: 'Container' },
+  'nvr': { stereotype: 'Security', shape: 'Container' },
+  'video-server': { stereotype: 'Security', shape: 'Container' },
+  'access-control': { stereotype: 'Security', shape: 'Container' },
 
   // Network
   'router': { stereotype: 'Network', shape: 'Container' },

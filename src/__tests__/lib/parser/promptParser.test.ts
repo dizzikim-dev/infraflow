@@ -63,14 +63,15 @@ describe('UnifiedParser (parsePromptLocal)', () => {
 
     it('should fallback to simple-waf template when no match', () => {
       const result = parsePromptLocal('asdfghjkl random text');
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
+      expect(result.isFallback).toBe(true);
       expect(result.templateUsed).toBe('simple-waf');
       expect(result.confidence).toBe(0.3);
     });
 
     it('should handle empty prompt gracefully', () => {
       const result = parsePromptLocal('');
-      expect(result.success).toBe(true);
+      expect(result.isFallback).toBe(true);
       expect(result.confidence).toBeLessThanOrEqual(0.5);
     });
 

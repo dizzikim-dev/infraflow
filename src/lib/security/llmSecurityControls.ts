@@ -87,6 +87,12 @@ export interface SecurityAuditResult {
 /** Maximum allowed user input length */
 const MAX_INPUT_LENGTH = 2000;
 
+/** Consecutive spaces/tabs threshold for whitespace collapsing */
+const EXCESSIVE_WHITESPACE_THRESHOLD = 4;
+
+/** Consecutive newlines threshold for newline collapsing */
+const EXCESSIVE_NEWLINES_THRESHOLD = 3;
+
 /**
  * Patterns considered dangerous in user input.
  * Each entry contains a regex and a short description for diagnostics.
@@ -603,9 +609,9 @@ export function sanitizeUserInput(input: string): string {
     sanitized = sanitized.replace(pattern, '');
   }
 
-  // Collapse excessive whitespace (more than 3 consecutive spaces or 2 consecutive newlines)
-  sanitized = sanitized.replace(/[ \t]{4,}/g, '   ');
-  sanitized = sanitized.replace(/\n{3,}/g, '\n\n');
+  // Collapse excessive whitespace
+  sanitized = sanitized.replace(new RegExp(`[ \\t]{${EXCESSIVE_WHITESPACE_THRESHOLD},}`, 'g'), '   ');
+  sanitized = sanitized.replace(new RegExp(`\\n{${EXCESSIVE_NEWLINES_THRESHOLD},}`, 'g'), '\n\n');
 
   // Trim leading/trailing whitespace
   sanitized = sanitized.trim();

@@ -134,6 +134,10 @@ spec:
   'casb': () => `# CASB: Implemented via API gateway policies and admission controllers`,
   'siem': () => `# SIEM: Use Fluentd/Fluent Bit DaemonSet for log collection`,
   'soar': () => `# SOAR: Implemented via event-driven automation (Argo Events, Tekton)`,
+  'cctv-camera': () => `# CCTV Camera: Physical device, not applicable to Kubernetes`,
+  'nvr': () => `# NVR: Physical device, not applicable to Kubernetes`,
+  'video-server': () => `# Video Server: Can be deployed as a containerized VMS`,
+  'access-control': () => `# Access Control: Physical device, not applicable to Kubernetes`,
 
   // Network nodes
   'router': () => `# Router: Kubernetes networking handled by CNI plugin`,

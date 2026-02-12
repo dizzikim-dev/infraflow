@@ -3,6 +3,9 @@
 import { useState, useCallback } from 'react';
 import { Node } from '@xyflow/react';
 import { PolicyRule, isInfraNodeData, safeGetTier } from '@/types';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('useInfraSelection');
 
 export interface SelectedNodeDetail {
   id: string;
@@ -43,7 +46,7 @@ export function useInfraSelection(): UseInfraSelectionReturn {
    */
   const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     if (!isInfraNodeData(node.data)) {
-      console.warn('Invalid node data:', node.id);
+      log.warn('Invalid node data: ' + node.id);
       return;
     }
 

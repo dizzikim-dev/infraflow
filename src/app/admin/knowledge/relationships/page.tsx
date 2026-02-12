@@ -10,6 +10,12 @@ import {
   TrustBadge,
 } from '@/components/admin/knowledge';
 import type { ColumnDef, FilterDef, KnowledgeListConfig } from '@/components/admin/knowledge';
+import {
+  RELATIONSHIP_TYPE_COLORS,
+  RELATIONSHIP_TYPE_LABELS,
+  STRENGTH_COLORS,
+  STRENGTH_LABELS,
+} from '@/lib/admin/badgeThemes';
 
 interface RelationshipItem {
   id: string;
@@ -27,34 +33,6 @@ interface RelationshipItem {
   createdAt: string;
   updatedAt: string;
 }
-
-const relationshipTypeColors: Record<string, string> = {
-  requires: 'bg-red-100 text-red-800',
-  recommends: 'bg-blue-100 text-blue-800',
-  conflicts: 'bg-orange-100 text-orange-800',
-  enhances: 'bg-green-100 text-green-800',
-  protects: 'bg-purple-100 text-purple-800',
-};
-
-const relationshipTypeLabels: Record<string, string> = {
-  requires: '필수',
-  recommends: '권장',
-  conflicts: '충돌',
-  enhances: '강화',
-  protects: '보호',
-};
-
-const strengthColors: Record<string, string> = {
-  mandatory: 'bg-red-100 text-red-800',
-  strong: 'bg-blue-100 text-blue-800',
-  weak: 'bg-gray-100 text-gray-800',
-};
-
-const strengthLabels: Record<string, string> = {
-  mandatory: '필수',
-  strong: '강함',
-  weak: '약함',
-};
 
 const columns: ColumnDef<RelationshipItem>[] = [
   {
@@ -86,10 +64,10 @@ const columns: ColumnDef<RelationshipItem>[] = [
     render: (item) => (
       <span
         className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-          relationshipTypeColors[item.relationshipType] || 'bg-gray-100 text-gray-800'
+          RELATIONSHIP_TYPE_COLORS[item.relationshipType] || 'bg-gray-100 text-gray-800'
         }`}
       >
-        {relationshipTypeLabels[item.relationshipType] || item.relationshipType}
+        {RELATIONSHIP_TYPE_LABELS[item.relationshipType] || item.relationshipType}
       </span>
     ),
   },
@@ -99,10 +77,10 @@ const columns: ColumnDef<RelationshipItem>[] = [
     render: (item) => (
       <span
         className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-          strengthColors[item.strength] || 'bg-gray-100 text-gray-800'
+          STRENGTH_COLORS[item.strength] || 'bg-gray-100 text-gray-800'
         }`}
       >
-        {strengthLabels[item.strength] || item.strength}
+        {STRENGTH_LABELS[item.strength] || item.strength}
       </span>
     ),
   },

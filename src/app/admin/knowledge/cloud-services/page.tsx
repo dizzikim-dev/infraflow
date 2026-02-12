@@ -7,6 +7,7 @@
 import Link from 'next/link';
 import { KnowledgeListPage } from '@/components/admin/knowledge';
 import type { ColumnDef, FilterDef, KnowledgeListConfig } from '@/components/admin/knowledge';
+import { PROVIDER_COLORS, STATUS_COLORS, STATUS_LABELS } from '@/lib/admin/badgeThemes';
 
 interface CloudServiceItem {
   id: string;
@@ -23,26 +24,6 @@ interface CloudServiceItem {
   createdAt: string;
   updatedAt: string;
 }
-
-const providerColors: Record<string, string> = {
-  aws: 'bg-orange-100 text-orange-800',
-  azure: 'bg-blue-100 text-blue-800',
-  gcp: 'bg-red-100 text-red-800',
-};
-
-const statusColors: Record<string, string> = {
-  active: 'bg-green-100 text-green-800',
-  deprecated: 'bg-red-100 text-red-800',
-  preview: 'bg-yellow-100 text-yellow-800',
-  end_of_life: 'bg-gray-100 text-gray-800',
-};
-
-const statusLabels: Record<string, string> = {
-  active: '활성',
-  deprecated: '지원종료',
-  preview: '미리보기',
-  end_of_life: 'EOL',
-};
 
 const columns: ColumnDef<CloudServiceItem>[] = [
   {
@@ -64,7 +45,7 @@ const columns: ColumnDef<CloudServiceItem>[] = [
     render: (item) => (
       <span
         className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-          providerColors[item.provider] || 'bg-gray-100 text-gray-800'
+          PROVIDER_COLORS[item.provider] || 'bg-gray-100 text-gray-800'
         }`}
       >
         {item.provider.toUpperCase()}
@@ -92,10 +73,10 @@ const columns: ColumnDef<CloudServiceItem>[] = [
     render: (item) => (
       <span
         className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-          statusColors[item.status] || 'bg-gray-100 text-gray-800'
+          STATUS_COLORS[item.status] || 'bg-gray-100 text-gray-800'
         }`}
       >
-        {statusLabels[item.status] || item.status}
+        {STATUS_LABELS[item.status] || item.status}
       </span>
     ),
   },

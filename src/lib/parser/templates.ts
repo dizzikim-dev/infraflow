@@ -610,6 +610,85 @@ export const infraTemplates: Record<string, InfraSpec> = {
       { id: 'data', label: '데이터', type: 'db' },
     ],
   },
+
+  // InfraFlow — Next.js AI Platform Architecture
+  'infraflow': {
+    name: 'InfraFlow AI 플랫폼',
+    description: 'Next.js + Vercel 기반 AI 인프라 시각화 플랫폼의 실제 배포 아키텍처',
+    nodes: [
+      // External
+      { id: 'user', type: 'user', label: 'User (Browser)', zone: 'external' },
+      { id: 'internet', type: 'internet', label: 'Internet', zone: 'external' },
+      // Edge / CDN
+      { id: 'cdn', type: 'cdn', label: 'Vercel Edge CDN', zone: 'edge' },
+      { id: 'waf', type: 'waf', label: 'Vercel WAF', zone: 'edge' },
+      // App Tier (Vercel Serverless)
+      { id: 'nextjs-ssr', type: 'web-server', label: 'Next.js SSR', description: 'React 19 서버 렌더링 + 정적 페이지', zone: 'app' },
+      { id: 'api-routes', type: 'app-server', label: 'API Routes', description: '/api/parse, /api/modify, /api/knowledge/*', zone: 'app' },
+      { id: 'middleware', type: 'firewall', label: 'Auth Middleware', description: 'NextAuth.js 세션 검증 + CSRF 보호', zone: 'app' },
+      // Data Tier
+      { id: 'postgres', type: 'db-server', label: 'PostgreSQL', description: 'Prisma ORM — User, Diagram, Component', zone: 'data' },
+      { id: 'redis', type: 'cache', label: 'Redis Cache', description: 'Rate Limiting, 세션 캐시', zone: 'data' },
+      // External Services
+      { id: 'llm-api', type: 'app-server', label: 'Claude API', description: 'Anthropic Claude — 프롬프트 파싱 + 다이어그램 생성', zone: 'external-svc' },
+      { id: 'oauth', type: 'sso', label: 'OAuth Providers', description: 'Google, GitHub OAuth 2.0', zone: 'external-svc' },
+      { id: 'obj-storage', type: 'object-storage', label: 'Blob Storage', description: 'PNG/PDF 내보내기 저장', zone: 'external-svc' },
+    ],
+    connections: [
+      // User flow
+      { source: 'user', target: 'internet', flowType: 'request' },
+      { source: 'internet', target: 'cdn', flowType: 'encrypted', label: 'HTTPS' },
+      { source: 'cdn', target: 'waf', flowType: 'request' },
+      { source: 'waf', target: 'nextjs-ssr', flowType: 'request', label: 'Static + SSR' },
+      { source: 'waf', target: 'middleware', flowType: 'request', label: 'API 요청' },
+      { source: 'middleware', target: 'api-routes', flowType: 'request' },
+      // API → Data
+      { source: 'api-routes', target: 'postgres', flowType: 'request', label: 'Prisma Query' },
+      { source: 'api-routes', target: 'redis', flowType: 'request', label: 'Rate Limit Check' },
+      // API → External
+      { source: 'api-routes', target: 'llm-api', flowType: 'encrypted', label: 'LLM 호출' },
+      { source: 'api-routes', target: 'obj-storage', flowType: 'request', label: 'Export 저장' },
+      // Auth
+      { source: 'middleware', target: 'oauth', flowType: 'encrypted', label: 'OAuth 2.0' },
+      { source: 'middleware', target: 'postgres', flowType: 'request', label: '세션 조회' },
+    ],
+    zones: [
+      { id: 'external', label: '사용자', type: 'external' },
+      { id: 'edge', label: 'Vercel Edge', type: 'dmz' },
+      { id: 'app', label: 'App (Serverless)', type: 'internal' },
+      { id: 'data', label: 'Data Tier', type: 'db' },
+      { id: 'external-svc', label: 'External Services', type: 'external' },
+    ],
+  },
+  // CCTV Surveillance System
+  'cctv-surveillance': {
+    name: 'CCTV 영상감시 시스템',
+    description: 'CCTV 카메라 → PoE 스위치 → NVR → 영상관제 서버 기반 감시 시스템',
+    nodes: [
+      { id: 'cam1', type: 'cctv-camera', label: 'CCTV Camera 1', zone: 'field' },
+      { id: 'cam2', type: 'cctv-camera', label: 'CCTV Camera 2', zone: 'field' },
+      { id: 'cam3', type: 'cctv-camera', label: 'CCTV Camera 3', zone: 'field' },
+      { id: 'poe-sw', type: 'switch-l2', label: 'PoE Switch', zone: 'network' },
+      { id: 'nvr1', type: 'nvr', label: 'NVR', zone: 'server' },
+      { id: 'vms', type: 'video-server', label: '영상관제 서버 (VMS)', zone: 'server' },
+      { id: 'storage', type: 'storage', label: 'Video Storage', zone: 'server' },
+      { id: 'acs', type: 'access-control', label: '출입통제 시스템', zone: 'field' },
+    ],
+    connections: [
+      { source: 'cam1', target: 'poe-sw', flowType: 'request', label: 'RTSP' },
+      { source: 'cam2', target: 'poe-sw', flowType: 'request', label: 'RTSP' },
+      { source: 'cam3', target: 'poe-sw', flowType: 'request', label: 'RTSP' },
+      { source: 'poe-sw', target: 'nvr1', flowType: 'request' },
+      { source: 'nvr1', target: 'vms', flowType: 'request' },
+      { source: 'nvr1', target: 'storage', flowType: 'sync' },
+      { source: 'acs', target: 'vms', flowType: 'request', label: 'Event' },
+    ],
+    zones: [
+      { id: 'field', label: '현장', type: 'external' },
+      { id: 'network', label: '네트워크', type: 'dmz' },
+      { id: 'server', label: '관제실', type: 'internal' },
+    ],
+  },
 };
 
 // Template keywords for matching
@@ -634,4 +713,6 @@ export const templateKeywords: Record<string, string[]> = {
   'hybrid-wan': ['하이브리드 wan', 'hybrid wan', 'sd-wan', 'sdwan', '전용회선 인터넷', 'kornet'],
   '5g-private': ['5g 특화', 'private 5g', '사설 5g', '5g 특화망', '기지국', 'gnb', '스마트팩토리 5g'],
   'idc-dual': ['idc 이중화', 'idc 이중', 'dual idc', 'idc dr', '데이터센터 이중화'],
+  'infraflow': ['infraflow', '인프라플로우', 'next.js 플랫폼', 'ai 플랫폼', 'vercel', 'claude api', 'saas 아키텍처'],
+  'cctv-surveillance': ['cctv', '씨씨티비', '영상감시', '영상관제', '폐쇄회로', 'cctv 회선', '감시 카메라', '방범'],
 };

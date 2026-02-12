@@ -5,9 +5,10 @@
  * Data processing runs server-side to reduce client bundle size.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { InfraSpec } from '@/types/infra';
 import type { IndustryType, IndustryComplianceReport } from '@/lib/audit/industryCompliance';
+import { useFetchAnalysis } from './useFetchAnalysis';
 
 export interface UseIndustryComplianceResult {
   report: IndustryComplianceReport | null;
@@ -19,45 +20,34 @@ export interface UseIndustryComplianceResult {
 
 export function useIndustryCompliance(spec: InfraSpec | null): UseIndustryComplianceResult {
   const [selectedIndustry, setSelectedIndustry] = useState<IndustryType>('general');
-  const [report, setReport] = useState<IndustryComplianceReport | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const requestIdRef = useRef(0);
+  const [manualReport, setManualReport] = useState<IndustryComplianceReport | null | undefined>(
+    undefined,
+  );
+  const [isManuallyAnalyzing, setIsManuallyAnalyzing] = useState(false);
+  const analyzeRequestIdRef = useRef(0);
 
-  useEffect(() => {
-    if (!spec || spec.nodes.length === 0) {
-      setReport(null);
-      return;
-    }
-
-    const currentId = ++requestIdRef.current;
-    setIsAnalyzing(true);
-
-    fetch('/api/analyze/compliance', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ spec, industry: selectedIndustry }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (currentId !== requestIdRef.current) return;
-        setReport(data.report ?? null);
-        setIsAnalyzing(false);
-      })
-      .catch(() => {
-        if (currentId !== requestIdRef.current) return;
-        setIsAnalyzing(false);
-      });
-  }, [spec, selectedIndustry]);
+  const { result: autoReport, isLoading: isAutoLoading } =
+    useFetchAnalysis<IndustryComplianceReport | null>(
+      spec,
+      {
+        endpoint: '/api/analyze/compliance',
+        buildBody: () => ({ spec, industry: selectedIndustry }),
+        extractResult: (data) => (data.report as IndustryComplianceReport) ?? null,
+        defaultResult: null,
+      },
+      [selectedIndustry],
+    );
 
   const setIndustry = useCallback((industry: IndustryType) => {
     setSelectedIndustry(industry);
+    setManualReport(undefined);
   }, []);
 
   const analyze = useCallback(() => {
-    // Trigger re-fetch by incrementing requestId
-    requestIdRef.current++;
-    setIsAnalyzing(true);
     if (!spec) return;
+
+    const currentId = ++analyzeRequestIdRef.current;
+    setIsManuallyAnalyzing(true);
 
     fetch('/api/analyze/compliance', {
       method: 'POST',
@@ -66,11 +56,21 @@ export function useIndustryCompliance(spec: InfraSpec | null): UseIndustryCompli
     })
       .then(res => res.json())
       .then(data => {
-        setReport(data.report ?? null);
-        setIsAnalyzing(false);
+        if (currentId !== analyzeRequestIdRef.current) return;
+        setManualReport(data.report ?? null);
+        setIsManuallyAnalyzing(false);
       })
-      .catch(() => setIsAnalyzing(false));
+      .catch(() => {
+        if (currentId !== analyzeRequestIdRef.current) return;
+        setIsManuallyAnalyzing(false);
+      });
   }, [spec, selectedIndustry]);
 
-  return { report, selectedIndustry, setIndustry, analyze, isAnalyzing };
+  return {
+    report: manualReport !== undefined ? manualReport : autoReport,
+    selectedIndustry,
+    setIndustry,
+    analyze,
+    isAnalyzing: isAutoLoading || isManuallyAnalyzing,
+  };
 }

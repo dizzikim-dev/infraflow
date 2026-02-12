@@ -7,6 +7,12 @@
 import Link from 'next/link';
 import { KnowledgeListPage } from '@/components/admin/knowledge';
 import type { ColumnDef, FilterDef, KnowledgeListConfig } from '@/components/admin/knowledge';
+import {
+  INDUSTRY_TYPE_COLORS,
+  INDUSTRY_TYPE_LABELS,
+  SECURITY_LEVEL_COLORS,
+  SECURITY_LEVEL_LABELS,
+} from '@/lib/admin/badgeThemes';
 
 interface IndustryPresetItem {
   id: string;
@@ -24,36 +30,6 @@ interface IndustryPresetItem {
   updatedAt: string;
 }
 
-const industryTypeColors: Record<string, string> = {
-  financial: 'bg-blue-100 text-blue-800',
-  healthcare: 'bg-green-100 text-green-800',
-  government: 'bg-indigo-100 text-indigo-800',
-  ecommerce: 'bg-purple-100 text-purple-800',
-  general: 'bg-gray-100 text-gray-800',
-};
-
-const industryTypeLabels: Record<string, string> = {
-  financial: '금융',
-  healthcare: '의료',
-  government: '공공',
-  ecommerce: '이커머스',
-  general: '일반',
-};
-
-const securityLevelColors: Record<string, string> = {
-  basic: 'bg-green-100 text-green-800',
-  standard: 'bg-blue-100 text-blue-800',
-  enhanced: 'bg-orange-100 text-orange-800',
-  maximum: 'bg-red-100 text-red-800',
-};
-
-const securityLevelLabels: Record<string, string> = {
-  basic: 'Basic',
-  standard: 'Standard',
-  enhanced: 'Enhanced',
-  maximum: 'Maximum',
-};
-
 const columns: ColumnDef<IndustryPresetItem>[] = [
   {
     key: 'industryType',
@@ -61,10 +37,10 @@ const columns: ColumnDef<IndustryPresetItem>[] = [
     render: (item) => (
       <span
         className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-          industryTypeColors[item.industryType] || 'bg-gray-100 text-gray-800'
+          INDUSTRY_TYPE_COLORS[item.industryType] || 'bg-gray-100 text-gray-800'
         }`}
       >
-        {industryTypeLabels[item.industryType] || item.industryType}
+        {INDUSTRY_TYPE_LABELS[item.industryType] || item.industryType}
       </span>
     ),
   },
@@ -90,10 +66,10 @@ const columns: ColumnDef<IndustryPresetItem>[] = [
     render: (item) => (
       <span
         className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-          securityLevelColors[item.minimumSecurityLevel] || 'bg-gray-100 text-gray-800'
+          SECURITY_LEVEL_COLORS[item.minimumSecurityLevel] || 'bg-gray-100 text-gray-800'
         }`}
       >
-        {securityLevelLabels[item.minimumSecurityLevel] || item.minimumSecurityLevel}
+        {SECURITY_LEVEL_LABELS[item.minimumSecurityLevel] || item.minimumSecurityLevel}
       </span>
     ),
   },

@@ -33,12 +33,9 @@ describe('PromptPanel', () => {
       expect(screen.getByRole('button', { name: '생성' })).toBeInTheDocument();
     });
 
-    it('should render example prompts', () => {
+    it('should not render example prompts in create mode', () => {
       render(<PromptPanel onSubmit={mockOnSubmit} />);
-      expect(screen.getByText('3티어 웹 아키텍처 보여줘')).toBeInTheDocument();
-      expect(screen.getByText('WAF + 로드밸런서 + 웹서버 구조')).toBeInTheDocument();
-      expect(screen.getByText('VPN으로 내부망 접속하는 구조')).toBeInTheDocument();
-      expect(screen.getByText('쿠버네티스 클러스터 아키텍처')).toBeInTheDocument();
+      expect(screen.queryByText('3티어 웹 아키텍처 보여줘')).not.toBeInTheDocument();
     });
 
     it('should render hint text', () => {
@@ -48,14 +45,19 @@ describe('PromptPanel', () => {
   });
 
   describe('Example prompts', () => {
-    it('should fill textarea when example prompt is clicked', async () => {
-      const user = userEvent.setup();
-      render(<PromptPanel onSubmit={mockOnSubmit} />);
-
-      await user.click(screen.getByText('3티어 웹 아키텍처 보여줘'));
-
-      const textarea = screen.getByPlaceholderText('인프라 아키텍처를 설명해주세요...');
-      expect(textarea).toHaveValue('3티어 웹 아키텍처 보여줘');
+    it('should show modify examples in modify mode', () => {
+      const mockModify = vi.fn();
+      render(
+        <PromptPanel
+          onSubmit={mockOnSubmit}
+          onModify={mockModify}
+          hasExistingDiagram={true}
+          llmAvailable={true}
+        />
+      );
+      // Click modify mode toggle
+      fireEvent.click(screen.getByText('AI 수정'));
+      expect(screen.getByText('WAF 추가해줘')).toBeInTheDocument();
     });
   });
 

@@ -60,77 +60,10 @@ export async function parseWithLLM(
 
     return result;
   } catch (error) {
+    logger.error('LLM parse request failed', error instanceof Error ? error : undefined);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Network error',
     };
   }
 }
-
-/**
- * Check if LLM is configured on server
- */
-export async function isLLMConfigured(): Promise<boolean> {
-  try {
-    const response = await fetch('/api/llm');
-    if (!response.ok) return false;
-
-    const data = await response.json();
-    return data.configured === true;
-  } catch (error) {
-    logger.debug('Failed to check LLM configuration', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return false;
-  }
-}
-
-/**
- * Get available LLM providers from server
- */
-export async function getAvailableProviders(): Promise<{
-  claude: boolean;
-  openai: boolean;
-}> {
-  try {
-    const response = await fetch('/api/llm');
-    if (!response.ok) {
-      return { claude: false, openai: false };
-    }
-
-    const data = await response.json();
-    return data.providers || { claude: false, openai: false };
-  } catch (error) {
-    logger.debug('Failed to get available LLM providers', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return { claude: false, openai: false };
-  }
-}
-
-/**
- * Get default LLM config based on available providers
- */
-export async function getDefaultLLMConfig(): Promise<LLMConfig | null> {
-  const providers = await getAvailableProviders();
-
-  if (providers.claude) {
-    return {
-      provider: 'claude',
-      model: 'claude-3-haiku-20240307',
-    };
-  }
-
-  if (providers.openai) {
-    return {
-      provider: 'openai',
-      model: 'gpt-4o-mini',
-    };
-  }
-
-  return null;
-}
-
-// Re-export for backwards compatibility
-export { parseWithLLM as parseWithClaude };
-export { parseWithLLM as parseWithOpenAI };

@@ -115,7 +115,7 @@ async function callAnthropic(
 
       if (response.status === 429) {
         const retryAfter = response.headers.get('retry-after');
-        throw LLMModifyError.rateLimit(retryAfter ? parseInt(retryAfter) : 60);
+        throw LLMModifyError.rateLimit(retryAfter ? parseInt(retryAfter, 10) || 60 : 60);
       }
 
       throw LLMModifyError.apiError(response.status, errorText);
@@ -174,7 +174,7 @@ async function callOpenAI(
 
       if (response.status === 429) {
         const retryAfter = response.headers.get('retry-after');
-        throw LLMModifyError.rateLimit(retryAfter ? parseInt(retryAfter) : 60);
+        throw LLMModifyError.rateLimit(retryAfter ? parseInt(retryAfter, 10) || 60 : 60);
       }
 
       throw LLMModifyError.apiError(response.status, errorText);

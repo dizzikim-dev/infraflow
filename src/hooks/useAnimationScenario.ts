@@ -3,6 +3,9 @@
 import { useState, useCallback } from 'react';
 import { generateFlowSequence, ScenarioType } from '@/lib/animation';
 import { InfraSpec, AnimationSequence } from '@/types';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('useAnimationScenario');
 
 export interface UseAnimationScenarioReturn {
   currentScenario: ScenarioType | null;
@@ -33,7 +36,7 @@ export function useAnimationScenario(
   const handleScenarioSelect = useCallback(
     (type: ScenarioType) => {
       if (!currentSpec) {
-        console.warn('Cannot select scenario: No current spec');
+        log.warn('Cannot select scenario: No current spec');
         return;
       }
 
@@ -42,7 +45,7 @@ export function useAnimationScenario(
         setAnimationSequence(sequence);
         setCurrentScenario(type);
       } catch (error) {
-        console.error('Failed to generate flow sequence:', error);
+        log.error('Failed to generate flow sequence', error instanceof Error ? error : undefined);
         setAnimationSequence(null);
         setCurrentScenario(null);
       }

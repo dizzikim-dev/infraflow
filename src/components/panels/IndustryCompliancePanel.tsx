@@ -6,11 +6,12 @@
  * Industry preset selector with gap analysis and score visualization.
  */
 
-import { motion } from 'framer-motion';
-import { X, Shield, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import type { InfraSpec } from '@/types';
 import { useIndustryCompliance } from '@/hooks/useIndustryCompliance';
 import { getAllIndustryPresets, type IndustryType, type ComplianceGap } from '@/lib/audit/industryCompliance';
+import { PanelContainer } from './PanelContainer';
+import { PanelHeader } from './PanelHeader';
 
 // ============================================================
 // Types
@@ -36,26 +37,8 @@ export function IndustryCompliancePanel({ spec, onClose }: IndustryCompliancePan
     : 'text-zinc-500';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 100 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 100 }}
-      className="fixed top-0 right-0 h-full w-[480px] bg-zinc-900/95 backdrop-blur-sm border-l border-white/10 z-50 flex flex-col"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
-        <div className="flex items-center gap-2">
-          <Shield className="w-5 h-5 text-purple-400" />
-          <h2 className="text-lg font-semibold text-white">산업별 컴플라이언스</h2>
-        </div>
-        <button
-          onClick={onClose}
-          className="p-1 rounded hover:bg-white/10 text-zinc-400 hover:text-white"
-          aria-label="닫기"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+    <PanelContainer>
+      <PanelHeader icon={Shield} iconColor="text-purple-400" title="산업별 컴플라이언스" onClose={onClose} />
 
       {/* Industry Selector */}
       <div className="p-4 border-b border-white/10">
@@ -202,7 +185,7 @@ export function IndustryCompliancePanel({ spec, onClose }: IndustryCompliancePan
           </span>
         </div>
       )}
-    </motion.div>
+    </PanelContainer>
   );
 }
 

@@ -56,9 +56,7 @@ export class ExporterRegistry {
    */
   register(exporter: ExporterExtension): void {
     if (this.exporters.has(exporter.format)) {
-      console.warn(
-        `[ExporterRegistry] Overwriting existing exporter: ${exporter.format}`
-      );
+      logger.warn(`Overwriting existing exporter: ${exporter.format}`);
     }
     this.exporters.set(exporter.format, exporter);
   }
@@ -138,7 +136,7 @@ export class ExporterRegistry {
     try {
       return exporter.export(spec, options);
     } catch (error) {
-      console.error(`[ExporterRegistry] Export failed for format: ${format}`, error);
+      logger.error(`Export failed for format: ${format}`, error instanceof Error ? error : undefined);
       throw error;
     }
   }

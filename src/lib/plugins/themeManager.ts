@@ -130,7 +130,7 @@ export class ThemeManager {
   apply(themeId: string): boolean {
     const theme = this.themes.get(themeId);
     if (!theme) {
-      console.warn(`[ThemeManager] Theme not found: ${themeId}`);
+      logger.warn(`Theme not found: ${themeId}`);
       return false;
     }
 

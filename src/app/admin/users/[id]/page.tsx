@@ -2,6 +2,9 @@
 
 import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('AdminUserDetail');
 
 interface UserDetail {
   id: string;
@@ -27,7 +30,8 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
         if (!res.ok) throw new Error('Failed to fetch');
         const data = await res.json();
         setUser(data.user);
-      } catch {
+      } catch (err) {
+        logger.error('Failed to fetch user', err instanceof Error ? err : undefined, { userId: id });
         setError('사용자를 불러오지 못했습니다');
       } finally {
         setLoading(false);
@@ -57,7 +61,8 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
 
       setUser({ ...user, role: newRole });
       setMessage('역할이 변경되었습니다');
-    } catch {
+    } catch (err) {
+      logger.error('Failed to change user role', err instanceof Error ? err : undefined, { userId: id, newRole });
       setError('역할 변경에 실패했습니다');
     } finally {
       setUpdating(false);

@@ -15,6 +15,7 @@ interface KnowledgeStats {
   benchmarks: number;
   industryPresets: number;
   sources: number;
+  unrecognizedQueries: number;
   total: number;
 }
 
@@ -40,6 +41,7 @@ async function getStats(): Promise<KnowledgeStats> {
       benchmarks,
       industryPresets,
       sources,
+      unrecognizedQueries,
     ] = await Promise.all([
       prisma.knowledgeRelationship.count({ where: { isActive: true } }),
       prisma.knowledgePattern.count({ where: { isActive: true } }),
@@ -51,6 +53,7 @@ async function getStats(): Promise<KnowledgeStats> {
       prisma.knowledgeBenchmark.count({ where: { isActive: true } }),
       prisma.knowledgeIndustryPreset.count({ where: { isActive: true } }),
       prisma.knowledgeSourceEntry.count({ where: { isActive: true } }),
+      prisma.unrecognizedQuery.count({ where: { isActive: true, isResolved: false } }),
     ]);
 
     const total = relationships + patterns + antipatterns + failures + performance +
@@ -58,14 +61,15 @@ async function getStats(): Promise<KnowledgeStats> {
 
     return {
       relationships, patterns, antipatterns, failures, performance,
-      vulnerabilities, cloudServices, benchmarks, industryPresets, sources, total,
+      vulnerabilities, cloudServices, benchmarks, industryPresets, sources,
+      unrecognizedQueries, total,
     };
   } catch (error) {
     log.error('Knowledge 통계 조회 실패', error instanceof Error ? error : undefined);
     return {
       relationships: 0, patterns: 0, antipatterns: 0, failures: 0, performance: 0,
       vulnerabilities: 0, cloudServices: 0, benchmarks: 0, industryPresets: 0,
-      sources: 0, total: 0,
+      sources: 0, unrecognizedQueries: 0, total: 0,
     };
   }
 }
@@ -153,6 +157,14 @@ export default async function KnowledgeDashboardPage() {
       href: '/admin/knowledge/sources',
       color: 'text-amber-600 bg-amber-100',
       iconPath: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+    },
+    {
+      label: 'Unrecognized',
+      labelKo: '미인식 쿼리',
+      count: stats.unrecognizedQueries,
+      href: '/admin/knowledge/unrecognized-queries',
+      color: 'text-yellow-600 bg-yellow-100',
+      iconPath: 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
     },
   ];
 

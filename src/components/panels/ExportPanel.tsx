@@ -11,6 +11,9 @@ import {
   ExportFormat,
 } from '@/lib/export';
 import { InfraSpec } from '@/types';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('ExportPanel');
 
 interface ExportPanelProps {
   onClose: () => void;
@@ -95,7 +98,7 @@ export function ExportPanel({ onClose, canvasRef, currentSpec }: ExportPanelProp
       downloadFile(data, filename, mimeType);
       setExportStatus({ type: 'success', message: `${format.toUpperCase()} 파일이 다운로드되었습니다` });
     } catch (error) {
-      console.error('Export failed:', error);
+      log.error('Export failed', error instanceof Error ? error : undefined);
       setExportStatus({ type: 'error', message: '내보내기에 실패했습니다' });
     }
 
@@ -115,7 +118,7 @@ export function ExportPanel({ onClose, canvasRef, currentSpec }: ExportPanelProp
       await copyImageToClipboard(canvasRef.current);
       setExportStatus({ type: 'success', message: '클립보드에 복사되었습니다' });
     } catch (error) {
-      console.error('Copy failed:', error);
+      log.error('Copy failed', error instanceof Error ? error : undefined);
       setExportStatus({ type: 'error', message: '복사에 실패했습니다' });
     }
 

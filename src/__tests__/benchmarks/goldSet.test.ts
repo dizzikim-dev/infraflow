@@ -661,7 +661,7 @@ describe('Gold Set - Korean Natural Language', () => {
 describe('Gold Set - Edge Cases', () => {
   it('GS-086: empty prompt returns fallback', () => {
     const result = parsePrompt('');
-    expect(result.success).toBe(true);
+    expect(result.isFallback).toBe(true);
     expect(result.confidence).toBeLessThanOrEqual(0.5);
   });
 

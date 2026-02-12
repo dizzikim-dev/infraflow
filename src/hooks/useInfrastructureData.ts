@@ -1,5 +1,5 @@
 /**
- * 인프라 데이터 SWR 훅
+ * 인프라 데이터 훅
  *
  * 데이터베이스에서 인프라 컴포넌트를 가져오고 캐싱합니다.
  * 정적 데이터를 폴백으로 사용하여 DB 연결 실패 시에도 작동합니다.
@@ -7,12 +7,12 @@
 
 'use client';
 
-import useSWR from 'swr';
+import { useState, useEffect, useCallback } from 'react';
 import { fetchComponents, fetchComponent } from '@/lib/data/componentService';
 import { infrastructureDB, InfraComponent } from '@/lib/data/infrastructureDB';
+import { createLogger } from '@/lib/utils/logger';
 
-// SWR 캐시 키
-const INFRASTRUCTURE_KEY = 'infrastructure-components';
+const log = createLogger('InfrastructureData');
 
 /**
  * 모든 인프라 컴포넌트 훅
@@ -23,33 +23,30 @@ const INFRASTRUCTURE_KEY = 'infrastructure-components';
  * ```
  */
 export function useInfrastructureData() {
-  const { data, error, isLoading, mutate } = useSWR<Record<string, InfraComponent>>(
-    INFRASTRUCTURE_KEY,
-    fetchComponents,
-    {
-      // 정적 데이터를 폴백으로 사용
-      fallbackData: infrastructureDB,
-      // 포커스 시 자동 갱신 비활성화 (성능)
-      revalidateOnFocus: false,
-      // 중복 요청 방지 (1분)
-      dedupingInterval: 60000,
-      // 에러 시 재시도
-      errorRetryCount: 3,
-      // 재시도 간격
-      errorRetryInterval: 5000,
-      // 에러 시에도 기존 데이터 유지
-      keepPreviousData: true,
+  // Static infrastructureDB is already loaded in-memory — use it directly.
+  // API fetch is only attempted when explicitly refreshed (e.g., after DB seeding).
+  const [data, setData] = useState<Record<string, InfraComponent>>(infrastructureDB);
+  const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await fetchComponents();
+      setData(result);
+      setError(null);
+    } catch {
+      // DB not available — silently use static fallback
+    } finally {
+      setIsLoading(false);
     }
-  );
+  }, []);
 
   return {
-    // DB 데이터 또는 정적 폴백
-    infrastructureDB: data || infrastructureDB,
+    infrastructureDB: data,
     isLoading,
     error,
-    // 수동 갱신 함수
-    refresh: mutate,
-    // DB 데이터 사용 여부
+    refresh,
     isFromDB: data !== infrastructureDB && !error,
   };
 }
@@ -63,35 +60,36 @@ export function useInfrastructureData() {
  * ```
  */
 export function useInfraComponent(componentId: string | null) {
-  const { data, error, isLoading, mutate } = useSWR<InfraComponent | null>(
-    componentId ? `component-${componentId}` : null,
-    componentId ? () => fetchComponent(componentId) : null,
-    {
-      // 정적 데이터에서 폴백
-      fallbackData: componentId ? infrastructureDB[componentId] || null : null,
-      revalidateOnFocus: false,
-      dedupingInterval: 60000,
-      keepPreviousData: true,
+  const localData = componentId ? infrastructureDB[componentId] ?? null : null;
+  const [data, setData] = useState<InfraComponent | null>(localData);
+  const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Update from local DB when componentId changes
+  useEffect(() => {
+    setData(componentId ? infrastructureDB[componentId] ?? null : null);
+  }, [componentId]);
+
+  const refresh = useCallback(async () => {
+    if (!componentId) return;
+    setIsLoading(true);
+    try {
+      const result = await fetchComponent(componentId);
+      setData(result);
+      setError(null);
+    } catch {
+      // DB not available — silently use static fallback
+    } finally {
+      setIsLoading(false);
     }
-  );
+  }, [componentId]);
 
   return {
-    component: data || (componentId ? infrastructureDB[componentId] : null),
+    component: data || localData,
     isLoading,
     error,
-    refresh: mutate,
+    refresh,
   };
-}
-
-/**
- * 인프라 데이터 캐시 무효화
- *
- * Admin에서 데이터 수정 후 호출하여 캐시를 갱신합니다.
- */
-export function invalidateInfrastructureCache() {
-  // SWR 글로벌 뮤테이트를 사용하여 캐시 무효화
-  const { mutate } = useSWR(INFRASTRUCTURE_KEY);
-  mutate();
 }
 
 export default useInfrastructureData;

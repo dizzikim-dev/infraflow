@@ -81,7 +81,7 @@ export function CostEstimatorPanel({ spec, onClose }: CostEstimatorPanelProps) {
       initial={{ opacity: 0, x: 100 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 100 }}
-      className="fixed top-0 right-0 h-full w-[450px] bg-zinc-900/95 backdrop-blur-sm border-l border-white/10 z-50 flex flex-col"
+      className="fixed top-[4.5rem] right-0 h-[calc(100vh-4.5rem)] w-[450px] bg-zinc-900/95 backdrop-blur-sm border-l border-white/10 z-40 flex flex-col rounded-tl-2xl"
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/10">

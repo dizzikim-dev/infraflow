@@ -54,6 +54,11 @@ const nodeConfigsRaw: Array<{ id: string; name: string; icon: string }> = [
   { id: 'casb', name: 'CASB', icon: '🔒' },
   { id: 'siem', name: 'SIEM', icon: '📊' },
   { id: 'soar', name: 'SOAR', icon: '⚡' },
+  // Physical Security
+  { id: 'cctv-camera', name: 'CCTV Camera', icon: '📹' },
+  { id: 'nvr', name: 'NVR', icon: '💿' },
+  { id: 'video-server', name: 'Video Server', icon: '🖥️' },
+  { id: 'access-control', name: 'Access Control', icon: '🚪' },
   // Network
   { id: 'router', name: 'Router', icon: '📡' },
   { id: 'switch-l2', name: 'Switch L2', icon: '🔀' },

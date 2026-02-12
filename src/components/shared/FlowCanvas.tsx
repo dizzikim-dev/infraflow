@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, memo } from 'react';
+import { useCallback, useEffect, useRef, useState, memo } from 'react';
 import {
   ReactFlow,
   Background,
@@ -18,14 +18,14 @@ import {
   useReactFlow,
   ReactFlowProvider,
   SelectionMode,
+  PanOnScrollMode,
   XYPosition,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { nodeTypes } from '../nodes';
-import { edgeTypes } from '../edges';
+import { nodeTypes } from '@/components/nodes';
+import { edgeTypes } from '@/components/edges';
 import { NodeEditingProvider } from '@/hooks/useNodeEditing';
-import { useHistory } from '@/hooks/useHistory';
 import { createLogger } from '@/lib/utils/logger';
 
 const log = createLogger('FlowCanvas');
@@ -102,16 +102,29 @@ const FlowCanvasInner = memo(function FlowCanvasInner({
     };
   }, []);
 
-  // Use the extracted history hook for undo/redo functionality
-  useHistory(nodes, edges, setNodes, setEdges, {
-    enableKeyboardShortcuts: true,
-  });
+  // Skip sync flag: prevents circular update when FlowCanvas changes propagate
+  // to parent and back via initialNodes/initialEdges
+  const skipSyncRef = useRef(false);
 
   // Sync nodes/edges when initialNodes/initialEdges change from parent
   useEffect(() => {
+    if (skipSyncRef.current) {
+      skipSyncRef.current = false;
+      return;
+    }
     setNodes(initialNodes);
     setEdges(initialEdges);
   }, [initialNodes, initialEdges, setNodes, setEdges]);
+
+  // Propagate node position changes to parent after drag ends
+  const handleNodeDragStop = useCallback(
+    (_event: React.MouseEvent, _node: Node, _draggedNodes: Node[]) => {
+      if (!onNodesChangeCallback) return;
+      skipSyncRef.current = true;
+      onNodesChangeCallback(nodes);
+    },
+    [onNodesChangeCallback, nodes]
+  );
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -119,10 +132,14 @@ const FlowCanvasInner = memo(function FlowCanvasInner({
       setEdges((eds) => {
         const newEdges = addEdge({ ...params, type: 'animated' }, eds);
         log.debug('Edges updated', { count: newEdges.length });
+        if (onEdgesChangeCallback) {
+          skipSyncRef.current = true;
+          setTimeout(() => onEdgesChangeCallback(newEdges), 0);
+        }
         return newEdges;
       });
     },
-    [setEdges]
+    [setEdges, onEdgesChangeCallback]
   );
 
   // Handle canvas context menu (right-click on empty area)
@@ -177,6 +194,7 @@ const FlowCanvasInner = memo(function FlowCanvasInner({
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onNodeDragStop={handleNodeDragStop}
           onNodeClick={onNodeClick}
           onPaneContextMenu={handlePaneContextMenu}
           onNodeContextMenu={handleNodeContextMenu}
@@ -190,7 +208,8 @@ const FlowCanvasInner = memo(function FlowCanvasInner({
           panOnDrag={isSpaceHeld}
           selectionOnDrag={!isSpaceHeld}
           selectionMode={SelectionMode.Partial}
-          panOnScroll={false}
+          panOnScroll
+          panOnScrollMode={PanOnScrollMode.Free}
         >
           <Background
             variant={BackgroundVariant.Dots}

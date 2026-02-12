@@ -15,7 +15,10 @@
 import { useState, useEffect, useCallback, Suspense, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { createLogger } from '@/lib/utils/logger';
 import KnowledgePageLayout from './KnowledgePageLayout';
+
+const log = createLogger('KnowledgeListPage');
 import KnowledgeSearchFilter from './KnowledgeSearchFilter';
 import KnowledgeDataTable from './KnowledgeDataTable';
 import type { ColumnDef, FilterDef } from '.';
@@ -116,12 +119,13 @@ function KnowledgeListContent<T extends { id: string }>({
       setData(result.data);
       setPagination(result.pagination);
     } catch (err) {
+      log.error('Failed to fetch knowledge data', err instanceof Error ? err : undefined);
       setError(err instanceof Error ? err.message : '오류가 발생했습니다');
     } finally {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search, config.entityPath, ...Object.values(filterValues)]);
+  }, [page, search, config.entityPath, JSON.stringify(filterValues)]);
 
   useEffect(() => {
     fetchData();
@@ -188,6 +192,7 @@ function KnowledgeListContent<T extends { id: string }>({
 
         fetchData();
       } catch (err) {
+        log.error('Failed to delete knowledge item', err instanceof Error ? err : undefined);
         alert(err instanceof Error ? err.message : '삭제에 실패했습니다');
       }
     },
@@ -225,25 +230,13 @@ function KnowledgeListContent<T extends { id: string }>({
         </div>
       }
     >
-      {config.filters && config.filters.length > 0 && (
-        <KnowledgeSearchFilter
-          onSearch={handleSearch}
-          onFilterChange={handleFilterChange}
-          filters={config.filters}
-          values={filterValues}
-          search={search}
-        />
-      )}
-
-      {!config.filters?.length && (
-        <KnowledgeSearchFilter
-          onSearch={handleSearch}
-          onFilterChange={handleFilterChange}
-          filters={[]}
-          values={{}}
-          search={search}
-        />
-      )}
+      <KnowledgeSearchFilter
+        onSearch={handleSearch}
+        onFilterChange={handleFilterChange}
+        filters={config.filters ?? []}
+        values={filterValues}
+        search={search}
+      />
 
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">

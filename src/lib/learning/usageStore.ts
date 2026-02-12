@@ -11,7 +11,7 @@ import { createLogger } from '@/lib/utils/logger';
 const log = createLogger('UsageStore');
 
 const DB_NAME = 'infraflow-learning';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const USAGE_STORE = 'usage-events';
 const MAX_EVENTS = 2000;
 
@@ -33,19 +33,24 @@ function openDB(): Promise<IDBDatabase> {
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
-      // Feedback store (created in feedbackStore.ts but may not exist yet)
+      // v1 stores
       if (!db.objectStoreNames.contains('feedback-records')) {
         const feedbackStore = db.createObjectStore('feedback-records', { keyPath: 'id' });
         feedbackStore.createIndex('timestamp', 'timestamp', { unique: false });
         feedbackStore.createIndex('sessionId', 'sessionId', { unique: false });
         feedbackStore.createIndex('diagramSource', 'diagramSource', { unique: false });
       }
-      // Usage store
       if (!db.objectStoreNames.contains(USAGE_STORE)) {
         const store = db.createObjectStore(USAGE_STORE, { keyPath: 'id' });
         store.createIndex('timestamp', 'timestamp', { unique: false });
         store.createIndex('sessionId', 'sessionId', { unique: false });
         store.createIndex('eventType', 'eventType', { unique: false });
+      }
+      // v2 store
+      if (!db.objectStoreNames.contains('antipattern-interactions')) {
+        const apStore = db.createObjectStore('antipattern-interactions', { keyPath: 'id' });
+        apStore.createIndex('antiPatternId', 'antiPatternId', { unique: false });
+        apStore.createIndex('timestamp', 'timestamp', { unique: false });
       }
     };
 

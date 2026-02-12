@@ -6,6 +6,9 @@
  */
 
 import { InfraComponent, PolicyRecommendation } from './infrastructureDB';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('ComponentService');
 
 // API 응답 타입
 interface ApiComponent {
@@ -99,7 +102,7 @@ export async function fetchComponents(): Promise<Record<string, InfraComponent>>
 
     return components;
   } catch (error) {
-    console.error('컴포넌트 로드 실패:', error);
+    log.error('컴포넌트 로드 실패', error instanceof Error ? error : undefined);
     throw error;
   }
 }
@@ -122,7 +125,7 @@ export async function fetchComponent(componentId: string): Promise<InfraComponen
     const apiComponent: ApiComponent = await response.json();
     return toInfraComponent(apiComponent);
   } catch (error) {
-    console.error('컴포넌트 로드 실패:', error);
+    log.error('컴포넌트 로드 실패', error instanceof Error ? error : undefined);
     throw error;
   }
 }
@@ -142,7 +145,7 @@ export async function searchComponents(query: string): Promise<InfraComponent[]>
 
     return data.results.map((result: ApiComponent) => toInfraComponent(result));
   } catch (error) {
-    console.error('컴포넌트 검색 실패:', error);
+    log.error('컴포넌트 검색 실패', error instanceof Error ? error : undefined);
     throw error;
   }
 }
