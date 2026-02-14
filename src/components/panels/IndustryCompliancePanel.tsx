@@ -10,6 +10,7 @@ import { Shield, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import type { InfraSpec } from '@/types';
 import { useIndustryCompliance } from '@/hooks/useIndustryCompliance';
 import { getAllIndustryPresets, type IndustryType, type ComplianceGap } from '@/lib/audit/industryCompliance';
+import { SEVERITY_BADGE } from '@/lib/utils/badgeThemes';
 import { PanelContainer } from './PanelContainer';
 import { PanelHeader } from './PanelHeader';
 
@@ -194,13 +195,7 @@ export function IndustryCompliancePanel({ spec, onClose }: IndustryCompliancePan
 // ============================================================
 
 function GapCard({ gap }: { gap: ComplianceGap }) {
-  const priorityConfig: Record<string, { icon: string; badgeClass: string }> = {
-    critical: { icon: '🔴', badgeClass: 'bg-red-500/20 text-red-300' },
-    high: { icon: '🟠', badgeClass: 'bg-orange-500/20 text-orange-300' },
-    medium: { icon: '🟡', badgeClass: 'bg-yellow-500/20 text-yellow-300' },
-    low: { icon: '🟢', badgeClass: 'bg-green-500/20 text-green-300' },
-  };
-  const config = priorityConfig[gap.priority] ?? priorityConfig.medium;
+  const config = SEVERITY_BADGE[gap.priority] ?? SEVERITY_BADGE.medium;
 
   return (
     <div className="bg-zinc-800/50 rounded-lg p-3 border border-white/5">

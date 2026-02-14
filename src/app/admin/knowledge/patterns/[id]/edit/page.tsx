@@ -251,7 +251,7 @@ export default function EditPatternPage() {
                 type="number"
                 value={formData.complexity}
                 onChange={(e) =>
-                  updateField('complexity', Math.min(5, Math.max(1, parseInt(e.target.value) || 1)))
+                  updateField('complexity', Math.min(5, Math.max(1, parseInt(e.target.value, 10) || 1)))
                 }
                 min={1}
                 max={5}

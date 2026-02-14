@@ -170,7 +170,7 @@ export default function EditBenchmarkPage() {
               <input
                 type="number"
                 value={maxRPS}
-                onChange={(e) => setMaxRPS(parseInt(e.target.value) || 0)}
+                onChange={(e) => setMaxRPS(parseInt(e.target.value, 10) || 0)}
                 required
                 className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
               />
@@ -196,7 +196,7 @@ export default function EditBenchmarkPage() {
               <input
                 type="number"
                 value={recommendedInstanceCount}
-                onChange={(e) => setRecommendedInstanceCount(parseInt(e.target.value) || 1)}
+                onChange={(e) => setRecommendedInstanceCount(parseInt(e.target.value, 10) || 1)}
                 min={1}
                 required
                 className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
@@ -234,7 +234,7 @@ export default function EditBenchmarkPage() {
               <input
                 type="number"
                 value={minimumInstanceCount}
-                onChange={(e) => setMinimumInstanceCount(parseInt(e.target.value) || 1)}
+                onChange={(e) => setMinimumInstanceCount(parseInt(e.target.value, 10) || 1)}
                 min={1}
                 required
                 className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"

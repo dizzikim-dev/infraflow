@@ -22,6 +22,7 @@ import type {
   ComplianceReport,
   ComplianceFramework,
 } from '@/lib/audit';
+import { PANEL_SEVERITY_COLORS } from '@/lib/utils/badgeThemes';
 
 // ============================================================
 // Constants
@@ -34,12 +35,8 @@ export const STATUS_ICONS: Record<string, React.ReactNode> = {
   'not-applicable': <MinusCircle className="w-4 h-4 text-zinc-400" />,
 };
 
-export const SEVERITY_COLORS: Record<string, string> = {
-  critical: 'bg-red-500/20 text-red-400 border-red-500/30',
-  high: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  medium: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  low: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-};
+/** @deprecated Use PANEL_SEVERITY_COLORS from '@/lib/utils/badgeThemes' */
+export const SEVERITY_COLORS = PANEL_SEVERITY_COLORS;
 
 // ============================================================
 // Utility Functions

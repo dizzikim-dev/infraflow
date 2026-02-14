@@ -33,6 +33,7 @@ import {
 import { assessChangeRisk, type ChangeRiskAssessment } from '@/lib/parser/changeRiskAssessor';
 import { sanitizeUserInput, validateOutputSafety } from '@/lib/security/llmSecurityControls';
 import { recordLLMCall } from '@/lib/utils/llmMetrics';
+import { getEnv } from '@/lib/config/env';
 
 const log = createLogger('Modify API');
 
@@ -66,15 +67,19 @@ export interface ModifyResponse {
   };
 }
 
-// LLM configuration (configurable via environment variables)
-const LLM_CONFIG = {
-  // Anthropic model
-  anthropicModel: process.env.LLM_MODEL || 'claude-sonnet-4-20250514',
-  // OpenAI model
-  openaiModel: process.env.OPENAI_MODEL || 'gpt-4o',
-  maxTokens: parseInt(process.env.LLM_MAX_TOKENS || '2048', 10),
-  timeoutMs: parseInt(process.env.LLM_TIMEOUT_MS || '30000', 10),
-};
+// LLM configuration (driven by validated env schema)
+function getLLMConfig() {
+  const env = getEnv();
+  return {
+    anthropicModel: env.LLM_MODEL,
+    openaiModel: env.OPENAI_MODEL,
+    maxTokens: env.LLM_MAX_TOKENS,
+    timeoutMs: env.LLM_TIMEOUT_MS,
+  };
+}
+
+// Keep a module-level alias for backward compatibility within this file
+const LLM_CONFIG = getLLMConfig();
 
 
 /**
@@ -230,7 +235,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ModifyRes
   // Basic CSRF protection - check Origin header
   const origin = request.headers.get('origin');
   const host = request.headers.get('host');
-  if (origin && host && !origin.includes(host)) {
+  const allowedOrigins = [`http://${host}`, `https://${host}`];
+  if (origin && !allowedOrigins.includes(origin)) {
     const response = NextResponse.json<ModifyResponse>(
       {
         success: false,

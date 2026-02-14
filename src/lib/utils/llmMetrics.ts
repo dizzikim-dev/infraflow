@@ -42,11 +42,27 @@ export interface LLMMetricsSummary {
 }
 
 // ---------------------------------------------------------------------------
-// Ring Buffer Store
+// Circular Buffer Store
 // ---------------------------------------------------------------------------
 
 const MAX_ENTRIES = 200;
-const metrics: LLMCallMetric[] = [];
+const buffer: (LLMCallMetric | null)[] = new Array(MAX_ENTRIES).fill(null);
+let writeIndex = 0;
+let count = 0;
+
+/**
+ * Collect the stored metrics in insertion order (oldest first).
+ */
+function collectAll(): LLMCallMetric[] {
+  if (count === 0) return [];
+  const result: LLMCallMetric[] = [];
+  const start = count < MAX_ENTRIES ? 0 : writeIndex;
+  for (let i = 0; i < count; i++) {
+    const idx = (start + i) % MAX_ENTRIES;
+    result.push(buffer[idx] as LLMCallMetric);
+  }
+  return result;
+}
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -56,9 +72,10 @@ const metrics: LLMCallMetric[] = [];
  * Record a single LLM call metric.
  */
 export function recordLLMCall(metric: LLMCallMetric): void {
-  metrics.push(metric);
-  if (metrics.length > MAX_ENTRIES) {
-    metrics.shift();
+  buffer[writeIndex] = metric;
+  writeIndex = (writeIndex + 1) % MAX_ENTRIES;
+  if (count < MAX_ENTRIES) {
+    count++;
   }
 }
 
@@ -66,9 +83,10 @@ export function recordLLMCall(metric: LLMCallMetric): void {
  * Get all recorded metrics, optionally filtered by time range.
  */
 export function getLLMMetrics(since?: string): LLMCallMetric[] {
-  if (!since) return [...metrics];
+  const all = collectAll();
+  if (!since) return all;
   const sinceTime = new Date(since).getTime();
-  return metrics.filter(m => new Date(m.timestamp).getTime() >= sinceTime);
+  return all.filter(m => new Date(m.timestamp).getTime() >= sinceTime);
 }
 
 /**
@@ -148,12 +166,14 @@ export function getLLMSummary(since?: string): LLMMetricsSummary {
  * Clear all recorded metrics. Useful for testing.
  */
 export function clearLLMMetrics(): void {
-  metrics.length = 0;
+  buffer.fill(null);
+  writeIndex = 0;
+  count = 0;
 }
 
 /**
  * Get the current buffer size.
  */
 export function getMetricsCount(): number {
-  return metrics.length;
+  return count;
 }

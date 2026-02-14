@@ -86,7 +86,7 @@ function KnowledgeListContent<T extends { id: string }>({
   const [error, setError] = useState<string | null>(null);
 
   // Read URL params
-  const page = parseInt(searchParams.get('page') || '1');
+  const page = parseInt(searchParams.get('page') || '1', 10);
   const search = searchParams.get('search') || '';
   const filterValues: Record<string, string> = {};
   for (const f of config.filters ?? []) {

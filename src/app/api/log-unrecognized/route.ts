@@ -40,7 +40,8 @@ export async function POST(request: NextRequest) {
     // CSRF protection — check Origin header
     const origin = request.headers.get('origin');
     const host = request.headers.get('host');
-    if (origin && host && !origin.includes(host)) {
+    const allowedOrigins = [`http://${host}`, `https://${host}`];
+    if (origin && !allowedOrigins.includes(origin)) {
       return NextResponse.json(
         { success: false, error: '허용되지 않은 요청입니다.' },
         { status: 403 }

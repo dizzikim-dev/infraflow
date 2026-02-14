@@ -46,7 +46,8 @@ export function validateAnalyzeRequest(
   // CSRF protection — check Origin header (matches /api/parse pattern)
   const origin = request.headers.get('origin');
   const host = request.headers.get('host');
-  if (origin && host && !origin.includes(host)) {
+  const allowedOrigins = [`http://${host}`, `https://${host}`];
+  if (origin && !allowedOrigins.includes(origin)) {
     return {
       passed: false,
       errorResponse: NextResponse.json(

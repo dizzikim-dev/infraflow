@@ -88,7 +88,7 @@ function RequiredComponentsEditor({
           <input
             type="number"
             value={item.minCount}
-            onChange={(e) => handleUpdate(index, 'minCount', parseInt(e.target.value) || 0)}
+            onChange={(e) => handleUpdate(index, 'minCount', parseInt(e.target.value, 10) || 0)}
             min={0}
             className="w-20 py-1.5 px-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="최소"
@@ -115,7 +115,7 @@ function RequiredComponentsEditor({
         <input
           type="number"
           value={newCount}
-          onChange={(e) => setNewCount(parseInt(e.target.value) || 0)}
+          onChange={(e) => setNewCount(parseInt(e.target.value, 10) || 0)}
           min={0}
           className="w-20 py-1.5 px-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           placeholder="최소"

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { POST, GET } from '@/app/api/parse/route';
+import { resetEnvCache } from '@/lib/config/env';
 
 // Mock environment variables
 const originalEnv = process.env;
@@ -9,10 +10,12 @@ describe('/api/parse', () => {
   beforeEach(() => {
     vi.resetModules();
     process.env = { ...originalEnv };
+    resetEnvCache();
   });
 
   afterEach(() => {
     process.env = originalEnv;
+    resetEnvCache();
     vi.restoreAllMocks();
   });
 

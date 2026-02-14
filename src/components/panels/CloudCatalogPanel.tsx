@@ -12,6 +12,7 @@ import { Cloud, AlertTriangle, CheckCircle2, Search } from 'lucide-react';
 import type { InfraSpec, InfraNodeType } from '@/types';
 import { useCloudCatalog } from '@/hooks/useCloudCatalog';
 import type { CloudProvider, CloudService, ServiceComparison } from '@/lib/knowledge/cloudCatalog';
+import { SEVERITY_BADGE, SERVICE_STATUS_BADGE, CLOUD_PROVIDER_BADGE } from '@/lib/utils/badgeThemes';
 import { PanelContainer } from './PanelContainer';
 import { PanelHeader } from './PanelHeader';
 import { PanelTabs } from './PanelTabs';
@@ -97,11 +98,7 @@ export function CloudCatalogPanel({ spec, onClose }: CloudCatalogPanelProps) {
               </div>
             ) : (
               deprecationWarnings.map((w) => {
-                const urgencyConfig = w.urgency === 'critical'
-                  ? { icon: '🔴', badgeClass: 'bg-red-500/20 text-red-300' }
-                  : w.urgency === 'high'
-                    ? { icon: '🟠', badgeClass: 'bg-orange-500/20 text-orange-300' }
-                    : { icon: '🟡', badgeClass: 'bg-yellow-500/20 text-yellow-300' };
+                const urgencyConfig = SEVERITY_BADGE[w.urgency] ?? SEVERITY_BADGE.medium;
                 return (
                   <div key={w.service.id} className="bg-zinc-800/50 rounded-lg p-3 border border-white/5">
                     <div className="flex items-start gap-2">
@@ -194,20 +191,13 @@ export function CloudCatalogPanel({ spec, onClose }: CloudCatalogPanelProps) {
 // ============================================================
 
 function ServiceCard({ service }: { service: CloudService }) {
-  const statusConfig: Record<string, { label: string; class: string }> = {
-    active: { label: 'Active', class: 'bg-green-500/20 text-green-300' },
-    deprecated: { label: 'Deprecated', class: 'bg-orange-500/20 text-orange-300' },
-    preview: { label: 'Preview', class: 'bg-blue-500/20 text-blue-300' },
-    'end-of-life': { label: 'EOL', class: 'bg-red-500/20 text-red-300' },
-  };
-
-  const status = statusConfig[service.status];
+  const status = SERVICE_STATUS_BADGE[service.status] ?? SERVICE_STATUS_BADGE.active;
 
   return (
     <div className="bg-zinc-800/50 rounded-lg p-3 border border-white/5">
       <div className="flex items-center gap-2 flex-wrap">
         <ProviderBadge provider={service.provider} />
-        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${status.class}`}>
+        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${status.className}`}>
           {status.label}
         </span>
         <span className="text-xs text-zinc-500 ml-auto">{service.pricingTier}</span>
@@ -225,13 +215,8 @@ function ServiceCard({ service }: { service: CloudService }) {
 }
 
 function ProviderBadge({ provider }: { provider: CloudProvider }) {
-  const config: Record<CloudProvider, { label: string; class: string }> = {
-    aws: { label: 'AWS', class: 'bg-orange-500/10 text-orange-300 border-orange-500/20' },
-    azure: { label: 'Azure', class: 'bg-blue-500/10 text-blue-300 border-blue-500/20' },
-    gcp: { label: 'GCP', class: 'bg-green-500/10 text-green-300 border-green-500/20' },
-  };
-  const c = config[provider];
+  const c = CLOUD_PROVIDER_BADGE[provider];
   return (
-    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${c.class}`}>{c.label}</span>
+    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${c.className}`}>{c.label}</span>
   );
 }

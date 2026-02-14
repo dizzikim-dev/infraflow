@@ -11,6 +11,7 @@ import { Gauge, AlertTriangle, CheckCircle2, TrendingUp } from 'lucide-react';
 import type { InfraSpec } from '@/types';
 import { useBenchmark } from '@/hooks/useBenchmark';
 import { TRAFFIC_PROFILES, type TrafficTier } from '@/lib/knowledge/benchmarks';
+import { TIER_BADGE } from '@/lib/utils/badgeThemes';
 import { PanelContainer } from './PanelContainer';
 import { PanelHeader } from './PanelHeader';
 
@@ -77,10 +78,7 @@ export function BenchmarkPanel({ spec, onClose }: BenchmarkPanelProps) {
                 </span>
                 <span className="text-sm text-zinc-500">RPS</span>
                 <span className={`ml-auto text-xs px-2 py-1 rounded ${
-                  capacity.currentTier === 'enterprise' ? 'bg-purple-500/20 text-purple-300' :
-                  capacity.currentTier === 'large' ? 'bg-blue-500/20 text-blue-300' :
-                  capacity.currentTier === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
-                  'bg-zinc-700 text-zinc-300'
+                  TIER_BADGE[capacity.currentTier] ?? TIER_BADGE.small
                 }`}>
                   {capacity.currentTier}
                 </span>

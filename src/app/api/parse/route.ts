@@ -37,6 +37,9 @@ import { ConversationContext, SmartParseResult } from '@/lib/parser/UnifiedParse
 import { ParseRequestSchema } from '@/lib/validations/api';
 import { sanitizeUserInput, validateOutputSafety } from '@/lib/security/llmSecurityControls';
 import { recordLLMCall } from '@/lib/utils/llmMetrics';
+import { checkRateLimit, LLM_RATE_LIMIT } from '@/lib/middleware/rateLimiter';
+import { addRateLimitHeaders } from '@/lib/llm/rateLimitHeaders';
+import { getEnv } from '@/lib/config/env';
 
 /**
  * Request body for the smart parse endpoint.
@@ -283,15 +286,23 @@ async function analyzeIntentWithOpenAI(
 export async function POST(
   request: NextRequest
 ): Promise<NextResponse<SmartParseResponse>> {
+  // Check rate limit
+  const { allowed, info, response: rateLimitResponse } = checkRateLimit(request, LLM_RATE_LIMIT);
+  if (!allowed && rateLimitResponse) {
+    return rateLimitResponse as NextResponse<SmartParseResponse>;
+  }
+
   try {
     // CSRF protection — check Origin header
     const origin = request.headers.get('origin');
     const host = request.headers.get('host');
-    if (origin && host && !origin.includes(host)) {
-      return NextResponse.json(
+    const allowedOrigins = [`http://${host}`, `https://${host}`];
+    if (origin && !allowedOrigins.includes(origin)) {
+      const response = NextResponse.json(
         { success: false, error: '허용되지 않은 요청입니다.' },
         { status: 403 }
       );
+      return addRateLimitHeaders(response, info);
     }
 
     const rawBody = await request.json();
@@ -328,11 +339,12 @@ export async function POST(
     let apiKey: string | undefined;
     let analyzeFunction: typeof analyzeIntentWithClaude;
 
+    const env = getEnv();
     if (provider === 'claude') {
-      apiKey = process.env.ANTHROPIC_API_KEY;
+      apiKey = env.ANTHROPIC_API_KEY;
       analyzeFunction = analyzeIntentWithClaude;
     } else if (provider === 'openai') {
-      apiKey = process.env.OPENAI_API_KEY;
+      apiKey = env.OPENAI_API_KEY;
       analyzeFunction = analyzeIntentWithOpenAI;
     } else {
       return NextResponse.json(
@@ -474,8 +486,9 @@ export async function POST(
  * }
  */
 export async function GET(): Promise<NextResponse> {
-  const claudeConfigured = !!process.env.ANTHROPIC_API_KEY;
-  const openaiConfigured = !!process.env.OPENAI_API_KEY;
+  const env = getEnv();
+  const claudeConfigured = !!env.ANTHROPIC_API_KEY;
+  const openaiConfigured = !!env.OPENAI_API_KEY;
 
   return NextResponse.json({
     available: claudeConfigured || openaiConfigured,

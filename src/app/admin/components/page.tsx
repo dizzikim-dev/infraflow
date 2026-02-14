@@ -60,7 +60,7 @@ function ComponentsPageContent() {
   const [error, setError] = useState<string | null>(null);
 
   // URL에서 필터 값 가져오기
-  const page = parseInt(searchParams.get('page') || '1');
+  const page = parseInt(searchParams.get('page') || '1', 10);
   const category = searchParams.get('category') || '';
   const tier = searchParams.get('tier') || '';
   const search = searchParams.get('search') || '';
