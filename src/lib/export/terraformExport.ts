@@ -227,6 +227,39 @@ resource "aws_lb_listener" "${sanitizeId(node.id)}_listener" {
     return `# Load Balancer: ${node.label}`;
   },
 
+  'api-gateway': (node, provider) => {
+    if (provider === 'aws') {
+      return `
+resource "aws_apigatewayv2_api" "${sanitizeId(node.id)}" {
+  name          = "${sanitizeId(node.id)}"
+  protocol_type = "HTTP"
+  description   = "${node.description || 'API Gateway managed by InfraFlow'}"
+
+  tags = {
+    Name = "${node.label}"
+  }
+}
+
+resource "aws_apigatewayv2_stage" "${sanitizeId(node.id)}_default" {
+  api_id      = aws_apigatewayv2_api.${sanitizeId(node.id)}.id
+  name        = "$default"
+  auto_deploy = true
+}`;
+    }
+    if (provider === 'azure') {
+      return `
+resource "azurerm_api_management" "${sanitizeId(node.id)}" {
+  name                = "${sanitizeId(node.id)}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  publisher_name      = "InfraFlow"
+  publisher_email     = "admin@example.com"
+  sku_name            = "Consumption_0"
+}`;
+    }
+    return `# API Gateway: ${node.label}`;
+  },
+
   'sd-wan': (node) => `# SD-WAN: ${node.label} - Software-defined WAN configuration`,
   'dns': (node, provider) => {
     if (provider === 'aws') {
@@ -361,6 +394,110 @@ resource "aws_eks_cluster" "${sanitizeId(node.id)}" {
     return `# Kubernetes: ${node.label}`;
   },
 
+  'kafka': (node, provider) => {
+    if (provider === 'aws') {
+      return `
+resource "aws_msk_cluster" "${sanitizeId(node.id)}" {
+  cluster_name           = "${sanitizeId(node.id)}"
+  kafka_version          = "3.5.1"
+  number_of_broker_nodes = 3
+
+  broker_node_group_info {
+    instance_type   = "kafka.m5.large"
+    client_subnets  = aws_subnet.private[*].id
+    security_groups = [aws_security_group.kafka.id]
+
+    storage_info {
+      ebs_storage_info {
+        volume_size = 100
+      }
+    }
+  }
+
+  encryption_info {
+    encryption_in_transit {
+      client_broker = "TLS"
+      in_cluster    = true
+    }
+  }
+
+  tags = {
+    Name = "${node.label}"
+  }
+}`;
+    }
+    if (provider === 'azure') {
+      return `
+resource "azurerm_eventhub_namespace" "${sanitizeId(node.id)}" {
+  name                = "${sanitizeId(node.id)}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  sku                 = "Standard"
+  capacity            = 2
+}`;
+    }
+    return `# Kafka: ${node.label}`;
+  },
+
+  'rabbitmq': (node, provider) => {
+    if (provider === 'aws') {
+      return `
+resource "aws_mq_broker" "${sanitizeId(node.id)}" {
+  broker_name   = "${sanitizeId(node.id)}"
+  engine_type   = "RabbitMQ"
+  engine_version = "3.11"
+  host_instance_type = "mq.m5.large"
+  deployment_mode    = "CLUSTER_MULTI_AZ"
+  publicly_accessible = false
+
+  user {
+    username = "admin"
+    password = var.rabbitmq_password
+  }
+
+  tags = {
+    Name = "${node.label}"
+  }
+}`;
+    }
+    // TODO: Add Azure (azurerm_servicebus_namespace) and GCP support
+    return `# RabbitMQ: ${node.label} — Azure/GCP not yet implemented`;
+  },
+
+  'prometheus': (node, provider) => {
+    if (provider === 'aws') {
+      return `
+resource "aws_prometheus_workspace" "${sanitizeId(node.id)}" {
+  alias = "${sanitizeId(node.id)}"
+
+  tags = {
+    Name = "${node.label}"
+  }
+}`;
+    }
+    // TODO: Add Azure (azurerm_monitor_workspace) and GCP support
+    return `# Prometheus: ${node.label} — Azure/GCP not yet implemented`;
+  },
+
+  'grafana': (node, provider) => {
+    if (provider === 'aws') {
+      return `
+resource "aws_grafana_workspace" "${sanitizeId(node.id)}" {
+  name                     = "${sanitizeId(node.id)}"
+  account_access_type      = "CURRENT_ACCOUNT"
+  authentication_providers = ["AWS_SSO"]
+  permission_type          = "SERVICE_MANAGED"
+  role_arn                 = aws_iam_role.grafana.arn
+
+  tags = {
+    Name = "${node.label}"
+  }
+}`;
+    }
+    // TODO: Add Azure (azurerm_dashboard_grafana) and GCP support
+    return `# Grafana: ${node.label} — Azure/GCP not yet implemented`;
+  },
+
   // Cloud
   'aws-vpc': (node) => `
 resource "aws_vpc" "${sanitizeId(node.id)}" {
@@ -451,6 +588,52 @@ resource "aws_elasticache_cluster" "${sanitizeId(node.id)}" {
     }
     return `# Cache: ${node.label}`;
   },
+
+  'elasticsearch': (node, provider) => {
+    if (provider === 'aws') {
+      return `
+resource "aws_opensearch_domain" "${sanitizeId(node.id)}" {
+  domain_name    = "${sanitizeId(node.id)}"
+  engine_version = "OpenSearch_2.11"
+
+  cluster_config {
+    instance_type  = "r6g.large.search"
+    instance_count = 3
+  }
+
+  ebs_options {
+    ebs_enabled = true
+    volume_size = 100
+    volume_type = "gp3"
+  }
+
+  encrypt_at_rest {
+    enabled = true
+  }
+
+  node_to_node_encryption {
+    enabled = true
+  }
+
+  tags = {
+    Name = "${node.label}"
+  }
+}`;
+    }
+    if (provider === 'azure') {
+      return `
+resource "azurerm_search_service" "${sanitizeId(node.id)}" {
+  name                = "${sanitizeId(node.id)}"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  sku                 = "standard"
+  replica_count       = 3
+  partition_count     = 1
+}`;
+    }
+    return `# Elasticsearch: ${node.label}`;
+  },
+
   'storage': (node) => `# Storage: ${node.label}`,
 
   // Auth

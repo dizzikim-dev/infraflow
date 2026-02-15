@@ -309,4 +309,48 @@ export const networkComponents: Record<string, InfraComponent> = {
     protocols: ['IPSec', 'MPLS', 'Broadband'],
     vendors: ['Cisco Viptela', 'VMware VeloCloud', 'Fortinet', 'Palo Alto Prisma'],
   },
+
+  'api-gateway': {
+    id: 'api-gateway',
+    name: 'API Gateway',
+    nameKo: 'API 게이트웨이',
+    category: 'network',
+    description: 'Centralized entry point for API traffic, providing routing, authentication, rate limiting, and protocol translation.',
+    descriptionKo: 'API 트래픽의 중앙 진입점으로 라우팅, 인증, 속도 제한, 프로토콜 변환을 제공합니다.',
+    functions: [
+      'Request routing',
+      'Authentication and authorization',
+      'Rate limiting and throttling',
+      'Request/response transformation',
+      'API versioning',
+    ],
+    functionsKo: [
+      '요청 라우팅',
+      '인증 및 인가',
+      '속도 제한 및 스로틀링',
+      '요청/응답 변환',
+      'API 버전 관리',
+    ],
+    features: [
+      'OpenAPI/Swagger integration',
+      'Circuit breaker pattern',
+      'Service discovery',
+      'Canary deployments',
+    ],
+    featuresKo: [
+      'OpenAPI/Swagger 통합',
+      '서킷 브레이커 패턴',
+      '서비스 디스커버리',
+      '카나리 배포',
+    ],
+    recommendedPolicies: [
+      { name: 'Rate Limiting', nameKo: '속도 제한', description: 'Configure per-client rate limits to prevent abuse', priority: 'critical', category: 'security' },
+      { name: 'JWT Validation', nameKo: 'JWT 검증', description: 'Validate JWT tokens at the gateway level', priority: 'critical', category: 'access' },
+      { name: 'Request Logging', nameKo: '요청 로깅', description: 'Log all API requests for audit and debugging', priority: 'high', category: 'monitoring' },
+    ],
+    tier: 'dmz',
+    ports: ['80', '443', '8443'],
+    protocols: ['HTTP/1.1', 'HTTP/2', 'gRPC', 'WebSocket'],
+    vendors: ['Kong', 'AWS API Gateway', 'Azure API Management', 'Google Apigee', 'NGINX'],
+  },
 };

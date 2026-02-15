@@ -36,6 +36,7 @@ const c4ElementMap: Record<InfraNodeType, { stereotype: string; shape: string }>
   'switch-l2': { stereotype: 'Network', shape: 'Container' },
   'switch-l3': { stereotype: 'Network', shape: 'Container' },
   'load-balancer': { stereotype: 'Network', shape: 'Container' },
+  'api-gateway': { stereotype: 'Network', shape: 'Container' },
   'sd-wan': { stereotype: 'Network', shape: 'Container' },
   'dns': { stereotype: 'Network', shape: 'Container' },
   'cdn': { stereotype: 'Network', shape: 'Container' },
@@ -47,6 +48,10 @@ const c4ElementMap: Record<InfraNodeType, { stereotype: string; shape: string }>
   'container': { stereotype: 'Compute', shape: 'Container' },
   'vm': { stereotype: 'Compute', shape: 'Container' },
   'kubernetes': { stereotype: 'Compute', shape: 'Container' },
+  'kafka': { stereotype: 'Compute', shape: 'Container' },
+  'rabbitmq': { stereotype: 'Compute', shape: 'Container' },
+  'prometheus': { stereotype: 'Compute', shape: 'Container' },
+  'grafana': { stereotype: 'Compute', shape: 'Container' },
 
   // Cloud
   'aws-vpc': { stereotype: 'Cloud', shape: 'System_Boundary' },
@@ -59,6 +64,7 @@ const c4ElementMap: Record<InfraNodeType, { stereotype: string; shape: string }>
   'object-storage': { stereotype: 'Storage', shape: 'ContainerDb' },
   'backup': { stereotype: 'Storage', shape: 'ContainerDb' },
   'cache': { stereotype: 'Storage', shape: 'ContainerDb' },
+  'elasticsearch': { stereotype: 'Storage', shape: 'ContainerDb' },
   'storage': { stereotype: 'Storage', shape: 'ContainerDb' },
 
   // Auth

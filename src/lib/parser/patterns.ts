@@ -50,6 +50,7 @@ export const nodeTypePatterns: NodeTypePattern[] = [
 
   // Network
   { pattern: /cdn|content.*delivery/i, type: 'cdn', label: 'CDN', labelKo: 'CDN' },
+  { pattern: /api[\s-]*gateway|api[\s-]*게이트웨이|kong(?!\w)|apigee/i, type: 'api-gateway', label: 'API Gateway', labelKo: 'API 게이트웨이' },
   { pattern: /load ?balancer|로드 ?밸런서|lb(?!\w)|부하분산/i, type: 'load-balancer', label: 'Load Balancer', labelKo: '로드밸런서' },
   { pattern: /router|라우터/i, type: 'router', label: 'Router', labelKo: '라우터' },
   { pattern: /switch.*l3|l3.*switch|레이어 ?3|스위치.*l3/i, type: 'switch-l3', label: 'L3 Switch', labelKo: 'L3 스위치' },
@@ -64,6 +65,10 @@ export const nodeTypePatterns: NodeTypePattern[] = [
   { pattern: /kubernetes|k8s|쿠버네티스/i, type: 'kubernetes', label: 'Kubernetes', labelKo: '쿠버네티스' },
   { pattern: /container|컨테이너|docker|도커/i, type: 'container', label: 'Container', labelKo: '컨테이너' },
   { pattern: /vm|virtual.*machine|가상.*머신|가상.*서버/i, type: 'vm', label: 'VM', labelKo: '가상머신' },
+  { pattern: /kafka|카프카|confluent(?!\w)/i, type: 'kafka', label: 'Kafka', labelKo: '카프카' },
+  { pattern: /rabbitmq|래빗엠큐|rabbit\s*mq|amqp/i, type: 'rabbitmq', label: 'RabbitMQ', labelKo: '래빗엠큐' },
+  { pattern: /prometheus|프로메테우스/i, type: 'prometheus', label: 'Prometheus', labelKo: '프로메테우스' },
+  { pattern: /grafana|그라파나/i, type: 'grafana', label: 'Grafana', labelKo: '그라파나' },
 
   // Cloud
   { pattern: /aws.*vpc|vpc.*aws/i, type: 'aws-vpc', label: 'AWS VPC', labelKo: 'AWS VPC' },
@@ -76,6 +81,8 @@ export const nodeTypePatterns: NodeTypePattern[] = [
   { pattern: /object.*storage|오브젝트.*스토리지|s3/i, type: 'object-storage', label: 'Object Storage', labelKo: '오브젝트 스토리지' },
   { pattern: /backup|백업/i, type: 'backup', label: 'Backup', labelKo: '백업' },
   { pattern: /cache|캐시|redis|memcached/i, type: 'cache', label: 'Cache', labelKo: '캐시' },
+  // OpenSearch is an Elasticsearch-compatible fork; both map to the same 'elasticsearch' node type
+  { pattern: /elasticsearch|엘라스틱서치|elastic\s*search|elk(?!\w)|opensearch/i, type: 'elasticsearch', label: 'Elasticsearch', labelKo: '엘라스틱서치' },
   { pattern: /storage|스토리지|저장소/i, type: 'storage', label: 'Storage', labelKo: '스토리지' },
 
   // Auth
@@ -298,6 +305,9 @@ const quickMatchKeywords: Set<string> = new Set([
   'cloud', 'private', 'san', 'nas', 'object', 'storage', 's3', 'backup',
   'cache', 'redis', 'memcached', 'ldap', 'ad', 'active', 'directory',
   'sso', 'single', 'sign', 'mfa', 'multi', 'factor', 'iam', 'identity', 'access',
+  // Cloud-native keywords
+  'kafka', 'confluent', 'rabbitmq', 'rabbit', 'amqp', 'prometheus', 'grafana',
+  'api', 'gateway', 'kong', 'apigee', 'elasticsearch', 'elastic', 'elk', 'opensearch',
   // Telecom/WAN English keywords
   'central', 'office', 'pop', 'base', 'station', 'gnb', 'enb', 'bts',
   'olt', 'optical', 'cpe', 'premise', 'idc',
@@ -307,6 +317,7 @@ const quickMatchKeywords: Set<string> = new Set([
   'cctv', 'nvr', 'vms', 'video',
   // Korean keywords
   '씨씨티비', '폐쇄회로', '감시', '방범', '영상', '녹화', '관제', '출입', '통제', '카드',
+  '카프카', '래빗엠큐', '프로메테우스', '그라파나', '게이트웨이', '엘라스틱서치',
   '사용자', '유저', '클라이언트', '인터넷', '외부망', '웹방화벽', '방화벽',
   '침입', '탐지', '방지', '가상사설망', '네트워크', '접근', '제어',
   '데이터', '유출', '로드', '밸런서', '부하분산', '라우터', '스위치',

@@ -660,6 +660,76 @@ export const infraTemplates: Record<string, InfraSpec> = {
       { id: 'external-svc', label: 'External Services', type: 'external' },
     ],
   },
+  // Netflix-style Streaming Architecture
+  'netflix-streaming': {
+    name: 'Netflix Streaming Architecture',
+    description: 'Netflix-style event-driven streaming architecture with API Gateway, Kafka, and Elasticsearch',
+    nodes: [
+      { id: 'user', type: 'user', label: 'User', zone: 'external' },
+      { id: 'cdn', type: 'cdn', label: 'CDN', zone: 'edge' },
+      { id: 'api-gw', type: 'api-gateway', label: 'API Gateway', zone: 'gateway' },
+      { id: 'app1', type: 'app-server', label: 'API Service', zone: 'services' },
+      { id: 'app2', type: 'app-server', label: 'Stream Service', zone: 'services' },
+      { id: 'kafka', type: 'kafka', label: 'Kafka', zone: 'messaging' },
+      { id: 'cache', type: 'cache', label: 'Redis Cache', zone: 'data' },
+      { id: 'db', type: 'db-server', label: 'Database', zone: 'data' },
+      { id: 'es', type: 'elasticsearch', label: 'Elasticsearch', zone: 'data' },
+    ],
+    connections: [
+      { source: 'user', target: 'cdn', flowType: 'request' },
+      { source: 'cdn', target: 'api-gw', flowType: 'request' },
+      { source: 'api-gw', target: 'app1', flowType: 'request' },
+      { source: 'api-gw', target: 'app2', flowType: 'request' },
+      { source: 'app1', target: 'kafka', flowType: 'sync', label: 'Publish Events' },
+      { source: 'kafka', target: 'app2', flowType: 'sync', label: 'Consume Events' },
+      { source: 'app1', target: 'cache', flowType: 'request' },
+      { source: 'app1', target: 'db', flowType: 'request' },
+      { source: 'kafka', target: 'es', flowType: 'sync', label: 'Stream to Search' },
+    ],
+    zones: [
+      { id: 'external', label: 'External', type: 'external' },
+      { id: 'edge', label: 'Edge', type: 'external' },
+      { id: 'gateway', label: 'Gateway', type: 'dmz' },
+      { id: 'services', label: 'Services', type: 'internal' },
+      { id: 'messaging', label: 'Messaging', type: 'internal' },
+      { id: 'data', label: 'Data Layer', type: 'db' },
+    ],
+  },
+
+  // Kafka Event Pipeline
+  'kafka-pipeline': {
+    name: 'Kafka Event Pipeline',
+    description: 'Event-driven data pipeline with Kafka, multiple consumers, and monitoring',
+    nodes: [
+      { id: 'producer', type: 'app-server', label: 'Producer App', zone: 'source' },
+      { id: 'kafka', type: 'kafka', label: 'Kafka Cluster', zone: 'messaging' },
+      { id: 'consumer1', type: 'app-server', label: 'Consumer: Analytics', zone: 'consumers' },
+      { id: 'consumer2', type: 'app-server', label: 'Consumer: Notification', zone: 'consumers' },
+      { id: 'consumer3', type: 'app-server', label: 'Consumer: Indexer', zone: 'consumers' },
+      { id: 'db', type: 'db-server', label: 'Database', zone: 'data' },
+      { id: 'es', type: 'elasticsearch', label: 'Elasticsearch', zone: 'data' },
+      { id: 'prometheus', type: 'prometheus', label: 'Prometheus', zone: 'monitoring' },
+      { id: 'grafana', type: 'grafana', label: 'Grafana', zone: 'monitoring' },
+    ],
+    connections: [
+      { source: 'producer', target: 'kafka', flowType: 'sync', label: 'Produce Events' },
+      { source: 'kafka', target: 'consumer1', flowType: 'sync', label: 'Analytics Events' },
+      { source: 'kafka', target: 'consumer2', flowType: 'sync', label: 'Notification Events' },
+      { source: 'kafka', target: 'consumer3', flowType: 'sync', label: 'Index Events' },
+      { source: 'consumer1', target: 'db', flowType: 'request' },
+      { source: 'consumer3', target: 'es', flowType: 'request' },
+      { source: 'prometheus', target: 'grafana', flowType: 'response', label: 'Metrics' },
+      { source: 'kafka', target: 'prometheus', flowType: 'response', label: 'JMX Metrics' },
+    ],
+    zones: [
+      { id: 'source', label: 'Source', type: 'external' },
+      { id: 'messaging', label: 'Messaging', type: 'internal' },
+      { id: 'consumers', label: 'Consumers', type: 'internal' },
+      { id: 'data', label: 'Data', type: 'db' },
+      { id: 'monitoring', label: 'Monitoring', type: 'internal' },
+    ],
+  },
+
   // CCTV Surveillance System
   'cctv-surveillance': {
     name: 'CCTV 영상감시 시스템',
@@ -714,5 +784,7 @@ export const templateKeywords: Record<string, string[]> = {
   '5g-private': ['5g 특화', 'private 5g', '사설 5g', '5g 특화망', '기지국', 'gnb', '스마트팩토리 5g'],
   'idc-dual': ['idc 이중화', 'idc 이중', 'dual idc', 'idc dr', '데이터센터 이중화'],
   'infraflow': ['infraflow', '인프라플로우', 'next.js 플랫폼', 'ai 플랫폼', 'vercel', 'claude api', 'saas 아키텍처'],
+  'netflix-streaming': ['netflix', '넷플릭스', 'streaming', '스트리밍', 'streaming architecture', '스트리밍 아키텍처', 'event driven'],
+  'kafka-pipeline': ['kafka pipeline', '카프카 파이프라인', 'event pipeline', '이벤트 파이프라인', 'pub sub', 'pubsub', 'kafka cluster', '카프카 클러스터'],
   'cctv-surveillance': ['cctv', '씨씨티비', '영상감시', '영상관제', '폐쇄회로', 'cctv 회선', '감시 카메라', '방범'],
 };

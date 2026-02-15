@@ -168,6 +168,63 @@ spec:
   selector:
     tier: web`,
 
+  'api-gateway': (node, options) => `
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${sanitizeK8sName(node.id)}
+  namespace: ${options.namespace || 'default'}
+  labels:
+    app: ${sanitizeK8sName(node.label)}
+    tier: gateway
+spec:
+  replicas: ${options.replicaCount || 2}
+  selector:
+    matchLabels:
+      app: ${sanitizeK8sName(node.id)}
+  template:
+    metadata:
+      labels:
+        app: ${sanitizeK8sName(node.id)}
+        tier: gateway
+    spec:
+      containers:
+        - name: kong
+          image: kong:3.4
+          ports:
+            - containerPort: 8000
+            - containerPort: 8443
+          env:
+            - name: KONG_DATABASE
+              value: "off"
+            - name: KONG_PROXY_ACCESS_LOG
+              value: /dev/stdout
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${sanitizeK8sName(node.id)}
+  namespace: ${options.namespace || 'default'}
+spec:
+  type: LoadBalancer
+  ports:
+    - name: proxy
+      port: 80
+      targetPort: 8000
+    - name: proxy-ssl
+      port: 443
+      targetPort: 8443
+  selector:
+    app: ${sanitizeK8sName(node.id)}`,
+
   'sd-wan': () => `# SD-WAN: Managed externally`,
 
   'dns': (node, options) => `
@@ -267,6 +324,262 @@ spec:
 
   'kubernetes': () => `# Kubernetes cluster: This is the target platform`,
 
+  'kafka': (node, options) => `
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ${sanitizeK8sName(node.id)}
+  namespace: ${options.namespace || 'default'}
+  labels:
+    app: ${sanitizeK8sName(node.label)}
+    tier: messaging
+spec:
+  serviceName: ${sanitizeK8sName(node.id)}
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ${sanitizeK8sName(node.id)}
+  template:
+    metadata:
+      labels:
+        app: ${sanitizeK8sName(node.id)}
+        tier: messaging
+    spec:
+      containers:
+        - name: kafka
+          image: confluentinc/cp-kafka:7.5.0
+          ports:
+            - containerPort: 9092
+            - containerPort: 9093
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/kafka/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 50Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${sanitizeK8sName(node.id)}
+  namespace: ${options.namespace || 'default'}
+spec:
+  type: ClusterIP
+  ports:
+    - name: plaintext
+      port: 9092
+      targetPort: 9092
+    - name: tls
+      port: 9093
+      targetPort: 9093
+  selector:
+    app: ${sanitizeK8sName(node.id)}`,
+
+  'rabbitmq': (node, options) => `
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ${sanitizeK8sName(node.id)}
+  namespace: ${options.namespace || 'default'}
+  labels:
+    app: ${sanitizeK8sName(node.label)}
+    tier: messaging
+spec:
+  serviceName: ${sanitizeK8sName(node.id)}
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ${sanitizeK8sName(node.id)}
+  template:
+    metadata:
+      labels:
+        app: ${sanitizeK8sName(node.id)}
+        tier: messaging
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3.12-management
+          ports:
+            - containerPort: 5672
+            - containerPort: 15672
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/rabbitmq
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${sanitizeK8sName(node.id)}
+  namespace: ${options.namespace || 'default'}
+spec:
+  type: ClusterIP
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: 5672
+    - name: management
+      port: 15672
+      targetPort: 15672
+  selector:
+    app: ${sanitizeK8sName(node.id)}`,
+
+  'prometheus': (node, options) => `
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ${sanitizeK8sName(node.id)}
+  namespace: ${options.namespace || 'default'}
+  labels:
+    app: ${sanitizeK8sName(node.label)}
+    tier: monitoring
+spec:
+  serviceName: ${sanitizeK8sName(node.id)}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${sanitizeK8sName(node.id)}
+  template:
+    metadata:
+      labels:
+        app: ${sanitizeK8sName(node.id)}
+        tier: monitoring
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.48.0
+          ports:
+            - containerPort: 9090
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "500m"
+          volumeMounts:
+            - name: data
+              mountPath: /prometheus
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 50Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${sanitizeK8sName(node.id)}
+  namespace: ${options.namespace || 'default'}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9090
+      targetPort: 9090
+  selector:
+    app: ${sanitizeK8sName(node.id)}`,
+
+  'grafana': (node, options) => {
+    const replicaCount = options.replicaCount || 2;
+    return `
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${sanitizeK8sName(node.id)}
+  namespace: ${options.namespace || 'default'}
+  labels:
+    app: ${sanitizeK8sName(node.label)}
+    tier: monitoring
+    managed-by: infraflow
+spec:
+  replicas: ${replicaCount}
+  selector:
+    matchLabels:
+      app: ${sanitizeK8sName(node.id)}
+  template:
+    metadata:
+      labels:
+        app: ${sanitizeK8sName(node.id)}
+        tier: monitoring
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:10.2.0
+          ports:
+            - containerPort: 3000
+          env:
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-secrets
+                  key: admin-password
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${sanitizeK8sName(node.id)}
+  namespace: ${options.namespace || 'default'}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+  selector:
+    app: ${sanitizeK8sName(node.id)}`;
+  },
+
   // Cloud nodes
   'aws-vpc': () => `# AWS VPC: Kubernetes runs within the VPC`,
   'azure-vnet': () => `# Azure VNet: Kubernetes runs within the VNet`,
@@ -336,6 +649,75 @@ spec:
   ports:
     - port: 6379
       targetPort: 6379
+  selector:
+    app: ${sanitizeK8sName(node.id)}`,
+
+  'elasticsearch': (node, options) => `
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ${sanitizeK8sName(node.id)}
+  namespace: ${options.namespace || 'default'}
+  labels:
+    app: ${sanitizeK8sName(node.label)}
+    tier: search
+spec:
+  serviceName: ${sanitizeK8sName(node.id)}
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ${sanitizeK8sName(node.id)}
+  template:
+    metadata:
+      labels:
+        app: ${sanitizeK8sName(node.id)}
+        tier: search
+    spec:
+      containers:
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+          ports:
+            - containerPort: 9200
+            - containerPort: 9300
+          env:
+            - name: discovery.type
+              value: zen
+            - name: xpack.security.enabled
+              value: "true"
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "1000m"
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/elasticsearch/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 100Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${sanitizeK8sName(node.id)}
+  namespace: ${options.namespace || 'default'}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 9200
+      targetPort: 9200
+    - name: transport
+      port: 9300
+      targetPort: 9300
   selector:
     app: ${sanitizeK8sName(node.id)}`,
 

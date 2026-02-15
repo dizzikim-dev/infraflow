@@ -155,6 +155,12 @@ const BASE_COSTS: Record<InfraNodeType, {
     gcp: { service: 'Cloud Load Balancing', cost: 18, tier: 'Standard' },
     onprem: { service: 'Load Balancer', cost: 300, tier: 'Estimated' },
   },
+  'api-gateway': {
+    aws: { service: 'AWS API Gateway', cost: 35, tier: 'HTTP API' },
+    azure: { service: 'Azure API Management', cost: 50, tier: 'Consumption' },
+    gcp: { service: 'Apigee', cost: 300, tier: 'Standard' },
+    onprem: { service: 'Kong/NGINX', cost: 100, tier: 'Estimated' },
+  },
   'sd-wan': {
     aws: { service: 'AWS Cloud WAN', cost: 100, tier: 'Standard' },
     azure: { service: 'Azure Virtual WAN', cost: 328.5, tier: 'Standard' },
@@ -211,6 +217,30 @@ const BASE_COSTS: Record<InfraNodeType, {
     gcp: { service: 'GKE Autopilot', cost: 72, tier: 'Standard' },
     onprem: { service: 'K8s Cluster', cost: 300, tier: 'Estimated' },
   },
+  kafka: {
+    aws: { service: 'Amazon MSK', cost: 350, tier: 'kafka.m5.large x3' },
+    azure: { service: 'Azure Event Hubs', cost: 300, tier: 'Standard' },
+    gcp: { service: 'Confluent Cloud on GCP', cost: 400, tier: 'Standard' },
+    onprem: { service: 'Kafka Cluster', cost: 200, tier: 'Estimated' },
+  },
+  rabbitmq: {
+    aws: { service: 'Amazon MQ (RabbitMQ)', cost: 150, tier: 'mq.m5.large' },
+    azure: { service: 'Azure Service Bus', cost: 100, tier: 'Standard' },
+    gcp: { service: 'Cloud Pub/Sub', cost: 50, tier: 'Standard' },
+    onprem: { service: 'RabbitMQ Server', cost: 100, tier: 'Estimated' },
+  },
+  prometheus: {
+    aws: { service: 'Amazon Managed Prometheus', cost: 100, tier: 'Standard' },
+    azure: { service: 'Azure Monitor', cost: 80, tier: 'Standard' },
+    gcp: { service: 'Cloud Monitoring', cost: 0, tier: 'Included' },
+    onprem: { service: 'Prometheus Server', cost: 50, tier: 'Estimated' },
+  },
+  grafana: {
+    aws: { service: 'Amazon Managed Grafana', cost: 9, tier: 'Per Editor' },
+    azure: { service: 'Azure Managed Grafana', cost: 20, tier: 'Standard' },
+    gcp: { service: 'Grafana Cloud', cost: 0, tier: 'Free Tier' },
+    onprem: { service: 'Grafana Server', cost: 25, tier: 'Estimated' },
+  },
 
   // Cloud
   'aws-vpc': {
@@ -262,6 +292,12 @@ const BASE_COSTS: Record<InfraNodeType, {
     azure: { service: 'Azure Cache Redis', cost: 16, tier: 'Basic C0' },
     gcp: { service: 'Memorystore', cost: 35, tier: 'Basic 1GB' },
     onprem: { service: 'Redis Server', cost: 50, tier: 'Estimated' },
+  },
+  elasticsearch: {
+    aws: { service: 'Amazon OpenSearch', cost: 200, tier: 'r6g.large x3' },
+    azure: { service: 'Azure Cognitive Search', cost: 250, tier: 'Standard' },
+    gcp: { service: 'Elastic Cloud on GCP', cost: 175, tier: 'Standard' },
+    onprem: { service: 'Elasticsearch Cluster', cost: 150, tier: 'Estimated' },
   },
   storage: {
     aws: { service: 'EBS gp3', cost: 80, tier: '1TB' },

@@ -221,4 +221,48 @@ export const storageComponents: Record<string, InfraComponent> = {
     protocols: ['NFS', 'SMB', 'S3', 'Tape'],
     vendors: ['Veeam', 'Commvault', 'Rubrik', 'Cohesity', 'Dell Data Protection'],
   },
+
+  'elasticsearch': {
+    id: 'elasticsearch',
+    name: 'Elasticsearch',
+    nameKo: '엘라스틱서치',
+    category: 'storage',
+    description: 'Distributed search and analytics engine for log analytics, full-text search, and real-time data exploration.',
+    descriptionKo: '로그 분석, 전문 검색, 실시간 데이터 탐색을 위한 분산 검색 및 분석 엔진입니다.',
+    functions: [
+      'Full-text search',
+      'Log analytics (ELK Stack)',
+      'Real-time indexing',
+      'Aggregation queries',
+      'Geospatial search',
+    ],
+    functionsKo: [
+      '전문 검색',
+      '로그 분석 (ELK 스택)',
+      '실시간 인덱싱',
+      '집계 쿼리',
+      '지리공간 검색',
+    ],
+    features: [
+      'Inverted index',
+      'Horizontal scaling (sharding)',
+      'Near-real-time search',
+      'RESTful API',
+    ],
+    featuresKo: [
+      '역색인',
+      '수평 확장 (샤딩)',
+      '거의 실시간 검색',
+      'RESTful API',
+    ],
+    recommendedPolicies: [
+      { name: 'Authentication', nameKo: '인증', description: 'Enable X-Pack security with user authentication', priority: 'critical', category: 'security' },
+      { name: 'TLS Encryption', nameKo: 'TLS 암호화', description: 'Enable TLS for transport and HTTP layers', priority: 'critical', category: 'security' },
+      { name: 'Index Lifecycle', nameKo: '인덱스 수명주기', description: 'Configure ILM policies for automatic index management', priority: 'high', category: 'performance' },
+    ],
+    tier: 'data',
+    ports: ['9200', '9300'],
+    protocols: ['HTTP', 'Transport'],
+    vendors: ['Elastic', 'OpenSearch', 'AWS OpenSearch', 'Elastic Cloud'],
+  },
 };

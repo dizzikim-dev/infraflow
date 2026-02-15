@@ -64,6 +64,7 @@ const nodeConfigsRaw: Array<{ id: string; name: string; icon: string }> = [
   { id: 'switch-l2', name: 'Switch L2', icon: '🔀' },
   { id: 'switch-l3', name: 'Switch L3', icon: '🔀' },
   { id: 'load-balancer', name: 'Load Balancer', icon: '⚖️' },
+  { id: 'api-gateway', name: 'API Gateway', icon: '🚪' },
   { id: 'sd-wan', name: 'SD-WAN', icon: '🌐' },
   { id: 'dns', name: 'DNS', icon: '📖' },
   { id: 'cdn', name: 'CDN', icon: '🌍' },
@@ -74,6 +75,10 @@ const nodeConfigsRaw: Array<{ id: string; name: string; icon: string }> = [
   { id: 'container', name: 'Container', icon: '📦' },
   { id: 'vm', name: 'VM', icon: '💻' },
   { id: 'kubernetes', name: 'Kubernetes', icon: '☸️' },
+  { id: 'kafka', name: 'Kafka', icon: '📨' },
+  { id: 'rabbitmq', name: 'RabbitMQ', icon: '🐰' },
+  { id: 'prometheus', name: 'Prometheus', icon: '🔥' },
+  { id: 'grafana', name: 'Grafana', icon: '📊' },
   // External
   { id: 'user', name: 'User', icon: '👤' },
   { id: 'internet', name: 'Internet', icon: '🌏' },
@@ -88,6 +93,7 @@ const nodeConfigsRaw: Array<{ id: string; name: string; icon: string }> = [
   { id: 'backup', name: 'Backup', icon: '💾' },
   { id: 'storage', name: 'Storage', icon: '💾' },
   { id: 'cache', name: 'Cache', icon: '⚡' },
+  { id: 'elasticsearch', name: 'Elasticsearch', icon: '🔍' },
   // Auth
   { id: 'ldap-ad', name: 'LDAP/AD', icon: '🔑' },
   { id: 'ldap', name: 'LDAP', icon: '🔑' }, // 하위호환

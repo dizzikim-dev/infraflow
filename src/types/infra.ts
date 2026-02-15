@@ -35,6 +35,7 @@ export type NetworkNodeType =
   | 'switch-l2'
   | 'switch-l3'
   | 'load-balancer'
+  | 'api-gateway'        // API 게이트웨이
   | 'sd-wan'
   | 'dns'
   | 'cdn';
@@ -46,7 +47,11 @@ export type ComputeNodeType =
   | 'db-server'
   | 'container'
   | 'vm'
-  | 'kubernetes';
+  | 'kubernetes'
+  | 'kafka'              // Apache Kafka 메시지 브로커
+  | 'rabbitmq'           // RabbitMQ 메시지 큐
+  | 'prometheus'         // Prometheus 모니터링
+  | 'grafana';           // Grafana 대시보드
 
 // Cloud Services
 export type CloudNodeType =
@@ -61,6 +66,7 @@ export type StorageNodeType =
   | 'object-storage'
   | 'backup'
   | 'cache'
+  | 'elasticsearch'      // Elasticsearch 검색엔진
   | 'storage';
 
 // Auth/Access

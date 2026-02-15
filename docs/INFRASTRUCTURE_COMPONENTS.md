@@ -1,7 +1,7 @@
 # InfraFlow 인프라 장비/솔루션 현황
 
-> **문서 버전**: 1.0.0
-> **최종 수정일**: 2026-02-06
+> **문서 버전**: 1.1.0
+> **최종 수정일**: 2026-02-14
 > **관리 담당**: Infrastructure Data Agent
 
 ---
@@ -42,13 +42,13 @@
 | 카테고리 | 장비 수 | 비고 |
 |----------|---------|------|
 | Security | 6개 | 방화벽, WAF, IDS/IPS 등 |
-| Network | 7개 | 라우터, 스위치, LB 등 |
-| Compute | 6개 | 서버, 컨테이너, K8s 등 |
+| Network | 8개 | 라우터, 스위치, LB, API GW 등 |
+| Compute | 10개 | 서버, 컨테이너, K8s, Kafka, Prometheus 등 |
 | Cloud | 4개 | AWS, Azure, GCP, Private |
-| Storage | 5개 | SAN/NAS, 오브젝트, 캐시 등 |
+| Storage | 6개 | SAN/NAS, 오브젝트, 캐시, Elasticsearch 등 |
 | Auth | 4개 | LDAP/AD, SSO, MFA, IAM |
 | External | 2개 | 사용자, 인터넷 |
-| **총합** | **34개** | Zone 타입 포함 시 35개 |
+| **총합** | **40개** | Zone 타입 포함 시 41개 |
 
 ---
 
@@ -59,22 +59,26 @@
 │                        장비 카테고리 구조                                 │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
-│  🔒 Security (6)        🌐 Network (7)          🖥️ Compute (6)          │
+│  🔒 Security (6)        🌐 Network (8)          🖥️ Compute (10)         │
 │  ─────────────          ─────────────           ─────────────           │
 │  • firewall             • router                • web-server            │
 │  • waf                  • switch-l2             • app-server            │
 │  • ids-ips              • switch-l3             • db-server             │
 │  • vpn-gateway          • load-balancer         • container             │
-│  • nac                  • sd-wan                • vm                    │
-│  • dlp                  • dns                   • kubernetes            │
-│                         • cdn                                           │
+│  • nac                  • api-gateway ✨        • vm                    │
+│  • dlp                  • sd-wan                • kubernetes            │
+│                         • dns                   • kafka ✨              │
+│                         • cdn                   • rabbitmq ✨           │
+│                                                 • prometheus ✨         │
+│                                                 • grafana ✨            │
 │                                                                         │
-│  ☁️ Cloud (4)           📦 Storage (5)          🔐 Auth (4)             │
+│  ☁️ Cloud (4)           📦 Storage (6)          🔐 Auth (4)             │
 │  ─────────────          ─────────────           ─────────────           │
 │  • aws-vpc              • storage               • ldap-ad               │
 │  • azure-vnet           • san-nas               • sso                   │
 │  • gcp-network          • object-storage        • mfa                   │
 │  • private-cloud        • cache                 • iam                   │
+│                         • elasticsearch ✨                              │
 │                         • backup                                        │
 │                                                                         │
 │  👤 External (2)                                                        │
@@ -632,6 +636,37 @@
 
 ---
 
+### 4.8 API Gateway (API 게이트웨이) ✨
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `api-gateway` |
+| **카테고리** | Network |
+| **티어** | DMZ |
+| **설명** | API 트래픽의 중앙 진입점으로 라우팅, 인증, 속도 제한, 프로토콜 변환 제공 |
+
+#### 주요 기능
+- 요청 라우팅
+- 인증 및 인가
+- 속도 제한 및 스로틀링
+- 요청/응답 변환
+- API 버전 관리
+
+#### 주요 특징
+- OpenAPI/Swagger 통합
+- 서킷 브레이커 패턴
+- 서비스 디스커버리
+- 카나리 배포
+
+#### 대표 벤더
+- Kong
+- AWS API Gateway
+- Azure API Management
+- Google Apigee
+- NGINX
+
+---
+
 ## 5. 컴퓨팅/서버 (Compute)
 
 ### 5.1 Web Server (웹 서버)
@@ -882,6 +917,90 @@
 - AWS EKS
 - Azure AKS
 - Google GKE
+
+---
+
+### 5.7 Apache Kafka (카프카) ✨
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `kafka` |
+| **카테고리** | Compute |
+| **티어** | Internal |
+| **설명** | 고처리량, 장애 허용 메시징 및 실시간 데이터 파이프라인을 위한 분산 이벤트 스트리밍 플랫폼 |
+
+#### 주요 기능
+- 이벤트 스트리밍
+- 발행-구독 메시징
+- 스트림 처리
+- 이벤트 소싱
+- 로그 집계
+
+#### 대표 벤더
+- Apache Kafka, Confluent, AWS MSK, Azure Event Hubs, Redpanda
+
+---
+
+### 5.8 RabbitMQ (래빗엠큐) ✨
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `rabbitmq` |
+| **카테고리** | Compute |
+| **티어** | Internal |
+| **설명** | AMQP, MQTT, STOMP 프로토콜을 구현하는 오픈소스 메시지 브로커 |
+
+#### 주요 기능
+- 메시지 큐잉
+- 라우팅 (다이렉트, 토픽, 팬아웃, 헤더)
+- 데드 레터 처리
+- 우선순위 큐잉
+- 지연 메시징
+
+#### 대표 벤더
+- RabbitMQ, Amazon MQ, CloudAMQP, Azure Service Bus
+
+---
+
+### 5.9 Prometheus (프로메테우스) ✨
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `prometheus` |
+| **카테고리** | Compute |
+| **티어** | Internal |
+| **설명** | 시계열 데이터의 안정성과 확장성을 위해 설계된 오픈소스 모니터링 및 알림 툴킷 |
+
+#### 주요 기능
+- 메트릭 수집 (풀 기반)
+- 시계열 저장소 (TSDB)
+- PromQL 쿼리 언어
+- 알림 규칙
+- 서비스 디스커버리
+
+#### 대표 벤더
+- Prometheus, Thanos, Cortex, Victoria Metrics, Amazon Managed Prometheus
+
+---
+
+### 5.10 Grafana (그라파나) ✨
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `grafana` |
+| **카테고리** | Compute |
+| **티어** | Internal |
+| **설명** | 모니터링 대시보드를 위한 오픈소스 분석 및 대화형 시각화 플랫폼 |
+
+#### 주요 기능
+- 대시보드 시각화
+- 다중 데이터소스 쿼리
+- 알림 및 통보
+- 로그 탐색 (Loki)
+- 트레이스 시각화 (Tempo)
+
+#### 대표 벤더
+- Grafana OSS, Grafana Enterprise, Grafana Cloud, Amazon Managed Grafana
 
 ---
 
@@ -1228,6 +1347,33 @@
 - Rubrik
 - Cohesity
 - Dell Data Protection
+
+---
+
+### 7.6 Elasticsearch (엘라스틱서치) ✨
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `elasticsearch` |
+| **카테고리** | Storage |
+| **티어** | Data |
+| **설명** | 로그 분석, 전문 검색, 실시간 데이터 탐색을 위한 분산 검색 및 분석 엔진 |
+
+#### 주요 기능
+- 전문 검색
+- 로그 분석 (ELK 스택)
+- 실시간 인덱싱
+- 집계 쿼리
+- 지리공간 검색
+
+#### 주요 특징
+- 역색인
+- 수평 확장 (샤딩)
+- 거의 실시간 검색
+- RESTful API
+
+#### 대표 벤더
+- Elastic, OpenSearch, AWS OpenSearch, Elastic Cloud
 
 ---
 
@@ -1582,6 +1728,7 @@
 | 날짜 | 버전 | 작성자 | 변경 내용 |
 |------|------|--------|----------|
 | 2026-02-06 | 1.0.0 | Claude | 초기 문서 작성 |
+| 2026-02-14 | 1.1.0 | Claude | Cloud-Native 6종 추가 (kafka, rabbitmq, api-gateway, prometheus, grafana, elasticsearch), 템플릿 2개 (netflix-streaming, kafka-pipeline), 관계 10개 추가 + 2건 수정 |
 
 ---
 
