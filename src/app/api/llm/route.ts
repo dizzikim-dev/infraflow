@@ -36,6 +36,7 @@ import { parseJSONFromLLMResponse } from '@/lib/llm/jsonParser';
 import { matchFallbackTemplate } from '@/lib/llm/fallbackTemplates';
 import { LLM_MODELS } from '@/lib/llm/models';
 import { LLMRequestSchema } from '@/lib/validations/api';
+import { checkRequestSize } from '@/lib/api/analyzeRouteUtils';
 
 const log = createLogger('LLM');
 
@@ -303,6 +304,10 @@ async function callOpenAI(
  * POST /api/llm - LLM Infrastructure Generation Endpoint
  */
 export async function POST(request: NextRequest): Promise<NextResponse<LLMResponse>> {
+  // Check request size
+  const sizeError = checkRequestSize(request);
+  if (sizeError) return sizeError as NextResponse<LLMResponse>;
+
   // Check rate limit first
   const { allowed, info, response: rateLimitResponse } = checkRateLimit(
     request,

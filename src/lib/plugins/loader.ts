@@ -218,9 +218,11 @@ export class PluginLoader {
       return this.parsePluginData(data);
     }
 
-    // JavaScript 모듈
-    const code = await response.text();
-    return this.evaluatePluginCode(code);
+    // JavaScript 모듈은 보안상 URL에서 직접 로드 불가
+    throw new Error(
+      'Loading JavaScript plugins from URLs is not supported for security reasons. ' +
+      'Use JSON format instead.'
+    );
   }
 
   /**
@@ -263,36 +265,13 @@ export class PluginLoader {
   /**
    * JavaScript 코드를 플러그인으로 평가
    *
-   * 주의: 보안상 위험할 수 있음. 신뢰할 수 있는 소스에서만 사용
+   * 보안상 위험으로 인해 비활성화됨. JSON 플러그인 형식을 사용하세요.
    */
-  private evaluatePluginCode(code: string): InfraFlowPlugin {
-    // 샌드박스 환경에서 실행 (기본 구현)
-    // 실제 프로덕션에서는 더 안전한 방법 필요
-    const exports: Record<string, unknown> = {};
-    const module = { exports };
-
-    // eslint-disable-next-line no-new-func
-    const fn = new Function('module', 'exports', code);
-    fn(module, exports);
-
-    const exported: unknown = module.exports;
-
-    if (!exported || typeof exported !== 'object') {
-      throw new Error('Plugin code did not export a valid object');
-    }
-
-    const obj = exported as Record<string, unknown>;
-
-    if (!obj.metadata || typeof obj.metadata !== 'object') {
-      throw new Error('Plugin code did not export a valid plugin');
-    }
-
-    const metadata = obj.metadata as Partial<PluginMetadata>;
-    if (!metadata.id || !metadata.name || !metadata.version) {
-      throw new Error('Plugin code exported invalid metadata: missing required fields');
-    }
-
-    return exported as InfraFlowPlugin;
+  private evaluatePluginCode(_code: string): InfraFlowPlugin {
+    throw new Error(
+      'Dynamic code execution is not supported for security reasons. ' +
+      'Use JSON plugin format or file-based loading instead.'
+    );
   }
 
   /**

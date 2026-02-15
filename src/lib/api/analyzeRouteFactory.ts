@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { validateAnalyzeRequest } from './analyzeRouteUtils';
+import { validateAnalyzeRequest, checkRequestSize } from './analyzeRouteUtils';
 import { isInfraSpec } from '@/types/guards';
 import type { InfraSpec } from '@/types/infra';
 import { createLogger } from '@/lib/utils/logger';
@@ -70,6 +70,10 @@ export interface AnalyzeRawRouteConfig<TResult> {
  */
 export function createAnalyzeRoute<TResult>(config: AnalyzeRouteConfig<TResult>) {
   return async function POST(request: NextRequest) {
+    // Check request size
+    const sizeError = checkRequestSize(request);
+    if (sizeError) return sizeError;
+
     // CSRF + rate-limit check
     const check = validateAnalyzeRequest(request);
     if (!check.passed) return check.errorResponse!;
@@ -125,6 +129,10 @@ export function createAnalyzeRoute<TResult>(config: AnalyzeRouteConfig<TResult>)
  */
 export function createAnalyzeRawRoute<TResult>(config: AnalyzeRawRouteConfig<TResult>) {
   return async function POST(request: NextRequest) {
+    // Check request size
+    const sizeError = checkRequestSize(request);
+    if (sizeError) return sizeError;
+
     // CSRF + rate-limit check
     const check = validateAnalyzeRequest(request);
     if (!check.passed) return check.errorResponse!;

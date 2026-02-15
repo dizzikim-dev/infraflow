@@ -496,7 +496,7 @@ describe('PluginLoader', () => {
   // ============================================================
 
   describe('evaluatePluginCode (private method behavior)', () => {
-    it('should evaluate JavaScript module code', async () => {
+    it('should reject JavaScript module code for security reasons', async () => {
       const moduleCode = `
         module.exports = {
           metadata: {
@@ -521,8 +521,9 @@ describe('PluginLoader', () => {
 
       const result = await loader.loadPlugin(manifest, { skipValidation: true });
 
-      // Plugin code should be evaluated
-      expect(mockFetch).toHaveBeenCalled();
+      // Should fail with security error
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('not supported for security reasons');
     });
 
     it('should reject code without valid export', async () => {
@@ -546,6 +547,7 @@ describe('PluginLoader', () => {
       const result = await loader.loadPlugin(manifest);
 
       expect(result.success).toBe(false);
+      expect(result.error).toContain('not supported for security reasons');
     });
   });
 });

@@ -40,6 +40,7 @@ import { recordLLMCall } from '@/lib/utils/llmMetrics';
 import { checkRateLimit, LLM_RATE_LIMIT } from '@/lib/middleware/rateLimiter';
 import { addRateLimitHeaders } from '@/lib/llm/rateLimitHeaders';
 import { getEnv } from '@/lib/config/env';
+import { checkRequestSize } from '@/lib/api/analyzeRouteUtils';
 
 /**
  * Request body for the smart parse endpoint.
@@ -286,6 +287,10 @@ async function analyzeIntentWithOpenAI(
 export async function POST(
   request: NextRequest
 ): Promise<NextResponse<SmartParseResponse>> {
+  // Check request size
+  const sizeError = checkRequestSize(request);
+  if (sizeError) return sizeError as NextResponse<SmartParseResponse>;
+
   // Check rate limit
   const { allowed, info, response: rateLimitResponse } = checkRateLimit(request, LLM_RATE_LIMIT);
   if (!allowed && rateLimitResponse) {
@@ -293,10 +298,22 @@ export async function POST(
   }
 
   try {
-    // CSRF protection — check Origin header
+    // CSRF protection — check Origin and Sec-Fetch-Site headers
     const origin = request.headers.get('origin');
     const host = request.headers.get('host');
+    const secFetchSite = request.headers.get('sec-fetch-site');
     const allowedOrigins = [`http://${host}`, `https://${host}`];
+
+    // Check Sec-Fetch-Site header (modern browsers)
+    if (secFetchSite && secFetchSite !== 'same-origin' && secFetchSite !== 'none') {
+      const response = NextResponse.json(
+        { success: false, error: '허용되지 않은 요청입니다.' },
+        { status: 403 }
+      );
+      return addRateLimitHeaders(response, info);
+    }
+
+    // Check Origin header (fallback for older browsers)
     if (origin && !allowedOrigins.includes(origin)) {
       const response = NextResponse.json(
         { success: false, error: '허용되지 않은 요청입니다.' },

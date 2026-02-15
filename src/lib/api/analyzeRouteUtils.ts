@@ -13,6 +13,27 @@ import { checkRateLimit } from '@/lib/middleware/rateLimiter';
 import type { RateLimitConfig } from '@/lib/middleware/rateLimiter';
 
 /**
+ * Check request body size via Content-Length header.
+ *
+ * Returns a 413 error response if the request exceeds maxBytes.
+ * Returns null if the check passes.
+ *
+ * @param request - The incoming request
+ * @param maxBytes - Maximum allowed body size in bytes (default: 51200 = 50KB)
+ * @returns NextResponse with 413 error if too large, null if OK
+ */
+export function checkRequestSize(request: Request, maxBytes: number = 51200): Response | null {
+  const contentLength = request.headers.get('content-length');
+  if (contentLength && parseInt(contentLength, 10) > maxBytes) {
+    return NextResponse.json(
+      { success: false, error: '요청 크기가 너무 큽니다.' },
+      { status: 413 }
+    );
+  }
+  return null;
+}
+
+/**
  * Rate limit configuration for analyze endpoints.
  * More permissive than LLM routes since these are local computations.
  */

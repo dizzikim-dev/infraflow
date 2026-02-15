@@ -34,6 +34,7 @@ import { assessChangeRisk, type ChangeRiskAssessment } from '@/lib/parser/change
 import { sanitizeUserInput, validateOutputSafety } from '@/lib/security/llmSecurityControls';
 import { recordLLMCall } from '@/lib/utils/llmMetrics';
 import { getEnv } from '@/lib/config/env';
+import { checkRequestSize } from '@/lib/api/analyzeRouteUtils';
 
 const log = createLogger('Modify API');
 
@@ -217,6 +218,10 @@ async function callLLM(
  * POST /api/modify - Modify diagram using LLM
  */
 export async function POST(request: NextRequest): Promise<NextResponse<ModifyResponse>> {
+  // Check request size
+  const sizeError = checkRequestSize(request);
+  if (sizeError) return sizeError as NextResponse<ModifyResponse>;
+
   // Check rate limit
   const { allowed, info, response: rateLimitResponse } = checkRateLimit(
     request,
@@ -232,10 +237,28 @@ export async function POST(request: NextRequest): Promise<NextResponse<ModifyRes
     remaining: info.remaining,
   };
 
-  // Basic CSRF protection - check Origin header
+  // CSRF protection - check Origin and Sec-Fetch-Site headers
   const origin = request.headers.get('origin');
   const host = request.headers.get('host');
+  const secFetchSite = request.headers.get('sec-fetch-site');
   const allowedOrigins = [`http://${host}`, `https://${host}`];
+
+  // Check Sec-Fetch-Site header (modern browsers)
+  if (secFetchSite && secFetchSite !== 'same-origin' && secFetchSite !== 'none') {
+    const response = NextResponse.json<ModifyResponse>(
+      {
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          userMessage: '허용되지 않은 요청입니다.',
+        },
+      },
+      { status: 403 }
+    );
+    return addRateLimitHeaders(response, info);
+  }
+
+  // Check Origin header (fallback for older browsers)
   if (origin && !allowedOrigins.includes(origin)) {
     const response = NextResponse.json<ModifyResponse>(
       {
