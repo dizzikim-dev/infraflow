@@ -2329,7 +2329,7 @@ const cloudNativeRelationships: ComponentRelationship[] = [
 // ---------------------------------------------------------------------------
 
 /** All verified component relationships */
-export const COMPONENT_RELATIONSHIPS: readonly ComponentRelationship[] = Object.freeze([
+export const RELATIONSHIPS: readonly ComponentRelationship[] = Object.freeze([
   ...mandatoryDependencies,
   ...strongRecommendations,
   ...securityProtections,
@@ -2343,9 +2343,6 @@ export const COMPONENT_RELATIONSHIPS: readonly ComponentRelationship[] = Object.
   ...cloudNativeRelationships,
 ]);
 
-/** Public alias used by the knowledge graph index */
-export const RELATIONSHIPS = COMPONENT_RELATIONSHIPS;
-
 // ---------------------------------------------------------------------------
 // Lookup helpers
 // ---------------------------------------------------------------------------
@@ -2354,7 +2351,7 @@ export const RELATIONSHIPS = COMPONENT_RELATIONSHIPS;
  * Returns all relationships where the given component appears as source or target.
  */
 export function getRelationshipsForComponent(type: InfraNodeType): ComponentRelationship[] {
-  return COMPONENT_RELATIONSHIPS.filter(
+  return RELATIONSHIPS.filter(
     (r) => r.source === type || r.target === type,
   );
 }
@@ -2368,7 +2365,7 @@ export function getRelatedComponents(
 ): { type: InfraNodeType; relationship: RelationshipType; reason: string }[] {
   const results: { type: InfraNodeType; relationship: RelationshipType; reason: string }[] = [];
 
-  for (const r of COMPONENT_RELATIONSHIPS) {
+  for (const r of RELATIONSHIPS) {
     if (r.source === type) {
       results.push({ type: r.target, relationship: r.relationshipType, reason: r.reason });
     } else if (r.target === type) {
@@ -2384,7 +2381,7 @@ export function getRelatedComponents(
  * These are components that the given component MUST have in the architecture.
  */
 export function getMandatoryDependencies(type: InfraNodeType): ComponentRelationship[] {
-  return COMPONENT_RELATIONSHIPS.filter(
+  return RELATIONSHIPS.filter(
     (r) => r.source === type && r.relationshipType === 'requires',
   );
 }
@@ -2394,7 +2391,7 @@ export function getMandatoryDependencies(type: InfraNodeType): ComponentRelation
  * These are components that are strongly suggested alongside the given component.
  */
 export function getRecommendations(type: InfraNodeType): ComponentRelationship[] {
-  return COMPONENT_RELATIONSHIPS.filter(
+  return RELATIONSHIPS.filter(
     (r) => r.source === type && r.relationshipType === 'recommends',
   );
 }
@@ -2404,7 +2401,7 @@ export function getRecommendations(type: InfraNodeType): ComponentRelationship[]
  * These are component combinations that should be avoided.
  */
 export function getConflicts(type: InfraNodeType): ComponentRelationship[] {
-  return COMPONENT_RELATIONSHIPS.filter(
+  return RELATIONSHIPS.filter(
     (r) => r.source === type && r.relationshipType === 'conflicts',
   );
 }

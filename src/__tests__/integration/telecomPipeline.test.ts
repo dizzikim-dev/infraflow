@@ -5,7 +5,7 @@ import { specToFlow, flowToSpec } from '@/lib/layout/layoutEngine';
 import { generateFlowSequence, getAvailableScenarios } from '@/lib/animation/flowScenarios';
 import { containsTelecomKeywords, buildContext } from '@/lib/parser/contextBuilder';
 import { enrichContext, buildKnowledgePromptSection } from '@/lib/knowledge/contextEnricher';
-import { COMPONENT_RELATIONSHIPS } from '@/lib/knowledge/relationships';
+import { RELATIONSHIPS } from '@/lib/knowledge/relationships';
 import { ARCHITECTURE_PATTERNS } from '@/lib/knowledge/patterns';
 import { ANTI_PATTERNS } from '@/lib/knowledge/antipatterns';
 import { FAILURE_SCENARIOS } from '@/lib/knowledge/failures';
@@ -338,7 +338,7 @@ describe('Telecom Pipeline Integration', () => {
 
   describe('Knowledge graph telecom integration', () => {
     it('should have telecom relationships in the knowledge graph', () => {
-      const telecomRels = COMPONENT_RELATIONSHIPS.filter((r) => r.id.startsWith('REL-TEL-'));
+      const telecomRels = RELATIONSHIPS.filter((r) => r.id.startsWith('REL-TEL-'));
       expect(telecomRels.length).toBe(20);
     });
 
@@ -401,7 +401,7 @@ describe('Telecom Pipeline Integration', () => {
         summary: 'PE-P router telecom topology',
       };
 
-      const enriched = enrichContext(diagramContext, [...COMPONENT_RELATIONSHIPS]);
+      const enriched = enrichContext(diagramContext, [...RELATIONSHIPS]);
       // Should include telecom-related relationships (pe-router→p-router is REL-TEL-002)
       expect(enriched.relationships.length).toBeGreaterThanOrEqual(1);
     });
@@ -473,7 +473,7 @@ describe('Telecom Pipeline Integration', () => {
 
   describe('Total data counts after telecom extension', () => {
     it('should have >= 69 relationships (49 + 20 telecom)', () => {
-      expect(COMPONENT_RELATIONSHIPS.length).toBeGreaterThanOrEqual(69);
+      expect(RELATIONSHIPS.length).toBeGreaterThanOrEqual(69);
     });
 
     it('should have >= 24 architecture patterns (18 + 6 telecom)', () => {

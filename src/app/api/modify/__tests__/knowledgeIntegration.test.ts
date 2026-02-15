@@ -12,7 +12,7 @@ import {
   enrichContext,
   buildKnowledgePromptSection,
   RELATIONSHIPS,
-  ANTIPATTERNS,
+  ANTI_PATTERNS,
   FAILURES,
 } from '@/lib/knowledge';
 import { assessChangeRisk } from '@/lib/parser/changeRiskAssessor';
@@ -83,7 +83,7 @@ describe('Knowledge pipeline integration', () => {
 
     const context = buildContext(nodes, edges);
     const enriched = enrichContext(context, [...RELATIONSHIPS], {
-      antiPatterns: [...ANTIPATTERNS],
+      antiPatterns: [...ANTI_PATTERNS],
       failureScenarios: [...FAILURES],
     });
     const section = buildKnowledgePromptSection(enriched);
@@ -117,7 +117,7 @@ describe('Knowledge pipeline integration', () => {
     const context = buildContext(nodes, edges);
     const enriched = enrichContext(context, [...RELATIONSHIPS], {
       spec,
-      antiPatterns: [...ANTIPATTERNS],
+      antiPatterns: [...ANTI_PATTERNS],
       failureScenarios: [...FAILURES],
     });
     const section = buildKnowledgePromptSection(enriched);
@@ -146,7 +146,7 @@ describe('Knowledge pipeline integration', () => {
     const context = buildContext(nodes, edges);
     const enriched = enrichContext(context, [...RELATIONSHIPS], {
       spec,
-      antiPatterns: [...ANTIPATTERNS],
+      antiPatterns: [...ANTI_PATTERNS],
       failureScenarios: [...FAILURES],
     });
 

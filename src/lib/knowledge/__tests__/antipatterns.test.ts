@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  ANTIPATTERNS,
+  ANTI_PATTERNS,
   detectAntiPatterns,
   getAntiPatternsBySeverity,
   getCriticalAntiPatterns,
@@ -24,26 +24,26 @@ function makeSpec(
 }
 
 describe('antipatterns', () => {
-  describe('ANTIPATTERNS registry', () => {
+  describe('ANTI_PATTERNS registry', () => {
     it('should contain at least 20 antipatterns', () => {
-      expect(ANTIPATTERNS.length).toBeGreaterThanOrEqual(20);
+      expect(ANTI_PATTERNS.length).toBeGreaterThanOrEqual(20);
     });
 
     it('should have unique IDs', () => {
-      const ids = ANTIPATTERNS.map((ap) => ap.id);
+      const ids = ANTI_PATTERNS.map((ap) => ap.id);
       const uniqueIds = new Set(ids);
       expect(uniqueIds.size).toBe(ids.length);
     });
 
     it('should have bilingual names', () => {
-      for (const ap of ANTIPATTERNS) {
+      for (const ap of ANTI_PATTERNS) {
         expect(ap.name).toBeTruthy();
         expect(ap.nameKo).toBeTruthy();
       }
     });
 
     it('should have Korean problem/impact/solution descriptions', () => {
-      for (const ap of ANTIPATTERNS) {
+      for (const ap of ANTI_PATTERNS) {
         expect(ap.problemKo).toBeTruthy();
         expect(ap.impactKo).toBeTruthy();
         expect(ap.solutionKo).toBeTruthy();
@@ -52,32 +52,32 @@ describe('antipatterns', () => {
     });
 
     it('should have valid severity on every entry', () => {
-      for (const ap of ANTIPATTERNS) {
+      for (const ap of ANTI_PATTERNS) {
         expect(['critical', 'high', 'medium']).toContain(ap.severity);
       }
     });
 
     it('should have detection function on every entry', () => {
-      for (const ap of ANTIPATTERNS) {
+      for (const ap of ANTI_PATTERNS) {
         expect(typeof ap.detection).toBe('function');
       }
     });
 
     it('should have trust metadata with sources', () => {
-      for (const ap of ANTIPATTERNS) {
+      for (const ap of ANTI_PATTERNS) {
         expect(ap.trust.sources.length).toBeGreaterThanOrEqual(1);
         expect(ap.trust.confidence).toBeGreaterThan(0);
       }
     });
 
     it('should have type "antipattern" on every entry', () => {
-      for (const ap of ANTIPATTERNS) {
+      for (const ap of ANTI_PATTERNS) {
         expect(ap.type).toBe('antipattern');
       }
     });
 
     it('should be frozen (immutable)', () => {
-      expect(Object.isFrozen(ANTIPATTERNS)).toBe(true);
+      expect(Object.isFrozen(ANTI_PATTERNS)).toBe(true);
     });
   });
 

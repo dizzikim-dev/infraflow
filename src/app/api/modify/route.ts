@@ -27,7 +27,7 @@ import {
   enrichContext,
   buildKnowledgePromptSection,
   RELATIONSHIPS,
-  ANTIPATTERNS,
+  ANTI_PATTERNS,
   FAILURES,
 } from '@/lib/knowledge';
 import { assessChangeRisk, type ChangeRiskAssessment } from '@/lib/parser/changeRiskAssessor';
@@ -383,7 +383,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ModifyRes
     // Enrich with knowledge graph
     const enriched = enrichContext(context, [...RELATIONSHIPS], {
       spec: currentSpec,
-      antiPatterns: [...ANTIPATTERNS],
+      antiPatterns: [...ANTI_PATTERNS],
       failureScenarios: [...FAILURES],
     });
     const knowledgeSection = buildKnowledgePromptSection(enriched);

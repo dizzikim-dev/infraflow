@@ -1422,9 +1422,6 @@ export const ANTI_PATTERNS: readonly AntiPattern[] = Object.freeze([
   ...saseAntiPatterns,
 ]);
 
-/** Public alias used by the knowledge graph index */
-export const ANTIPATTERNS = ANTI_PATTERNS;
-
 // ---------------------------------------------------------------------------
 // Public helper functions
 // ---------------------------------------------------------------------------

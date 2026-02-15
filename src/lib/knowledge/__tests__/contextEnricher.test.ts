@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { enrichContext, buildKnowledgePromptSection } from '../contextEnricher';
 import { RELATIONSHIPS } from '../relationships';
-import { ANTIPATTERNS } from '../antipatterns';
+import { ANTI_PATTERNS } from '../antipatterns';
 import { FAILURES } from '../failures';
 import type { DiagramContext } from '../../parser/prompts';
 import type { EnrichedKnowledge, AntiPattern } from '../types';
@@ -222,7 +222,7 @@ describe('enrichContext with antipattern detection', () => {
     ]);
     const result = enrichContext(ctx, [...RELATIONSHIPS], {
       spec,
-      antiPatterns: [...ANTIPATTERNS],
+      antiPatterns: [...ANTI_PATTERNS],
     });
     // Should detect issues like no firewall, no backup, etc.
     expect(result.violations.length).toBeGreaterThan(0);
@@ -251,7 +251,7 @@ describe('enrichContext with antipattern detection', () => {
     ]);
     const poorResult = enrichContext(poorCtx, [...RELATIONSHIPS], {
       spec: poorSpec,
-      antiPatterns: [...ANTIPATTERNS],
+      antiPatterns: [...ANTI_PATTERNS],
     });
 
     const goodCtx = makeDiagramContext([
@@ -271,7 +271,7 @@ describe('enrichContext with antipattern detection', () => {
     ]);
     const goodResult = enrichContext(goodCtx, [...RELATIONSHIPS], {
       spec: goodSpec,
-      antiPatterns: [...ANTIPATTERNS],
+      antiPatterns: [...ANTI_PATTERNS],
     });
 
     expect(goodResult.violations.length).toBeLessThan(poorResult.violations.length);
@@ -321,7 +321,7 @@ describe('buildKnowledgePromptSection with violations', () => {
     ]);
     const enriched = enrichContext(ctx, [...RELATIONSHIPS], {
       spec,
-      antiPatterns: [...ANTIPATTERNS],
+      antiPatterns: [...ANTI_PATTERNS],
     });
     const result = buildKnowledgePromptSection(enriched);
     expect(result).toContain('주의사항');
@@ -339,7 +339,7 @@ describe('buildKnowledgePromptSection with violations', () => {
     ]);
     const enriched = enrichContext(ctx, [...RELATIONSHIPS], {
       spec,
-      antiPatterns: [...ANTIPATTERNS],
+      antiPatterns: [...ANTI_PATTERNS],
     });
     // Even with empty context (no relationships), violations should surface
     if (enriched.violations.length > 0) {

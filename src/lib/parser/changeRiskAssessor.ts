@@ -7,7 +7,7 @@
  */
 
 import type { InfraSpec, InfraNodeType } from '@/types/infra';
-import { ANTIPATTERNS } from '../knowledge/antipatterns';
+import { ANTI_PATTERNS } from '../knowledge/antipatterns';
 import { getMandatoryDependencies } from '../knowledge/relationships';
 import { getCategoryForType } from '../data/infrastructureDB';
 import { createLogger } from '@/lib/utils/logger';
@@ -238,7 +238,7 @@ export function getRiskFactors(
   }
 
   // --- ANTIPATTERN_INTRODUCED ---
-  for (const ap of ANTIPATTERNS) {
+  for (const ap of ANTI_PATTERNS) {
     try {
       const detectedBefore = ap.detection(before);
       const detectedAfter = ap.detection(after);

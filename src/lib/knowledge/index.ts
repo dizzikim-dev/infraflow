@@ -54,7 +54,7 @@ export {
 
 // Anti-patterns
 export {
-  ANTIPATTERNS,
+  ANTI_PATTERNS,
   detectAntiPatterns,
   getAntiPatternsBySeverity,
   getCriticalAntiPatterns,
