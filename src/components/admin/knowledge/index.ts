@@ -11,9 +11,11 @@ export { default as SeverityBadge } from './SeverityBadge';
 export { default as JsonFieldEditor } from './JsonFieldEditor';
 export { default as KnowledgePageLayout } from './KnowledgePageLayout';
 export { default as KnowledgeListPage } from './KnowledgeListPage';
+export { default as KnowledgeFormPage } from './KnowledgeFormPage';
 
 // Re-export types
 export type { ColumnDef } from './KnowledgeDataTable';
 export type { FilterDef } from './KnowledgeSearchFilter';
 export type { KnowledgeListConfig } from './KnowledgeListPage';
 export type { TrustMetadataInput } from './TrustMetadataEditor';
+export type { FormConfig, FormFieldConfig, FormSection } from './KnowledgeFormPage';
