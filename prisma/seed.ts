@@ -24,7 +24,6 @@ import { CLOUD_SERVICES } from '../src/lib/knowledge/cloudCatalog';
 import { SIZING_MATRIX } from '../src/lib/knowledge/benchmarks';
 import { getAllIndustryPresets } from '../src/lib/audit/industryCompliance';
 import { ALL_SOURCES } from '../src/lib/knowledge/sourceRegistry';
-import { getAllDetectionRuleIds } from '../src/lib/knowledge/detectionRegistry';
 import type { InputJsonValue } from '../src/generated/prisma/runtime/library';
 import * as bcrypt from 'bcryptjs';
 
@@ -405,14 +404,11 @@ async function seedPatterns() {
 async function seedAntiPatterns() {
   console.log('⚠️  안티패턴 데이터 시드 중...');
   await prisma.knowledgeAntiPattern.deleteMany();
-  // Get all registered detection rule IDs for validation
-  const registeredRuleIds = new Set(getAllDetectionRuleIds());
   let count = 0;
   for (const ap of ANTI_PATTERNS) {
     try {
       // Use the antipattern's own ID as the detection rule ID
-      // (detectionRegistry maps ap.id → detection function)
-      const detectionRuleId = registeredRuleIds.has(ap.id) ? ap.id : ap.id;
+      const detectionRuleId = ap.id;
       await prisma.knowledgeAntiPattern.create({
         data: {
           antiPatternId: ap.id,

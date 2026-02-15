@@ -43,15 +43,6 @@ export {
   type UseHistoryOptions,
   type UseHistoryReturn,
 } from './useHistory';
-export {
-  useKeyboardNavigation,
-  formatShortcutKey,
-  defaultCanvasShortcuts,
-  type KeyboardShortcut,
-  type UseKeyboardNavigationOptions,
-  type UseKeyboardNavigationReturn,
-} from './useKeyboardNavigation';
 export { useSidebar } from './useSidebar';
 export { useLocalHistory, type LocalHistoryEntry } from './useLocalHistory';
-export { useDiagramList, type DiagramSummary } from './useDiagramList';
 export { useDbHistory, type DbHistoryEntry, type FetchedDiagram } from './useDbHistory';

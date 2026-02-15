@@ -35,8 +35,6 @@ export const STATUS_ICONS: Record<string, React.ReactNode> = {
   'not-applicable': <MinusCircle className="w-4 h-4 text-zinc-400" />,
 };
 
-/** @deprecated Use PANEL_SEVERITY_COLORS from '@/lib/utils/badgeThemes' */
-export const SEVERITY_COLORS = PANEL_SEVERITY_COLORS;
 
 // ============================================================
 // Utility Functions
@@ -106,7 +104,7 @@ export function AuditResultsTab({ auditResult }: AuditResultsTabProps) {
           auditResult.findings.map((finding, index) => (
             <div
               key={index}
-              className={`rounded-lg p-3 border ${SEVERITY_COLORS[finding.severity]}`}
+              className={`rounded-lg p-3 border ${PANEL_SEVERITY_COLORS[finding.severity]}`}
             >
               <div className="flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
