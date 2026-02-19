@@ -26,13 +26,13 @@ export type { VendorCatalog, ProductNode, CatalogStats, SearchResult } from './t
 // Vendor catalog registry
 // ---------------------------------------------------------------------------
 
-// Vendor data files will be imported here as they are created.
-// import { ciscoCatalog } from './vendors/cisco';
+// Vendor data files
+import { ciscoCatalog } from './vendors/cisco';
 // import { fortinetCatalog } from './vendors/fortinet';
 
 /** Merged array of all vendor catalogs. */
 export const allVendorCatalogs: VendorCatalog[] = [
-  // ciscoCatalog,
+  ciscoCatalog,
   // fortinetCatalog,
 ];
 

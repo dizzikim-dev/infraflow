@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { InfraNodeType } from '@/types/infra';
 import type { VendorCatalog, ProductNode, SearchResult } from '../types';
 import {
@@ -76,6 +76,20 @@ function makeVendor(overrides: Partial<VendorCatalog> = {}): VendorCatalog {
 
 describe('vendorCatalog unified query API', () => {
   describe('empty catalog (default state)', () => {
+    let savedCatalogs: VendorCatalog[];
+
+    beforeEach(() => {
+      // Save and clear the catalog to test empty-state behavior
+      savedCatalogs = [...allVendorCatalogs];
+      allVendorCatalogs.length = 0;
+    });
+
+    afterEach(() => {
+      // Restore the original catalogs
+      allVendorCatalogs.length = 0;
+      allVendorCatalogs.push(...savedCatalogs);
+    });
+
     it('should export allVendorCatalogs as an array', () => {
       expect(Array.isArray(allVendorCatalogs)).toBe(true);
     });
@@ -230,10 +244,19 @@ describe('vendorCatalog unified query API', () => {
       stats: { totalProducts: 3, maxDepth: 1, categoriesCount: 1 },
     });
 
+    let savedCatalogs: VendorCatalog[];
+
     beforeEach(() => {
-      // Reset and populate the catalog
+      // Save original, then reset and populate with test data
+      savedCatalogs = [...allVendorCatalogs];
       allVendorCatalogs.length = 0;
       allVendorCatalogs.push(vendorA, vendorB);
+    });
+
+    afterEach(() => {
+      // Restore the original catalogs
+      allVendorCatalogs.length = 0;
+      allVendorCatalogs.push(...savedCatalogs);
     });
 
     // -- getVendorList -------------------------------------------------------
