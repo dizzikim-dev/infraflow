@@ -84,6 +84,7 @@ const knowledgeSection: NavSection = {
     { href: '/admin/knowledge/benchmarks', label: '벤치마크' },
     { href: '/admin/knowledge/industry-presets', label: '산업별 프리셋' },
     { href: '/admin/knowledge/sources', label: '출처 관리' },
+    { href: '/admin/knowledge/vendor-catalog', label: '벤더 카탈로그' },
   ],
 };
 
