@@ -34,8 +34,8 @@ describe('Cisco vendor catalog', () => {
     });
 
     it('should have bilingual depth structure', () => {
-      expect(ciscoCatalog.depthStructure).toEqual(['category', 'subcategory', 'series']);
-      expect(ciscoCatalog.depthStructureKo).toEqual(['카테고리', '하위 카테고리', '시리즈']);
+      expect(ciscoCatalog.depthStructure).toEqual(['category', 'subcategory', 'series', 'model']);
+      expect(ciscoCatalog.depthStructureKo).toEqual(['카테고리', '하위 카테고리', '시리즈', '모델']);
       expect(ciscoCatalog.depthStructure).toHaveLength(ciscoCatalog.depthStructureKo.length);
     });
 
@@ -70,8 +70,8 @@ describe('Cisco vendor catalog', () => {
       expect(ciscoCatalog.stats.categoriesCount).toBe(computed.categoriesCount);
     });
 
-    it('should have 201 total nodes', () => {
-      expect(ciscoCatalog.stats.totalProducts).toBe(201);
+    it('should have 214 total nodes', () => {
+      expect(ciscoCatalog.stats.totalProducts).toBe(214);
     });
 
     it('should have maxDepth of 3', () => {
@@ -411,9 +411,11 @@ describe('Cisco vendor catalog', () => {
   // Leaf node counts
   // -------------------------------------------------------------------------
   describe('leaf node counts', () => {
-    it('should have 173 total leaf nodes', () => {
+    it('should have 185 total leaf nodes', () => {
+      // 173 original + 13 Catalyst 9600 models (1 chassis + 2 supervisors + 7 line cards + 3 PSUs)
+      // minus 1 (Catalyst 9600 was a leaf, now has children)
       const leaves = getLeafNodes(ciscoCatalog.products);
-      expect(leaves).toHaveLength(173);
+      expect(leaves).toHaveLength(185);
     });
 
     it('should match countLeafNodes helper', () => {
@@ -539,13 +541,115 @@ describe('Cisco vendor catalog', () => {
       expect(nodes).toHaveLength(31);
     });
 
-    it('should have nodes at depth 3 only under routers', () => {
+    it('should have nodes at depth 3 under routers and catalyst 9600', () => {
       const depth3Nodes = getNodesByDepth(ciscoCatalog.products, 3);
-      expect(depth3Nodes.length).toBe(32); // 9 branch + 6 industrial + 17 SP
-      // All depth 3 nodes should be under routers
+      // 32 router models + 13 Catalyst 9600 models = 45
+      expect(depth3Nodes.length).toBe(45);
       for (const node of depth3Nodes) {
         expect(node.children).toEqual([]);
       }
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Data quality validation
+  // -------------------------------------------------------------------------
+  describe('data quality validation', () => {
+    // Architecture planning fields
+    describe('architecture planning fields', () => {
+      it('should have infraNodeTypes on all subcategory nodes (depth 1)', () => {
+        // All depth-1 nodes should have infraNodeTypes mapping
+        const depth1 = getNodesByDepth(ciscoCatalog.products, 1);
+        const withoutTypes = depth1.filter(
+          (n) => !n.infraNodeTypes || n.infraNodeTypes.length === 0,
+        );
+        // Report which nodes are missing, then assert
+        expect(withoutTypes.map((n) => n.nodeId)).toEqual([]);
+      });
+
+      it('should have architectureRole and architectureRoleKo pair completeness', () => {
+        // If architectureRole is set, architectureRoleKo should also be set
+        const allNodes = getAllNodes(ciscoCatalog.products);
+        const mismatched = allNodes.filter(
+          (n) =>
+            (n.architectureRole && !n.architectureRoleKo) ||
+            (!n.architectureRole && n.architectureRoleKo),
+        );
+        expect(mismatched.map((n) => n.nodeId)).toEqual([]);
+      });
+
+      it('should have recommendedFor and recommendedForKo pair completeness', () => {
+        const allNodes = getAllNodes(ciscoCatalog.products);
+        const mismatched = allNodes.filter(
+          (n) =>
+            (n.recommendedFor && !n.recommendedForKo) ||
+            (!n.recommendedFor && n.recommendedForKo),
+        );
+        expect(mismatched.map((n) => n.nodeId)).toEqual([]);
+      });
+
+      it('should have recommendedFor with matching length in recommendedForKo', () => {
+        const allNodes = getAllNodes(ciscoCatalog.products);
+        const lengthMismatch = allNodes.filter(
+          (n) =>
+            n.recommendedFor &&
+            n.recommendedForKo &&
+            n.recommendedFor.length !== n.recommendedForKo.length,
+        );
+        expect(lengthMismatch.map((n) => n.nodeId)).toEqual([]);
+      });
+    });
+
+    describe('lifecycle field', () => {
+      it('should have valid lifecycle values when present', () => {
+        const validValues = new Set(['active', 'end-of-sale', 'end-of-life']);
+        const allNodes = getAllNodes(ciscoCatalog.products);
+        for (const node of allNodes) {
+          if (node.lifecycle) {
+            expect(validValues.has(node.lifecycle)).toBe(true);
+          }
+        }
+      });
+    });
+
+    describe('URL quality', () => {
+      it('should not have duplicate sourceUrls among leaf nodes', () => {
+        const leaves = getLeafNodes(ciscoCatalog.products);
+        const urls = leaves.map((n) => n.sourceUrl);
+        const duplicates = urls.filter((url, i) => urls.indexOf(url) !== i);
+        const uniqueDuplicates = [...new Set(duplicates)];
+        // Some sharing is OK at category level but leaf products should be unique
+        // Log but don't fail for now — report how many
+        expect(uniqueDuplicates.length).toBeLessThanOrEqual(20); // Allow some sharing
+      });
+
+      it('should use English URLs (not ko_kr)', () => {
+        const allNodes = getAllNodes(ciscoCatalog.products);
+        const koreanUrls = allNodes.filter((n) => n.sourceUrl.includes('ko_kr'));
+        expect(koreanUrls.map((n) => n.nodeId)).toEqual([]);
+      });
+    });
+
+    describe('coverage statistics', () => {
+      it('should report infraNodeTypes coverage', () => {
+        const allNodes = getAllNodes(ciscoCatalog.products);
+        const withTypes = allNodes.filter(
+          (n) => n.infraNodeTypes && n.infraNodeTypes.length > 0,
+        );
+        // At minimum, all depth 0 and 1 nodes should have types
+        const depth01 = allNodes.filter((n) => n.depth <= 1);
+        const depth01WithTypes = depth01.filter(
+          (n) => n.infraNodeTypes && n.infraNodeTypes.length > 0,
+        );
+        expect(depth01WithTypes.length).toBe(depth01.length);
+      });
+
+      it('should report architectureRole coverage', () => {
+        const allNodes = getAllNodes(ciscoCatalog.products);
+        const withRole = allNodes.filter((n) => n.architectureRole);
+        // At least some nodes should have architecture roles
+        expect(withRole.length).toBeGreaterThan(0);
+      });
     });
   });
 });

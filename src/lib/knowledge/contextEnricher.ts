@@ -22,17 +22,96 @@ const DEFAULT_MIN_CONFIDENCE = 0.5;
 const OFFICIAL_CONFIDENCE_THRESHOLD = 0.85;
 
 // ---------------------------------------------------------------------------
+// Enrichment Cache (FIFO eviction)
+// ---------------------------------------------------------------------------
+
+const CACHE_MAX_SIZE = 50;
+const enrichmentCache = new Map<string, EnrichedKnowledge>();
+
+/**
+ * Build a cache key from sorted unique node types.
+ */
+function buildCacheKey(context: DiagramContext): string {
+  const types = [...new Set(context.nodes.map((n) => n.type))].sort();
+  return types.join(',');
+}
+
+/**
+ * Clear the enrichment cache. Exported for testing purposes.
+ */
+export function clearEnrichmentCache(): void {
+  enrichmentCache.clear();
+}
+
+/**
+ * Return the current cache size. Exported for testing purposes.
+ */
+export function getEnrichmentCacheSize(): number {
+  return enrichmentCache.size;
+}
+
+// ---------------------------------------------------------------------------
 // enrichContext
 // ---------------------------------------------------------------------------
 
 /**
  * Analyze a diagram and return relevant knowledge.
  *
+ * Results are cached by sorted node types when no options are passed.
+ * When options (spec, antiPatterns, failureScenarios, vulnerabilities,
+ * complianceGaps) are provided, the cache is bypassed because those
+ * inputs make the result variable.
+ *
  * @param context - The existing diagram context from contextBuilder
  * @param relationships - All available component relationships
  * @returns EnrichedKnowledge with relevant relationships, suggestions, and conflicts
  */
 export function enrichContext(
+  context: DiagramContext,
+  relationships: ComponentRelationship[],
+  options?: {
+    spec?: InfraSpec;
+    antiPatterns?: AntiPattern[];
+    failureScenarios?: FailureScenario[];
+    vulnerabilities?: VulnerabilityEntry[];
+    complianceGaps?: ComplianceGap[];
+  },
+): EnrichedKnowledge {
+  // Bypass cache when options are provided (result depends on variable inputs)
+  if (
+    options?.spec ||
+    options?.antiPatterns ||
+    options?.failureScenarios ||
+    options?.vulnerabilities ||
+    options?.complianceGaps
+  ) {
+    return computeEnrichment(context, relationships, options);
+  }
+
+  const key = buildCacheKey(context);
+  const cached = enrichmentCache.get(key);
+  if (cached) return cached;
+
+  const result = computeEnrichment(context, relationships, options);
+
+  // Evict oldest entry (FIFO) if cache is full
+  if (enrichmentCache.size >= CACHE_MAX_SIZE) {
+    const firstKey = enrichmentCache.keys().next().value;
+    if (firstKey !== undefined) enrichmentCache.delete(firstKey);
+  }
+
+  enrichmentCache.set(key, result);
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// computeEnrichment (internal — extracted from enrichContext)
+// ---------------------------------------------------------------------------
+
+/**
+ * Core enrichment logic. Always computes a fresh result.
+ */
+function computeEnrichment(
   context: DiagramContext,
   relationships: ComponentRelationship[],
   options?: {

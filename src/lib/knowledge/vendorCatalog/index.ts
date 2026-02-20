@@ -67,6 +67,14 @@ export function getVendor(vendorId: string): VendorCatalog | undefined {
 }
 
 /**
+ * Get a flat array of ProductNodes matching an InfraNodeType across all vendors.
+ * Convenience wrapper around getProductsByNodeType that flattens vendor grouping.
+ */
+export function getProductsForNodeType(nodeType: InfraNodeType): ProductNode[] {
+  return getProductsByNodeType(nodeType).flatMap(v => v.products);
+}
+
+/**
  * Find products mapped to a specific InfraNodeType across all vendors.
  * Returns only vendors that have at least one matching product.
  */

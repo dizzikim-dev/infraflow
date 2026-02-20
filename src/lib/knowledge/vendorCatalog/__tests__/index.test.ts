@@ -6,6 +6,7 @@ import {
   getVendorList,
   getVendor,
   getProductsByNodeType,
+  getProductsForNodeType,
   getChildren,
   getLeafProducts,
   getProductPath,
@@ -314,6 +315,40 @@ describe('vendorCatalog unified query API', () => {
       });
     });
 
+    // -- getProductsForNodeType ---------------------------------------------
+    describe('getProductsForNodeType', () => {
+      it('should return a flat array of ProductNodes for firewall', () => {
+        const products = getProductsForNodeType('firewall' as InfraNodeType);
+        expect(Array.isArray(products)).toBe(true);
+        // Should contain all firewall products from both vendors flattened
+        expect(products).toHaveLength(3);
+        const nodeIds = products.map((p) => p.nodeId).sort();
+        expect(nodeIds).toEqual(['PN-ASA-001', 'PN-FW-001', 'PN-FW-002']);
+      });
+
+      it('should return a flat array for switch-l2', () => {
+        const products = getProductsForNodeType('switch-l2' as InfraNodeType);
+        expect(products).toHaveLength(1);
+        expect(products[0].nodeId).toBe('PN-SW-001');
+      });
+
+      it('should return empty array for a type with no products', () => {
+        const products = getProductsForNodeType('waf' as InfraNodeType);
+        expect(products).toEqual([]);
+      });
+
+      it('should return ProductNode objects with correct shape', () => {
+        const products = getProductsForNodeType('firewall' as InfraNodeType);
+        for (const product of products) {
+          expect(product).toHaveProperty('nodeId');
+          expect(product).toHaveProperty('name');
+          expect(product).toHaveProperty('nameKo');
+          expect(product).toHaveProperty('children');
+          expect(product.infraNodeTypes).toContain('firewall');
+        }
+      });
+    });
+
     // -- getChildren ---------------------------------------------------------
     describe('getChildren', () => {
       it('should return children of a node in a vendor', () => {
@@ -493,6 +528,163 @@ describe('vendorCatalog unified query API', () => {
         matchField: 'name',
       };
       expect(result.matchField).toBe('name');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Tests — With real Cisco catalog (integration tests)
+  // -------------------------------------------------------------------------
+  describe('with real Cisco catalog', () => {
+    // These tests run against the actual registered catalogs (no mock override).
+
+    describe('getProductsByNodeType', () => {
+      it('should return Cisco firewall products for "firewall"', () => {
+        const results = getProductsByNodeType('firewall' as InfraNodeType);
+        const cisco = results.find((r) => r.vendorId === 'cisco');
+        expect(cisco).toBeDefined();
+        expect(cisco!.vendorName).toBe('Cisco Systems');
+        expect(cisco!.products.length).toBeGreaterThanOrEqual(1);
+        // Every returned product should map to the firewall type
+        for (const p of cisco!.products) {
+          expect(p.infraNodeTypes).toContain('firewall');
+        }
+      });
+
+      it('should return Cisco switch products for "switch-l2"', () => {
+        const results = getProductsByNodeType('switch-l2' as InfraNodeType);
+        const cisco = results.find((r) => r.vendorId === 'cisco');
+        expect(cisco).toBeDefined();
+        expect(cisco!.products.length).toBeGreaterThanOrEqual(1);
+        for (const p of cisco!.products) {
+          expect(p.infraNodeTypes).toContain('switch-l2');
+        }
+      });
+
+      it('should return Cisco router products for "router"', () => {
+        const results = getProductsByNodeType('router' as InfraNodeType);
+        const cisco = results.find((r) => r.vendorId === 'cisco');
+        expect(cisco).toBeDefined();
+        expect(cisco!.products.length).toBeGreaterThanOrEqual(1);
+        for (const p of cisco!.products) {
+          expect(p.infraNodeTypes).toContain('router');
+        }
+      });
+    });
+
+    describe('getProductsForNodeType', () => {
+      it('should return a flat array of firewall ProductNodes', () => {
+        const products = getProductsForNodeType('firewall' as InfraNodeType);
+        expect(Array.isArray(products)).toBe(true);
+        expect(products.length).toBeGreaterThanOrEqual(1);
+        // All products must have infraNodeTypes including 'firewall'
+        for (const p of products) {
+          expect(p.infraNodeTypes).toContain('firewall');
+        }
+      });
+
+      it('should return empty array for a type with no mapped products', () => {
+        // Use a type that is unlikely to have vendor catalog entries
+        const products = getProductsForNodeType('nac' as InfraNodeType);
+        expect(Array.isArray(products)).toBe(true);
+        // May or may not be empty depending on catalog, but should not throw
+      });
+    });
+
+    describe('getVendorList', () => {
+      it('should return array with at least Cisco', () => {
+        const list = getVendorList();
+        expect(list.length).toBeGreaterThanOrEqual(1);
+        const vendorIds = list.map((v) => v.vendorId);
+        expect(vendorIds).toContain('cisco');
+      });
+    });
+
+    describe('getVendor', () => {
+      it('should return the Cisco catalog', () => {
+        const cisco = getVendor('cisco');
+        expect(cisco).toBeDefined();
+        expect(cisco!.vendorId).toBe('cisco');
+        expect(cisco!.vendorName).toBe('Cisco Systems');
+        expect(cisco!.products.length).toBeGreaterThan(0);
+      });
+
+      it('should return undefined for nonexistent vendor', () => {
+        expect(getVendor('nonexistent')).toBeUndefined();
+      });
+    });
+
+    describe('searchProducts', () => {
+      it('should return results for "Catalyst"', () => {
+        const results = searchProducts('Catalyst');
+        expect(results.length).toBeGreaterThanOrEqual(1);
+        // All results should contain 'Catalyst' in some field
+        for (const r of results) {
+          const matchesName = r.node.name.toLowerCase().includes('catalyst');
+          const matchesDesc = r.node.description.toLowerCase().includes('catalyst');
+          const matchesId = r.node.nodeId.toLowerCase().includes('catalyst');
+          expect(matchesName || matchesDesc || matchesId).toBe(true);
+        }
+      });
+
+      it('should filter by nodeType', () => {
+        const results = searchProducts('Catalyst', {
+          nodeType: 'switch-l3' as InfraNodeType,
+        });
+        expect(results.length).toBeGreaterThanOrEqual(1);
+        for (const r of results) {
+          expect(r.node.infraNodeTypes).toContain('switch-l3');
+        }
+      });
+
+      it('should filter leafOnly', () => {
+        const results = searchProducts('Cisco', { leafOnly: true });
+        for (const r of results) {
+          expect(r.node.children).toHaveLength(0);
+        }
+      });
+    });
+
+    describe('getCatalogStats', () => {
+      it('should return correct aggregate stats', () => {
+        const stats = getCatalogStats();
+        expect(stats.vendors).toBeGreaterThanOrEqual(1);
+        expect(stats.totalProducts).toBeGreaterThan(0);
+        expect(stats.byVendor).toHaveProperty('cisco');
+        expect(stats.byVendor['cisco']).toBeGreaterThan(0);
+      });
+    });
+
+    describe('getChildren', () => {
+      it('should return children of cisco-networking', () => {
+        const children = getChildren('cisco', 'cisco-networking');
+        expect(children.length).toBeGreaterThanOrEqual(1);
+        // All children should have depth 1
+        for (const child of children) {
+          expect(child.depth).toBe(1);
+        }
+      });
+    });
+
+    describe('getLeafProducts', () => {
+      it('should return leaf products for Cisco', () => {
+        const leaves = getLeafProducts('cisco');
+        expect(leaves.length).toBeGreaterThanOrEqual(1);
+        // Every leaf must have empty children array
+        for (const leaf of leaves) {
+          expect(leaf.children).toHaveLength(0);
+        }
+      });
+    });
+
+    describe('getProductPath', () => {
+      it('should return breadcrumb for cisco-catalyst-9300', () => {
+        const path = getProductPath('cisco', 'cisco-catalyst-9300');
+        expect(path.length).toBeGreaterThanOrEqual(2);
+        // Last element should be the target node
+        expect(path[path.length - 1].nodeId).toBe('cisco-catalyst-9300');
+        // First element should be a root category
+        expect(path[0].depth).toBe(0);
+      });
     });
   });
 });

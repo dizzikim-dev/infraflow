@@ -122,3 +122,8 @@ export type {
   KnowledgeGraphStats,
   GraphFilterOptions,
 } from './graphVisualizer';
+
+// Vendor Catalog
+export {
+  getProductsForNodeType,
+} from './vendorCatalog';

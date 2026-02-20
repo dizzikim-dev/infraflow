@@ -41,6 +41,24 @@ export interface ProductNode {
   pricingInfo?: string;
   /** Product lifecycle status */
   lifecycle?: 'active' | 'end-of-sale' | 'end-of-life';
+
+  // ── Architecture Planning Fields ──
+
+  /** Recommended architecture role (e.g., 'Campus Core', 'Distribution', 'Access Layer') */
+  architectureRole?: string;
+  /** Korean architecture role */
+  architectureRoleKo?: string;
+  /** Recommended deployment use cases */
+  recommendedFor?: string[];
+  /** Korean recommended use cases */
+  recommendedForKo?: string[];
+  /** Supported network protocols (for connectivity planning) */
+  supportedProtocols?: string[];
+  /** High availability features (SSO, NSF, ISSU, etc.) */
+  haFeatures?: string[];
+  /** Security capabilities (MACsec, ETA, TrustSec, etc.) */
+  securityCapabilities?: string[];
+
   /** Child nodes (sub-categories or models) */
   children: ProductNode[];
 }

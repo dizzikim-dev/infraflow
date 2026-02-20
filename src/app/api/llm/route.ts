@@ -26,7 +26,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import type { InfraSpec } from '@/types';
+import type { InfraSpec, InfraNodeType } from '@/types';
 import { withRetry, isRetryableError } from '@/lib/utils/retry';
 import { checkRateLimit, LLM_RATE_LIMIT } from '@/lib/middleware/rateLimiter';
 import { createLogger } from '@/lib/utils/logger';
@@ -37,6 +37,15 @@ import { matchFallbackTemplate } from '@/lib/llm/fallbackTemplates';
 import { LLM_MODELS } from '@/lib/llm/models';
 import { LLMRequestSchema } from '@/lib/validations/api';
 import { checkRequestSize } from '@/lib/api/analyzeRouteUtils';
+import {
+  enrichContext,
+  buildKnowledgePromptSection,
+  RELATIONSHIPS,
+  ANTI_PATTERNS,
+  FAILURES,
+} from '@/lib/knowledge';
+import { AVAILABLE_COMPONENTS } from '@/lib/parser/prompts';
+import type { DiagramContext } from '@/lib/parser/prompts';
 
 const log = createLogger('LLM');
 
@@ -113,12 +122,150 @@ Guidelines:
 Only output valid JSON. No explanations.`;
 
 /**
+ * Keyword aliases mapping common terms to InfraNodeType values.
+ * Used for extracting node types from natural language prompts.
+ */
+const KEYWORD_ALIASES: Record<string, InfraNodeType> = {
+  vpn: 'vpn-gateway',
+  'load balancer': 'load-balancer',
+  lb: 'load-balancer',
+  k8s: 'kubernetes',
+  ad: 'ldap-ad',
+  'active directory': 'ldap-ad',
+  ldap: 'ldap-ad',
+  database: 'db-server',
+  db: 'db-server',
+  web: 'web-server',
+  app: 'app-server',
+  aws: 'aws-vpc',
+  azure: 'azure-vnet',
+  gcp: 'gcp-network',
+  nas: 'san-nas',
+  san: 'san-nas',
+  s3: 'object-storage',
+  blob: 'object-storage',
+  redis: 'cache',
+  memcached: 'cache',
+  nginx: 'web-server',
+  apache: 'web-server',
+  docker: 'container',
+  vdi: 'vm',
+  'ids/ips': 'ids-ips',
+  ids: 'ids-ips',
+  ips: 'ids-ips',
+  siem: 'siem',
+  soar: 'soar',
+  casb: 'casb',
+  sase: 'sase-gateway',
+  ztna: 'ztna-broker',
+};
+
+/** All known InfraNodeType values, derived from AVAILABLE_COMPONENTS */
+const ALL_INFRA_NODE_TYPES: InfraNodeType[] = Object.values(AVAILABLE_COMPONENTS).flat();
+
+/**
+ * Extract potential InfraNodeType values from a user prompt using keyword matching.
+ *
+ * Checks for:
+ * 1. Exact InfraNodeType matches (e.g., "firewall", "load-balancer")
+ * 2. Keyword aliases (e.g., "VPN" -> "vpn-gateway", "k8s" -> "kubernetes")
+ *
+ * @param prompt - The user's natural language prompt
+ * @returns Array of unique InfraNodeType values found in the prompt
+ */
+export function extractNodeTypesFromPrompt(prompt: string): InfraNodeType[] {
+  const lowerPrompt = prompt.toLowerCase();
+  const foundTypes = new Set<InfraNodeType>();
+
+  // Check exact InfraNodeType matches
+  for (const nodeType of ALL_INFRA_NODE_TYPES) {
+    if (lowerPrompt.includes(nodeType)) {
+      foundTypes.add(nodeType);
+    }
+  }
+
+  // Check keyword aliases
+  for (const [keyword, nodeType] of Object.entries(KEYWORD_ALIASES)) {
+    if (lowerPrompt.includes(keyword)) {
+      foundTypes.add(nodeType);
+    }
+  }
+
+  return [...foundTypes];
+}
+
+/**
+ * Build an enriched system prompt by appending knowledge graph context.
+ *
+ * Extracts potential node types from the user's prompt, builds a minimal
+ * DiagramContext, runs enrichContext() + buildKnowledgePromptSection(),
+ * and appends the result to the base SYSTEM_PROMPT.
+ *
+ * Falls back to the static SYSTEM_PROMPT if enrichment fails or produces
+ * no additional knowledge.
+ *
+ * @param prompt - The user's natural language prompt
+ * @returns The enriched system prompt string
+ */
+export function buildEnrichedSystemPrompt(prompt: string): string {
+  try {
+    const nodeTypes = extractNodeTypesFromPrompt(prompt);
+
+    if (nodeTypes.length === 0) {
+      log.debug('No node types extracted from prompt, using base system prompt');
+      return SYSTEM_PROMPT;
+    }
+
+    // Build a minimal DiagramContext from extracted node types
+    const context: DiagramContext = {
+      nodes: nodeTypes.map((type, index) => ({
+        id: `extracted-${index}`,
+        type,
+        label: type,
+        category: '',
+        zone: '',
+        connectedTo: [],
+        connectedFrom: [],
+      })),
+      connections: [],
+      summary: `Extracted from prompt: ${nodeTypes.join(', ')}`,
+    };
+
+    // Enrich with knowledge graph
+    const enriched = enrichContext(context, [...RELATIONSHIPS], {
+      antiPatterns: [...ANTI_PATTERNS],
+      failureScenarios: [...FAILURES],
+    });
+
+    const knowledgeSection = buildKnowledgePromptSection(enriched);
+
+    if (!knowledgeSection) {
+      log.debug('Knowledge enrichment produced no additional content');
+      return SYSTEM_PROMPT;
+    }
+
+    log.debug('Knowledge section injected into system prompt', {
+      nodeTypes: nodeTypes.length,
+      sectionLength: knowledgeSection.length,
+    });
+
+    return `${SYSTEM_PROMPT}\n\n${knowledgeSection}`;
+  } catch (error) {
+    log.warn('Knowledge enrichment failed, using base system prompt', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return SYSTEM_PROMPT;
+  }
+}
+
+/**
  * Makes a single API call to Claude for infrastructure generation.
  */
 async function callClaudeOnce(
   prompt: string,
   apiKey: string,
-  model: string = LLM_MODELS.ANTHROPIC_DEFAULT
+  model: string = LLM_MODELS.ANTHROPIC_DEFAULT,
+  systemPrompt: string = SYSTEM_PROMPT
 ): Promise<LLMResponse> {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -130,7 +277,7 @@ async function callClaudeOnce(
     body: JSON.stringify({
       model,
       max_tokens: 2048,
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: [
         {
           role: 'user',
@@ -175,10 +322,11 @@ async function callClaudeOnce(
 async function callClaude(
   prompt: string,
   apiKey: string,
-  model: string = LLM_MODELS.ANTHROPIC_DEFAULT
+  model: string = LLM_MODELS.ANTHROPIC_DEFAULT,
+  systemPrompt: string = SYSTEM_PROMPT
 ): Promise<LLMResponse> {
   const result = await withRetry(
-    () => callClaudeOnce(prompt, apiKey, model),
+    () => callClaudeOnce(prompt, apiKey, model, systemPrompt),
     {
       maxAttempts: LLM_CONFIG.maxRetries,
       timeoutMs: LLM_CONFIG.timeoutMs,
@@ -212,7 +360,8 @@ async function callClaude(
 async function callOpenAIOnce(
   prompt: string,
   apiKey: string,
-  model: string = LLM_MODELS.OPENAI_DEFAULT
+  model: string = LLM_MODELS.OPENAI_DEFAULT,
+  systemPrompt: string = SYSTEM_PROMPT
 ): Promise<LLMResponse> {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -223,7 +372,7 @@ async function callOpenAIOnce(
     body: JSON.stringify({
       model,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         {
           role: 'user',
           content: `Convert this infrastructure description to JSON:\n\n${prompt}`,
@@ -269,10 +418,11 @@ async function callOpenAIOnce(
 async function callOpenAI(
   prompt: string,
   apiKey: string,
-  model: string = LLM_MODELS.OPENAI_DEFAULT
+  model: string = LLM_MODELS.OPENAI_DEFAULT,
+  systemPrompt: string = SYSTEM_PROMPT
 ): Promise<LLMResponse> {
   const result = await withRetry(
-    () => callOpenAIOnce(prompt, apiKey, model),
+    () => callOpenAIOnce(prompt, apiKey, model, systemPrompt),
     {
       maxAttempts: LLM_CONFIG.maxRetries,
       timeoutMs: LLM_CONFIG.timeoutMs,
@@ -331,6 +481,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
 
     const { prompt, provider, model, useFallback } = parsed.data;
 
+    // Build enriched system prompt ONCE per request (not per retry)
+    const enrichedPrompt = buildEnrichedSystemPrompt(prompt);
+
     // Get API key from server-side environment variables (not NEXT_PUBLIC_)
     let apiKey: string | undefined;
     let result: LLMResponse;
@@ -351,7 +504,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
           { status: 500 }
         );
       }
-      result = await callClaude(prompt, apiKey, model);
+      result = await callClaude(prompt, apiKey, model, enrichedPrompt);
     } else if (provider === 'openai') {
       apiKey = process.env.OPENAI_API_KEY;
       if (!apiKey) {
@@ -368,7 +521,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
           { status: 500 }
         );
       }
-      result = await callOpenAI(prompt, apiKey, model);
+      result = await callOpenAI(prompt, apiKey, model, enrichedPrompt);
     } else {
       return NextResponse.json(
         { success: false, error: `Unknown provider: ${provider}` },

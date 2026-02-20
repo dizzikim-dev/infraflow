@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { enrichContext, buildKnowledgePromptSection } from '../contextEnricher';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { enrichContext, buildKnowledgePromptSection, clearEnrichmentCache, getEnrichmentCacheSize } from '../contextEnricher';
 import { RELATIONSHIPS } from '../relationships';
 import { ANTI_PATTERNS } from '../antipatterns';
 import { FAILURES } from '../failures';
@@ -408,5 +408,151 @@ describe('buildKnowledgePromptSection with risks', () => {
       expect(result).toContain('MTTR');
       expect(result).toContain('예방');
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Enrichment Cache Tests
+// ---------------------------------------------------------------------------
+
+describe('enrichContext caching', () => {
+  beforeEach(() => {
+    clearEnrichmentCache();
+  });
+
+  it('should return the same reference on second call with identical node types', () => {
+    const ctx = makeDiagramContext(['firewall', 'web-server']);
+    const first = enrichContext(ctx, [...RELATIONSHIPS]);
+    const second = enrichContext(ctx, [...RELATIONSHIPS]);
+    // Cached result should be the exact same reference
+    expect(second).toBe(first);
+  });
+
+  it('should return same result regardless of node order (cache key is sorted)', () => {
+    const ctxA = makeDiagramContext(['web-server', 'firewall']);
+    const ctxB = makeDiagramContext(['firewall', 'web-server']);
+    const resultA = enrichContext(ctxA, [...RELATIONSHIPS]);
+    const resultB = enrichContext(ctxB, [...RELATIONSHIPS]);
+    expect(resultB).toBe(resultA);
+  });
+
+  it('should bypass cache when options.spec is provided', () => {
+    const ctx = makeDiagramContext(['web-server', 'firewall']);
+    const spec = makeSpec([
+      { id: 'ws-1', type: 'web-server', label: 'Web' },
+      { id: 'fw-1', type: 'firewall', label: 'FW' },
+    ]);
+    const withoutOptions = enrichContext(ctx, [...RELATIONSHIPS]);
+    const withOptions = enrichContext(ctx, [...RELATIONSHIPS], { spec });
+    // With options should NOT be the cached reference
+    expect(withOptions).not.toBe(withoutOptions);
+  });
+
+  it('should bypass cache when options.antiPatterns is provided', () => {
+    const ctx = makeDiagramContext(['web-server']);
+    const withoutOptions = enrichContext(ctx, [...RELATIONSHIPS]);
+    const withOptions = enrichContext(ctx, [...RELATIONSHIPS], {
+      antiPatterns: [...ANTI_PATTERNS],
+    });
+    expect(withOptions).not.toBe(withoutOptions);
+  });
+
+  it('should bypass cache when options.failureScenarios is provided', () => {
+    const ctx = makeDiagramContext(['firewall']);
+    const withoutOptions = enrichContext(ctx, [...RELATIONSHIPS]);
+    const withOptions = enrichContext(ctx, [...RELATIONSHIPS], {
+      failureScenarios: [...FAILURES],
+    });
+    expect(withOptions).not.toBe(withoutOptions);
+  });
+
+  it('should clear cache via clearEnrichmentCache()', () => {
+    const ctx = makeDiagramContext(['firewall', 'web-server']);
+    const first = enrichContext(ctx, [...RELATIONSHIPS]);
+    expect(getEnrichmentCacheSize()).toBe(1);
+
+    clearEnrichmentCache();
+    expect(getEnrichmentCacheSize()).toBe(0);
+
+    // After clearing, a new call should compute fresh result (different reference)
+    const second = enrichContext(ctx, [...RELATIONSHIPS]);
+    expect(second).not.toBe(first);
+    // But structurally equal
+    expect(second).toEqual(first);
+  });
+
+  it('should evict oldest entry when cache exceeds CACHE_MAX_SIZE (50)', () => {
+    // Fill cache with 50 unique entries
+    const nodeTypes = [
+      'firewall', 'web-server', 'app-server', 'db-server', 'cache',
+      'load-balancer', 'waf', 'dns', 'vpn-gateway', 'ids-ips',
+    ];
+    for (let i = 0; i < 50; i++) {
+      // Create unique combinations by picking different subsets
+      const types = [nodeTypes[i % nodeTypes.length], `dummy-type-${i}`];
+      const ctx = makeDiagramContext(types);
+      enrichContext(ctx, [...RELATIONSHIPS]);
+    }
+    expect(getEnrichmentCacheSize()).toBe(50);
+
+    // Add one more — should evict the oldest
+    const extraCtx = makeDiagramContext(['firewall', 'extra-overflow-type']);
+    enrichContext(extraCtx, [...RELATIONSHIPS]);
+    expect(getEnrichmentCacheSize()).toBe(50); // Still 50, not 51
+  });
+
+  it('should cache different results for different node type sets', () => {
+    const ctxA = makeDiagramContext(['firewall']);
+    const ctxB = makeDiagramContext(['web-server', 'db-server']);
+    const resultA = enrichContext(ctxA, [...RELATIONSHIPS]);
+    const resultB = enrichContext(ctxB, [...RELATIONSHIPS]);
+    expect(resultA).not.toBe(resultB);
+    expect(getEnrichmentCacheSize()).toBe(2);
+  });
+
+  it('should not cache results when options with vulnerabilities are provided', () => {
+    const ctx = makeDiagramContext(['firewall']);
+    enrichContext(ctx, [...RELATIONSHIPS], {
+      vulnerabilities: [{
+        id: 'V-TEST',
+        cveId: 'CVE-2025-0001',
+        affectedComponents: ['firewall'] as never[],
+        severity: 'high',
+        title: 'Test vuln',
+        titleKo: '테스트 취약점',
+        description: 'Test',
+        descriptionKo: '테스트',
+        mitigation: 'Fix it',
+        mitigationKo: '수정하세요',
+        publishedDate: '2025-01-01',
+        references: [],
+        trust: {
+          confidence: 0.8,
+          sources: [{ type: 'industry' as const, title: 'Test', accessedDate: '2026-02-09' }],
+          lastReviewedAt: '2026-02-09',
+          upvotes: 0,
+          downvotes: 0,
+        },
+      }],
+    });
+    // Should not have cached because options were provided
+    expect(getEnrichmentCacheSize()).toBe(0);
+  });
+
+  it('should not cache results when options with complianceGaps are provided', () => {
+    const ctx = makeDiagramContext(['firewall']);
+    enrichContext(ctx, [...RELATIONSHIPS], {
+      complianceGaps: [{
+        framework: 'NIST',
+        frameworkKo: 'NIST',
+        missingComponents: ['waf'] as never[],
+        priority: 'high',
+        remediation: 'Add WAF',
+        remediationKo: 'WAF 추가',
+        estimatedEffort: '1 week',
+        estimatedEffortKo: '1주',
+      }],
+    });
+    expect(getEnrichmentCacheSize()).toBe(0);
   });
 });

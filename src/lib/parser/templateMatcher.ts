@@ -9,6 +9,7 @@ import { infraTemplates, templateKeywords } from './templates';
 import { getTemplatesFromRegistry } from './pluginIntegration';
 import { parseCustomPrompt } from './componentDetector';
 import { buildExplanation } from './explanationBuilder';
+import { recordTemplateMatch, recordComponentMatch, recordFallback } from './parserTelemetry';
 
 export interface ParseResult {
   success: boolean;
@@ -58,12 +59,14 @@ export function parsePromptLocal(
   if (useTemplates) {
     const result = matchTemplateByKeywords(normalizedPrompt, templates);
     if (result) {
+      recordTemplateMatch(result.templateUsed!);
       return result;
     }
 
     // Match by template ID directly
     const directMatch = matchTemplateById(normalizedPrompt, templates);
     if (directMatch) {
+      recordTemplateMatch(directMatch.templateUsed!);
       return directMatch;
     }
   }
@@ -72,6 +75,7 @@ export function parsePromptLocal(
   if (useComponentDetection) {
     const parsedSpec = parseCustomPrompt(normalizedPrompt, usePlugins);
     if (parsedSpec) {
+      recordComponentMatch();
       return {
         success: true,
         spec: parsedSpec,
@@ -82,6 +86,7 @@ export function parsePromptLocal(
   }
 
   // Default fallback — low confidence, flagged as fallback
+  recordFallback();
   return {
     success: false,
     isFallback: true,
