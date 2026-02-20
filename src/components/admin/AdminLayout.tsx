@@ -74,6 +74,7 @@ const knowledgeSection: NavSection = {
   ),
   items: [
     { href: '/admin/knowledge', label: '개요' },
+    { href: '/admin/knowledge/graph', label: 'Knowledge Graph' },
     { href: '/admin/knowledge/relationships', label: '관계' },
     { href: '/admin/knowledge/patterns', label: '패턴' },
     { href: '/admin/knowledge/antipatterns', label: '안티패턴' },

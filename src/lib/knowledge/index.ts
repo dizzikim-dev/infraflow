@@ -109,3 +109,16 @@ export {
   estimateCapacity,
   findBottlenecks,
 } from './benchmarks';
+
+// Graph Visualizer
+export {
+  buildKnowledgeGraph,
+  getNodeDetail,
+} from './graphVisualizer';
+export type {
+  KnowledgeGraph,
+  KnowledgeGraphNode,
+  KnowledgeGraphEdge,
+  KnowledgeGraphStats,
+  GraphFilterOptions,
+} from './graphVisualizer';
