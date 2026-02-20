@@ -16,3 +16,5 @@ export { VulnerabilityPanel } from './VulnerabilityPanel';
 export { CloudCatalogPanel } from './CloudCatalogPanel';
 export { IndustryCompliancePanel } from './IndustryCompliancePanel';
 export { BenchmarkPanel } from './BenchmarkPanel';
+export { GraphVisualizerPanel } from './GraphVisualizerPanel';
+export { VendorRecommendationPanel } from './VendorRecommendationPanel';

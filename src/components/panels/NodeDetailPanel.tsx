@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { InfraNodeType } from '@/types';
 import { InfraComponent, PolicyRecommendation } from '@/lib/data';
 import { useInfraComponent } from '@/hooks/useInfrastructureData';
+import { getProductsByNodeType } from '@/lib/knowledge/vendorCatalog';
 
 interface NodeDetailPanelProps {
   nodeId: string;
@@ -17,7 +18,7 @@ interface NodeDetailPanelProps {
 }
 
 // Tab types
-type TabType = 'overview' | 'functions' | 'policies' | 'technical';
+type TabType = 'overview' | 'functions' | 'policies' | 'technical' | 'products';
 
 // Category colors
 const categoryColors: Record<string, { bg: string; border: string; text: string }> = {
@@ -69,7 +70,13 @@ export function NodeDetailPanel({
     { id: 'functions', label: '기능', icon: '⚙️' },
     { id: 'policies', label: '정책', icon: '🔐' },
     { id: 'technical', label: '기술정보', icon: '🔧' },
+    { id: 'products', label: '제품', icon: '🏭' },
   ];
+
+  const vendorResults = useMemo(
+    () => getProductsByNodeType(nodeType),
+    [nodeType]
+  );
 
   const renderOverview = () => (
     <div className="space-y-4">
@@ -255,6 +262,103 @@ export function NodeDetailPanel({
     </div>
   );
 
+  const renderProducts = () => {
+    if (vendorResults.length === 0) {
+      return (
+        <div className="text-center py-8 text-zinc-500">
+          이 컴포넌트 유형에 매칭되는 벤더 제품이 없습니다.
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {vendorResults.map(({ vendorId, vendorName, products }) => (
+          <div key={vendorId} className="space-y-2">
+            {/* Vendor header */}
+            <h4 className="text-xs uppercase text-zinc-500 tracking-wider flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30 text-[10px] font-bold">
+                {vendorName}
+              </span>
+              <span>{products.length} products</span>
+            </h4>
+
+            {/* Product cards */}
+            <div className="space-y-1.5">
+              {products.slice(0, 8).map((product) => (
+                <div
+                  key={product.nodeId}
+                  className="p-2.5 rounded-lg bg-zinc-800/30 border border-zinc-700/30 hover:bg-zinc-800/50 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-white font-medium truncate">
+                        {product.name}
+                      </div>
+                      <div className="text-xs text-zinc-400 truncate">
+                        {product.nameKo}
+                      </div>
+                    </div>
+                    {product.lifecycle && (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                        product.lifecycle === 'active'
+                          ? 'bg-green-500/20 text-green-400'
+                          : product.lifecycle === 'end-of-sale'
+                          ? 'bg-yellow-500/20 text-yellow-400'
+                          : 'bg-red-500/20 text-red-400'
+                      }`}>
+                        {product.lifecycle}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Architecture role */}
+                  {product.architectureRoleKo && (
+                    <div className="mt-1 text-xs text-zinc-500">
+                      역할: {product.architectureRoleKo}
+                    </div>
+                  )}
+
+                  {/* Recommended for tags */}
+                  {product.recommendedForKo && product.recommendedForKo.length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {product.recommendedForKo.slice(0, 3).map((useCase, idx) => (
+                        <span
+                          key={idx}
+                          className="px-1.5 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                        >
+                          {useCase}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Source link */}
+                  {product.sourceUrl && (
+                    <a
+                      href={product.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 text-[10px] text-zinc-500 hover:text-blue-400 transition-colors inline-flex items-center gap-1"
+                    >
+                      제품 페이지 →
+                    </a>
+                  )}
+                </div>
+              ))}
+
+              {products.length > 8 && (
+                <div className="text-center text-xs text-zinc-500 py-1">
+                  + {products.length - 8}개 더...
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -320,6 +424,7 @@ export function NodeDetailPanel({
               {activeTab === 'functions' && renderFunctions()}
               {activeTab === 'policies' && renderPolicies()}
               {activeTab === 'technical' && renderTechnical()}
+              {activeTab === 'products' && renderProducts()}
             </motion.div>
           </AnimatePresence>
         </div>

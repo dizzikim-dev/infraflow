@@ -87,6 +87,16 @@ const BenchmarkPanel = dynamic(
   { ssr: false }
 );
 
+const GraphVisualizerPanel = dynamic(
+  () => import('@/components/panels/GraphVisualizerPanel').then(mod => ({ default: mod.GraphVisualizerPanel })),
+  { ssr: false }
+);
+
+const VendorRecommendationPanel = dynamic(
+  () => import('@/components/panels/VendorRecommendationPanel').then(mod => ({ default: mod.VendorRecommendationPanel })),
+  { ssr: false }
+);
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -117,6 +127,8 @@ export interface EditorPanelsProps {
   showCloudCatalog: boolean;
   showCompliance: boolean;
   showBenchmark: boolean;
+  showGraphVisualizer: boolean;
+  showVendorRecommendation: boolean;
   showTemplateGallery: boolean;
   showExportPanel: boolean;
   showSaveDialog: boolean;
@@ -152,6 +164,8 @@ export function EditorPanels({
   showCloudCatalog,
   showCompliance,
   showBenchmark,
+  showGraphVisualizer,
+  showVendorRecommendation,
   showTemplateGallery,
   showExportPanel,
   showSaveDialog,
@@ -275,6 +289,25 @@ export function EditorPanels({
           <BenchmarkPanel
             spec={currentSpec}
             onClose={() => closeModal('benchmark')}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Graph Visualizer Panel */}
+      <AnimatePresence>
+        {showGraphVisualizer && (
+          <GraphVisualizerPanel
+            onClose={() => closeModal('graphVisualizer')}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Vendor Recommendation Panel */}
+      <AnimatePresence>
+        {showVendorRecommendation && (
+          <VendorRecommendationPanel
+            spec={currentSpec}
+            onClose={() => closeModal('vendorRecommendation')}
           />
         )}
       </AnimatePresence>

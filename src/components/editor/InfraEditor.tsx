@@ -154,6 +154,8 @@ export function InfraEditor({
     showCloudCatalog,
     showCompliance,
     showBenchmark,
+    showGraphVisualizer,
+    showVendorRecommendation,
     openModal,
     closeModal,
     toggleModal,
@@ -485,6 +487,8 @@ export function InfraEditor({
         showCloudCatalog={showCloudCatalog}
         showCompliance={showCompliance}
         showBenchmark={showBenchmark}
+        showGraphVisualizer={showGraphVisualizer}
+        showVendorRecommendation={showVendorRecommendation}
         showTemplateGallery={showTemplateGallery}
         showExportPanel={showExportPanel}
         showSaveDialog={showSaveDialog}
