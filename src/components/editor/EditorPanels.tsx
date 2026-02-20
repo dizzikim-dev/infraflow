@@ -97,6 +97,11 @@ const VendorRecommendationPanel = dynamic(
   { ssr: false }
 );
 
+const VendorComparisonPanel = dynamic(
+  () => import('@/components/panels/VendorComparisonPanel').then(mod => ({ default: mod.VendorComparisonPanel })),
+  { ssr: false }
+);
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -129,6 +134,7 @@ export interface EditorPanelsProps {
   showBenchmark: boolean;
   showGraphVisualizer: boolean;
   showVendorRecommendation: boolean;
+  showVendorComparison: boolean;
   showTemplateGallery: boolean;
   showExportPanel: boolean;
   showSaveDialog: boolean;
@@ -166,6 +172,7 @@ export function EditorPanels({
   showBenchmark,
   showGraphVisualizer,
   showVendorRecommendation,
+  showVendorComparison,
   showTemplateGallery,
   showExportPanel,
   showSaveDialog,
@@ -308,6 +315,15 @@ export function EditorPanels({
           <VendorRecommendationPanel
             spec={currentSpec}
             onClose={() => closeModal('vendorRecommendation')}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Vendor Comparison Panel */}
+      <AnimatePresence>
+        {showVendorComparison && (
+          <VendorComparisonPanel
+            onClose={() => closeModal('vendorComparison')}
           />
         )}
       </AnimatePresence>

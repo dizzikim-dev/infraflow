@@ -234,7 +234,7 @@ describe('POST /api/recommendation', () => {
     const request = makePostRequest({
       spec: {
         nodes: [
-          { id: 'ldap-1', type: 'ldap-ad', label: 'Active Directory' },
+          { id: 'upf-1', type: 'upf', label: '5G UPF' },
         ],
         connections: [],
       },
@@ -248,12 +248,11 @@ describe('POST /api/recommendation', () => {
     expect(data.data.unmatchedNodes.length).toBeGreaterThanOrEqual(1);
 
     const unmatched = data.data.unmatchedNodes.find(
-      (n: { nodeId: string }) => n.nodeId === 'ldap-1',
+      (n: { nodeId: string }) => n.nodeId === 'upf-1',
     );
-    if (unmatched) {
-      expect(unmatched.nodeType).toBe('ldap-ad');
-      expect(unmatched.nodeLabel).toBe('Active Directory');
-    }
+    expect(unmatched).toBeDefined();
+    expect(unmatched.nodeType).toBe('upf');
+    expect(unmatched.nodeLabel).toBe('5G UPF');
   });
 
   // ── Error handling ──

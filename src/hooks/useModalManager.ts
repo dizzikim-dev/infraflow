@@ -15,7 +15,8 @@ export type ModalType =
   | 'compliance'
   | 'benchmark'
   | 'graphVisualizer'
-  | 'vendorRecommendation';
+  | 'vendorRecommendation'
+  | 'vendorComparison';
 
 interface ModalState {
   templateGallery: boolean;
@@ -31,6 +32,7 @@ interface ModalState {
   benchmark: boolean;
   graphVisualizer: boolean;
   vendorRecommendation: boolean;
+  vendorComparison: boolean;
 }
 
 /**
@@ -52,13 +54,14 @@ export function useModalManager() {
     benchmark: false,
     graphVisualizer: false,
     vendorRecommendation: false,
+    vendorComparison: false,
   });
 
   /**
    * Analyze group — only one can be open at a time
    */
   const ANALYZE_GROUP: readonly ModalType[] = [
-    'healthCheck', 'insights', 'vulnerability', 'cloudCatalog', 'compliance', 'benchmark', 'graphVisualizer', 'vendorRecommendation',
+    'healthCheck', 'insights', 'vulnerability', 'cloudCatalog', 'compliance', 'benchmark', 'graphVisualizer', 'vendorRecommendation', 'vendorComparison',
   ];
 
   /**
@@ -119,6 +122,7 @@ export function useModalManager() {
       benchmark: false,
       graphVisualizer: false,
       vendorRecommendation: false,
+      vendorComparison: false,
     });
   }, []);
 
@@ -143,5 +147,6 @@ export function useModalManager() {
     showBenchmark: modals.benchmark,
     showGraphVisualizer: modals.graphVisualizer,
     showVendorRecommendation: modals.vendorRecommendation,
+    showVendorComparison: modals.vendorComparison,
   };
 }

@@ -156,6 +156,7 @@ export function InfraEditor({
     showBenchmark,
     showGraphVisualizer,
     showVendorRecommendation,
+    showVendorComparison,
     openModal,
     closeModal,
     toggleModal,
@@ -489,6 +490,7 @@ export function InfraEditor({
         showBenchmark={showBenchmark}
         showGraphVisualizer={showGraphVisualizer}
         showVendorRecommendation={showVendorRecommendation}
+        showVendorComparison={showVendorComparison}
         showTemplateGallery={showTemplateGallery}
         showExportPanel={showExportPanel}
         showSaveDialog={showSaveDialog}

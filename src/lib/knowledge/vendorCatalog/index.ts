@@ -28,12 +28,16 @@ export type { VendorCatalog, ProductNode, CatalogStats, SearchResult } from './t
 
 // Vendor data files
 import { ciscoCatalog } from './vendors/cisco';
-// import { fortinetCatalog } from './vendors/fortinet';
+import { paloaltoCatalog } from './vendors/paloalto';
+import { aristaCatalog } from './vendors/arista';
+import { fortinetCatalog } from './vendors/fortinet';
 
 /** Merged array of all vendor catalogs. */
 export const allVendorCatalogs: VendorCatalog[] = [
   ciscoCatalog,
-  // fortinetCatalog,
+  paloaltoCatalog,
+  aristaCatalog,
+  fortinetCatalog,
 ];
 
 // ---------------------------------------------------------------------------
