@@ -157,6 +157,8 @@ export function InfraEditor({
     showGraphVisualizer,
     showVendorRecommendation,
     showVendorComparison,
+    showRequirementsWizard,
+    showCostComparison,
     openModal,
     closeModal,
     toggleModal,
@@ -491,6 +493,8 @@ export function InfraEditor({
         showGraphVisualizer={showGraphVisualizer}
         showVendorRecommendation={showVendorRecommendation}
         showVendorComparison={showVendorComparison}
+        showRequirementsWizard={showRequirementsWizard}
+        showCostComparison={showCostComparison}
         showTemplateGallery={showTemplateGallery}
         showExportPanel={showExportPanel}
         showSaveDialog={showSaveDialog}

@@ -102,6 +102,16 @@ const VendorComparisonPanel = dynamic(
   { ssr: false }
 );
 
+const RequirementsWizardPanel = dynamic(
+  () => import('@/components/panels/RequirementsWizardPanel').then(mod => ({ default: mod.RequirementsWizardPanel })),
+  { ssr: false }
+);
+
+const CostComparisonPanel = dynamic(
+  () => import('@/components/panels/CostComparisonPanel').then(mod => ({ default: mod.CostComparisonPanel })),
+  { ssr: false }
+);
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -135,6 +145,8 @@ export interface EditorPanelsProps {
   showGraphVisualizer: boolean;
   showVendorRecommendation: boolean;
   showVendorComparison: boolean;
+  showRequirementsWizard: boolean;
+  showCostComparison: boolean;
   showTemplateGallery: boolean;
   showExportPanel: boolean;
   showSaveDialog: boolean;
@@ -173,6 +185,8 @@ export function EditorPanels({
   showGraphVisualizer,
   showVendorRecommendation,
   showVendorComparison,
+  showRequirementsWizard,
+  showCostComparison,
   showTemplateGallery,
   showExportPanel,
   showSaveDialog,
@@ -324,6 +338,28 @@ export function EditorPanels({
         {showVendorComparison && (
           <VendorComparisonPanel
             onClose={() => closeModal('vendorComparison')}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Requirements Wizard Panel */}
+      <AnimatePresence>
+        {showRequirementsWizard && (
+          <RequirementsWizardPanel
+            show={showRequirementsWizard}
+            onClose={() => closeModal('requirementsWizard')}
+            onComplete={() => closeModal('requirementsWizard')}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Cost Comparison Panel */}
+      <AnimatePresence>
+        {showCostComparison && (
+          <CostComparisonPanel
+            show={showCostComparison}
+            onClose={() => closeModal('costComparison')}
+            spec={currentSpec || { nodes: [], connections: [] }}
           />
         )}
       </AnimatePresence>
