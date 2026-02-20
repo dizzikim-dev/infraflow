@@ -108,7 +108,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const isKnowledgeActive = pathname.startsWith('/admin/knowledge');
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="h-screen bg-gray-100 flex overflow-hidden">
       {/* 사이드바 */}
       <aside
         className={`${
