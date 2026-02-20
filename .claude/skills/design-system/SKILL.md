@@ -1,6 +1,6 @@
 ---
 name: design-system
-description: "InfraFlow 디자인 시스템 생성 및 관리. 색상, 타이포그래피, 여백, 컴포넌트 스타일 정의."
+description: "InfraFlow design system creation and management. Colors, typography, spacing, component styles."
 user-invocable: true
 ---
 

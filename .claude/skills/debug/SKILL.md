@@ -1,6 +1,6 @@
 ---
 name: debug
-description: "4단계 체계적 디버깅. 버그 발생 시 근본 원인 분석."
+description: "4-step systematic debugging. Root cause analysis when bugs occur."
 user-invocable: true
 ---
 

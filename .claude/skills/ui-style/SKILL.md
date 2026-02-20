@@ -1,6 +1,6 @@
 ---
 name: ui-style
-description: "InfraFlow UI 스타일 적용. Dark Mode, Minimalism, AI Native, Glassmorphism 등."
+description: "InfraFlow UI style application. Dark Mode, Minimalism, AI Native, Glassmorphism."
 user-invocable: true
 ---
 

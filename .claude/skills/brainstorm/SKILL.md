@@ -1,6 +1,6 @@
 ---
 name: brainstorm
-description: "소크라테스식 대화를 통한 설계 정제. 새 기능 설계 시 요구사항 탐색 및 대안 비교."
+description: "Socratic dialogue for design refinement. Explores requirements and compares alternatives for new feature design."
 user-invocable: true
 ---
 

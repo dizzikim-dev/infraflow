@@ -1,6 +1,6 @@
 ---
 name: color-palette
-description: "InfraFlow 색상 팔레트 적용 및 관리. 노드 카테고리, 흐름 애니메이션, 상태 색상."
+description: "InfraFlow color palette application and management. Node categories, flow animations, status colors."
 user-invocable: true
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: plan-skill
-description: "작업을 실행 가능한 단계로 분해하는 계획 수립."
+description: "Break tasks into executable steps with clear completion criteria."
 user-invocable: true
 ---
 

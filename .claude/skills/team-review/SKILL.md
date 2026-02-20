@@ -1,6 +1,6 @@
 ---
 name: team-review
-description: "Agent team을 구성하여 병렬 코드 리뷰 실행. 보안, 성능, 테스트 검증을 동시 수행."
+description: "Create an agent team for parallel code review. Security, performance, and test validation in parallel."
 user-invocable: true
 ---
 

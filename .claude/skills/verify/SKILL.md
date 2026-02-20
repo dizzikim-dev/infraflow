@@ -1,6 +1,6 @@
 ---
 name: verify
-description: "작업 완료 전 체계적 검증. 테스트, 타입체크, 빌드, 보안 확인."
+description: "Systematic verification before completion. Tests, type check, build, security checks."
 user-invocable: true
 ---
 

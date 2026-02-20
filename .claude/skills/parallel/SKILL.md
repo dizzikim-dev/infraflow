@@ -1,6 +1,6 @@
 ---
 name: parallel
-description: "복잡한 작업을 여러 에이전트에 분배하여 병렬 처리."
+description: "Distribute complex tasks across multiple agents for parallel execution."
 user-invocable: true
 ---
 

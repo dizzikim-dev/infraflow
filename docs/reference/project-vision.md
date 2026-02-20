@@ -1,37 +1,102 @@
 # InfraFlow - Project Vision
 
-> **프롬프트 한 줄로 인프라 아키텍처를 시각화하고, 데이터 흐름을 애니메이션으로 보여주는 플랫폼**
+## The Problem
 
-## 핵심 목표
-1. **자연어 → 인프라 다이어그램**: 프롬프트로 복잡한 아키텍처 생성
-2. **애니메이션 데이터 흐름**: 실시간으로 데이터가 어떻게 흐르는지 시각화
-3. **보안 정책 시각화**: 방화벽, ACL, 라우팅 정책 등을 시각적으로 표현
-4. **인터랙티브 편집**: 생성된 다이어그램을 드래그앤드롭으로 수정
+Infrastructure is too complex. When customers meet with vendors, integrators, and consultants:
 
-## 인프라 구성요소 라이브러리
+- **No one sees the full picture**: Network engineers know switches, security teams know firewalls, cloud architects know AWS — but nobody understands how all pieces connect end-to-end.
+- **Vendors think in silos**: Cisco only talks Cisco, Fortinet only talks Fortinet. No vendor explains how their products fit into the customer's actual infrastructure.
+- **Customers are lost**: They don't know what they need, what products exist, or how to architect a solution. They rely on vendors who each push their own products.
+- **Knowledge is fragmented**: Infrastructure knowledge lives in scattered datasheets, RFCs, vendor docs, and the heads of senior engineers who are retiring.
 
-| 카테고리 | 구성요소 |
-|----------|---------|
-| 보안 장비 | Firewall, WAF, IDS/IPS, VPN Gateway, NAC, DLP |
-| 네트워크 장비 | Router, Switch (L2/L3), Load Balancer, SD-WAN, DNS, CDN |
-| 컴퓨팅/서버 | Web Server, App Server, DB Server, Container, VM, Kubernetes |
-| 클라우드 서비스 | AWS VPC, Azure VNet, GCP Network, Private Cloud |
-| 스토리지 | SAN/NAS, Object Storage, Backup, Cache (Redis) |
-| 인증/접근 | LDAP/AD, SSO, MFA, IAM |
+## The Solution
 
-## 데이터 흐름 애니메이션
+InfraFlow is an AI-powered infrastructure consulting platform that lets users:
 
-| 흐름 유형 | 시각화 |
-|-----------|--------|
-| Request Flow (요청) | 파란색 점선 이동 |
-| Response Flow (응답) | 녹색 점선 이동 |
-| Sync/Replication | 주황색 양방향 |
-| Blocked/Denied | 빨간색 차단 표시 |
-| Encrypted | 굵은 실선 (자물쇠 아이콘) |
+1. **Describe** what they want in natural language ("I need a 3-tier web architecture with WAF and load balancing")
+2. **See** the architecture visualized as an interactive diagram with animated data flows
+3. **Understand** why components are connected, what protocols they use, and what patterns they follow
+4. **Get recommendations** for specific vendor products that match their requirements
+5. **Modify** the design through conversation, iterating until it's right
 
-## 정책 시각화
+## Three-Layer Value Proposition
 
-노드 클릭 시 보안 정책, ACL, 라우팅 규칙을 시각적 오버레이로 표시.
-- 방화벽 규칙 (Allow/Deny)
-- WAF 규칙 (SQL Injection Block, XSS Prevention, Rate Limiting)
-- 라우팅 정책
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Layer 3: RECOMMEND                                         │
+│  "For this firewall role, consider Fortinet FortiGate 600F  │
+│   or Cisco Firepower 2100 — here's why"                     │
+│  Ontology + Vendor Catalog → Product matching & consulting  │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 2: UNDERSTAND                                        │
+│  "A WAF sits between the load balancer and web servers      │
+│   because it needs to inspect HTTP traffic after SSL term"  │
+│  Ontology-based knowledge of WHY components connect         │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 1: VISUALIZE                                         │
+│  "Show me a 3-tier architecture with security zones"        │
+│  Natural language → interactive animated diagrams           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Layer 1: Visualize (Implemented)
+
+- Natural language prompt → infrastructure diagram
+- Animated data flows (request, response, blocked, encrypted, sync)
+- Interactive editing (drag-and-drop, click to see policies)
+- Export to Terraform, Kubernetes YAML, PlantUML, PNG/PDF
+
+### Layer 2: Understand (Implemented — Knowledge Graph)
+
+- **Ontology**: 40+ infrastructure component types with typed relationships
+- **Relationships**: 105+ connections defining how components interact (protocol, strength, direction)
+- **Patterns**: 33+ proven architecture designs (3-tier, microservice, zero-trust, etc.)
+- **Anti-patterns**: 45+ known bad designs with detection and severity
+- **Failures**: 64+ failure scenarios with impact analysis
+- **Compliance**: Industry presets (financial, healthcare, government, e-commerce)
+
+### Layer 3: Recommend (In Progress — Vendor Catalog + Matching)
+
+- **Vendor Catalog**: Structured product data from Cisco, Fortinet, AWS, Azure, GCP, etc.
+- **Product Mapping**: Generic component types → specific vendor products
+- **Recommendation Engine**: Given an architecture pattern + requirements → suggest products
+- **Consulting Workflow**: Requirements analysis → architecture design → product selection → gap analysis
+
+## Target Users
+
+| User | Pain Point | Value |
+|------|-----------|-------|
+| **Infrastructure Engineers** | Can't explain full architecture to stakeholders | Visual, interactive diagrams from natural language |
+| **Pre-sales / Solution Architects** | Spend days drawing architecture proposals | Generate proposals in minutes, backed by knowledge |
+| **IT Managers / CISOs** | Don't understand what they're buying | See how products fit together, get recommendations |
+| **System Integrators** | Multi-vendor complexity, no holistic view | Ontology maps cross-vendor interconnections |
+| **Students / Junior Engineers** | Steep learning curve for infrastructure | Learn by exploring interactive diagrams |
+
+## Infrastructure Component Library
+
+| Category | Components |
+|----------|-----------|
+| Security | Firewall, WAF, IDS/IPS, VPN Gateway, NAC, DLP, SASE, ZTNA, CASB, SIEM, SOAR |
+| Network | Router, Switch (L2/L3), Load Balancer, SD-WAN, DNS, CDN |
+| Compute | Web Server, App Server, DB Server, Container, VM, Kubernetes |
+| Cloud | AWS VPC, Azure VNet, GCP Network, Private Cloud |
+| Storage | SAN/NAS, Object Storage, Backup, Cache (Redis) |
+| Auth | LDAP/AD, SSO, MFA, IAM |
+
+## Data Flow Animation
+
+| Flow Type | Visualization |
+|-----------|--------------|
+| Request | Blue dashed forward animation |
+| Response | Green dashed reverse animation |
+| Sync/Replication | Orange bidirectional |
+| Blocked/Denied | Red stop marker |
+| Encrypted | Bold solid line (lock icon) |
+
+## Long-Term Vision
+
+InfraFlow evolves from a visualization tool into an **AI infrastructure consultant**:
+
+1. **Today**: "Draw me a 3-tier architecture" → diagram
+2. **Next**: "What's wrong with this design?" → anti-pattern detection + remediation
+3. **Future**: "I need to serve 10K users with PCI-DSS compliance on $50K/month budget" → full architecture + vendor product recommendations + cost estimate + compliance gap analysis

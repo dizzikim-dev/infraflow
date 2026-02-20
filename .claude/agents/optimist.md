@@ -1,6 +1,6 @@
 ---
 name: optimist
-description: "낙관적 관점에서 기회, 확장 가능성, 차별화 포인트를 분석하는 전문가. 코드 리뷰, 아키텍처 검토, 가치 평가 시 사용."
+description: "Analyzes opportunities, expansion potential, and differentiation points from a positive perspective. Use for code reviews, architecture reviews, and value assessment."
 tools: Read, Grep, Glob
 model: sonnet
 ---

@@ -1,6 +1,6 @@
 ---
 name: pessimist
-description: "비관적 관점에서 리스크, 문제점, 기술적 한계를 분석하는 전문가. 코드 리뷰, 아키텍처 검토, 설계 분석 시 사용."
+description: "Analyzes risks, problems, and technical limitations from a devil's advocate perspective. Use for code reviews, architecture reviews, and design analysis."
 tools: Read, Grep, Glob
 model: sonnet
 ---

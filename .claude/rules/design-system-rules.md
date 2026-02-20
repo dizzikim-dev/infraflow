@@ -1,237 +1,126 @@
+---
+paths:
+  - "src/components/**/*.tsx"
+  - "src/app/**/*.tsx"
+---
+
 # Design System Rules
 
-> UI UX Pro Max 기반 디자인 시스템 규칙
+> UI/UX design system rules based on Dark Mode + Minimalism + AI Native preset.
 
-## 규칙 ID 체계
+## Rule IDs
 
-| ID | 규칙명 | 중요도 |
-|----|--------|--------|
-| DS-001 | 색상 토큰 사용 | P0 (필수) |
-| DS-002 | 노드 카테고리 색상 | P0 (필수) |
-| DS-003 | 다크모드 우선 | P0 (필수) |
-| DS-004 | 대비율 준수 | P0 (필수) |
-| DS-005 | 타이포그래피 일관성 | P1 (권장) |
-| DS-006 | 여백 스케일 사용 | P1 (권장) |
-| DS-007 | 애니메이션 일관성 | P1 (권장) |
-| DS-008 | 컴포넌트 스타일 준수 | P0 (필수) |
+| ID | Rule | Priority |
+|----|------|----------|
+| DS-001 | Use color tokens | P0 (Required) |
+| DS-002 | Node category colors | P0 (Required) |
+| DS-003 | Dark mode first | P0 (Required) |
+| DS-004 | Contrast ratio compliance | P0 (Required) |
+| DS-005 | Typography consistency | P1 (Recommended) |
+| DS-006 | Spacing scale | P1 (Recommended) |
+| DS-007 | Animation consistency | P1 (Recommended) |
+| DS-008 | Component style compliance | P0 (Required) |
 
 ---
 
-## DS-001: 색상 토큰 사용
+## DS-001: Use Color Tokens
 
-**규칙**: 하드코딩된 색상값 대신 CSS 변수 또는 Tailwind 토큰을 사용한다.
+Use CSS variables or Tailwind tokens instead of hardcoded color values.
 
 ```tsx
-// ❌ 잘못된 방식
+// Wrong
 <div style={{ background: '#1e293b' }}>
 <div className="bg-[#1e293b]">
 
-// ✅ 올바른 방식
+// Correct
 <div className="bg-infra-bg-secondary">
 <div style={{ background: 'var(--infra-bg-secondary)' }}>
 ```
 
-**토큰 참조**: `.claude/templates/infraflow-design-system.md`
+## DS-002: Node Category Colors
 
----
+Infrastructure nodes must use their category color:
 
-## DS-002: 노드 카테고리 색상
+| Category | Color | Class |
+|----------|-------|-------|
+| Security | Red #ef4444 | `border-infra-node-security` |
+| Network | Blue #3b82f6 | `border-infra-node-network` |
+| Compute | Green #22c55e | `border-infra-node-compute` |
+| Cloud | Purple #8b5cf6 | `border-infra-node-cloud` |
+| Storage | Amber #f59e0b | `border-infra-node-storage` |
+| Auth | Pink #ec4899 | `border-infra-node-auth` |
 
-**규칙**: 인프라 노드는 카테고리에 맞는 색상을 사용한다.
+## DS-003: Dark Mode First
 
-| 카테고리 | 색상 | 클래스 |
-|----------|------|--------|
-| Security | Red | `border-infra-node-security` |
-| Network | Blue | `border-infra-node-network` |
-| Compute | Green | `border-infra-node-compute` |
-| Cloud | Purple | `border-infra-node-cloud` |
-| Storage | Amber | `border-infra-node-storage` |
-| Auth | Pink | `border-infra-node-auth` |
+All UI elements default to dark mode:
+
+```
+Backgrounds: #0f172a (primary) → #1e293b (secondary) → #334155 (tertiary) → #475569 (hover)
+Text: #f8fafc (primary) → #e2e8f0 (secondary) → #94a3b8 (muted) → #64748b (subtle)
+```
+
+## DS-004: Contrast Ratio
+
+Maintain WCAG AA minimum (4.5:1 for normal text, 3:1 for large text):
+
+```
+Pass: #f8fafc on #0f172a → 15.8:1
+Pass: #f8fafc on #1e293b → 12.1:1
+Pass: #94a3b8 on #0f172a → 6.3:1
+Large text only: #3b82f6 on #1e293b → 4.2:1
+```
+
+## DS-005: Typography
+
+```
+Font families: Inter (UI), JetBrains Mono (code)
+Allowed sizes: 12px / 14px / 16px / 18px / 20px / 24px only
+No non-standard sizes (13px, 17px, etc.)
+```
+
+## DS-006: Spacing Scale
+
+Use 4px-based spacing scale only:
+
+```
+4 / 8 / 12 / 16 / 24 / 32 / 48px
+Use: p-1, p-2, p-3, p-4, p-6, p-8, p-12
+Never: p-[5px], m-[11px], p-[13px]
+```
+
+## DS-007: Animation
+
+```
+Fast: 150ms ease
+Base: 200ms ease (default)
+Slow: 300ms ease
+Never exceed 500ms for any transition
+```
+
+## DS-008: Component Styles
 
 ```tsx
-// 노드 컴포넌트 예시
-const FirewallNode = () => (
-  <div className="infra-node infra-node-security">
-    <FirewallIcon className="text-infra-node-security" />
-    <span>Firewall</span>
-  </div>
-);
-```
-
----
-
-## DS-003: 다크모드 우선
-
-**규칙**: 모든 UI 요소는 다크모드를 기본으로 설계한다.
-
-```
-배경 색상:
-├── bg-primary: #0f172a (캔버스)
-├── bg-secondary: #1e293b (카드, 노드)
-├── bg-tertiary: #334155 (입력 필드)
-└── bg-hover: #475569 (호버 상태)
-
-텍스트 색상:
-├── text-primary: #f8fafc (주요 텍스트)
-├── text-secondary: #e2e8f0 (부제목)
-├── text-muted: #94a3b8 (힌트)
-└── text-subtle: #64748b (비활성화)
-```
-
----
-
-## DS-004: 대비율 준수
-
-**규칙**: WCAG AA 기준 (4.5:1) 이상의 대비율을 유지한다.
-
-```
-✅ 충족 조합:
-- #f8fafc on #0f172a → 15.8:1
-- #f8fafc on #1e293b → 12.1:1
-- #94a3b8 on #0f172a → 6.3:1
-
-⚠️ 대형 텍스트만 가능 (3:1):
-- #3b82f6 on #1e293b → 4.2:1
-- #8b5cf6 on #1e293b → 3.8:1
-```
-
-**도구**: https://webaim.org/resources/contrastchecker/
-
----
-
-## DS-005: 타이포그래피 일관성
-
-**규칙**: 정의된 폰트 패밀리와 크기만 사용한다.
-
-```
-폰트 패밀리:
-├── UI 전반: Inter (font-sans)
-└── 코드/기술: JetBrains Mono (font-mono)
-
-폰트 크기:
-├── text-xs: 12px (배지, 메타)
-├── text-sm: 14px (노드 레이블)
-├── text-base: 16px (본문)
-├── text-lg: 18px (섹션 제목)
-├── text-xl: 20px (패널 제목)
-└── text-2xl: 24px (페이지 제목)
-```
-
----
-
-## DS-006: 여백 스케일 사용
-
-**규칙**: 4px 기반 여백 스케일을 사용한다.
-
-```
-여백 스케일:
-├── space-1: 4px
-├── space-2: 8px
-├── space-3: 12px
-├── space-4: 16px (기본 패딩)
-├── space-6: 24px
-├── space-8: 32px
-└── space-12: 48px
-```
-
-```tsx
-// ❌ 잘못된 방식
-<div className="p-[13px] m-[7px]">
-
-// ✅ 올바른 방식
-<div className="p-4 m-2">
-```
-
----
-
-## DS-007: 애니메이션 일관성
-
-**규칙**: 정의된 트랜지션 속도와 이징을 사용한다.
-
-```
-트랜지션:
-├── fast: 150ms ease
-├── base: 200ms ease (기본)
-└── slow: 300ms ease
-
-애니메이션:
-├── flow-dash: 흐름 점선 이동
-├── fade-in: 페이드 인
-└── pulse-slow: 상태 펄스
-```
-
-```tsx
-// ❌ 잘못된 방식
-<div style={{ transition: '0.3s' }}>
-
-// ✅ 올바른 방식
-<div className="transition-all duration-base">
-<div className="transition-colors duration-fast">
-```
-
----
-
-## DS-008: 컴포넌트 스타일 준수
-
-**규칙**: 정의된 컴포넌트 클래스를 사용한다.
-
-### 노드 컴포넌트
-```tsx
+// Nodes
 <div className="infra-node infra-node-{category}">
-  {/* 노드 내용 */}
-</div>
-```
 
-### 버튼
-```tsx
-<button className="btn-primary">Primary</button>
-<button className="btn-secondary">Secondary</button>
-<button className="btn-ghost">Ghost</button>
-```
+// Buttons
+<button className="btn-primary">    // Primary action
+<button className="btn-secondary">  // Secondary action
+<button className="btn-ghost">      // Tertiary action
 
-### 입력 필드
-```tsx
+// Inputs
 <input className="input-default" />
 <input className="prompt-input" />
-```
 
-### 글래스 패널
-```tsx
+// Panels
 <div className="glass-panel">
-  {/* 패널 내용 */}
-</div>
 ```
 
----
+## Anti-Patterns
 
-## 안티패턴 (피해야 할 것)
-
-```
-❌ 하드코딩된 색상값 사용
-❌ 7개 이상의 액센트 색상 사용
-❌ 4.5:1 미만의 대비율
-❌ 비표준 폰트 크기 (13px, 17px 등)
-❌ 비표준 여백 (5px, 11px 등)
-❌ 과도한 그림자/블러 효과
-❌ 0.5초 이상의 트랜지션
-❌ 일관성 없는 모서리 둥글기
-```
-
----
-
-## 체크리스트
-
-### 컴포넌트 생성 시
-- [ ] 색상 토큰 사용
-- [ ] 카테고리 색상 적용 (노드)
-- [ ] 대비율 확인
-- [ ] 폰트 스케일 준수
-- [ ] 여백 스케일 준수
-- [ ] 트랜지션 설정
-- [ ] 호버/포커스 상태
-
-### 코드 리뷰 시
-- [ ] 하드코딩된 색상 없음
-- [ ] 디자인 토큰 사용
-- [ ] 접근성 준수
-- [ ] 다크모드 호환
+- Hardcoded color values
+- More than 7 accent colors
+- Contrast ratio below 4.5:1
+- Non-standard font sizes or spacing
+- Transitions over 500ms
+- Inconsistent border radius

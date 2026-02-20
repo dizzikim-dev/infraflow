@@ -1,6 +1,6 @@
 ---
 name: design-reviewer
-description: "디자인 시스템 준수 검증, 색상 토큰/대비율/타이포그래피 검토 전문가. UI 컴포넌트 리뷰 시 사용."
+description: "Design system compliance verification, color token/contrast ratio/typography review expert. Use for UI component reviews."
 tools: Read, Grep, Glob
 model: sonnet
 ---

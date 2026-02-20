@@ -1,6 +1,6 @@
 ---
 name: tdd
-description: "RED-GREEN-REFACTOR TDD 사이클. 새 기능 구현 시 테스트 먼저 작성."
+description: "RED-GREEN-REFACTOR TDD cycle. Write tests first when implementing new features."
 user-invocable: true
 ---
 

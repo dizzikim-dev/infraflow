@@ -1,6 +1,6 @@
 ---
 name: infra-data
-description: "인프라 장비/솔루션 데이터 관리 전담. 장비 CRUD, 4-파일 동기화, 데이터 품질 검증. 인프라 데이터 변경 작업 시 사용."
+description: "Infrastructure component data management. Handles CRUD operations, 4-file sync, and data quality validation. Use for infrastructure data changes."
 tools: Read, Edit, Write, Grep, Glob, Bash
 ---
 

@@ -1,6 +1,16 @@
-# InfraFlow - AI Infrastructure Visualization Platform
+# InfraFlow - AI Infrastructure Consulting Platform
 
-> Prompt-driven infrastructure architecture visualization with animated data flows.
+> **Problem**: Infrastructure is too complex. No one — not customers, not even vendors — understands the full picture of how network/infra/cloud/HW/SW components interconnect. Vendors only know their own products. Customers don't know what they need or how to build it.
+>
+> **Solution**: A natural-language-driven platform that lets users visualize, modify, and understand infrastructure flows through prompts — backed by an ontology-based knowledge graph that maps real component interconnections and vendor products.
+
+## Three-Layer Value
+
+```
+Layer 3: RECOMMEND  — Match vendor/cloud products to infrastructure needs (consulting)
+Layer 2: UNDERSTAND — Ontology-based interconnection knowledge (why components connect)
+Layer 1: VISUALIZE  — Natural language → animated infrastructure diagrams (what you see)
+```
 
 ## Build & Test Commands
 
@@ -20,6 +30,7 @@ npm run lint         # ESLint
 - **Commits**: `feat:` / `fix:` / `refactor:` / `style:` / `docs:` / `test:`
 - **Styling**: Tailwind CSS with design tokens (no hardcoded colors). See `.claude/rules/design-system-rules.md`
 - **TDD**: Write test first, then implement. See `.claude/rules/tdd-rules.md`
+- **Bilingual**: All user-facing text must have both English and Korean (`field` + `fieldKo`)
 
 ## Verification Loop (IMPORTANT)
 
@@ -37,10 +48,13 @@ src/
 ├── components/edges/    # Edge/connection components
 ├── components/panels/   # UI panels (prompt, sidebar, control)
 ├── lib/parser/          # Prompt -> infra spec parser
-├── lib/data/            # Infrastructure database
+├── lib/data/            # Infrastructure database (SSoT)
+├── lib/knowledge/       # Ontology: relationships, patterns, failures, vendor catalog
 ├── lib/layout/          # Auto-layout engine
 ├── lib/animation/       # Animation engine
 ├── lib/export/          # Export (Terraform, K8s, PlantUML)
+├── lib/audit/           # Compliance & security audit
+├── lib/learning/        # Feedback, analytics, calibration
 ├── hooks/               # Custom React hooks
 ├── types/               # TypeScript types (infra.ts)
 └── app/api/             # API routes
@@ -56,6 +70,18 @@ When adding/modifying/deleting infrastructure components, update ALL 4 files:
 4. `docs/INFRASTRUCTURE_COMPONENTS.md` - Documentation
 
 Rules: `.claude/rules/infra-data-rules.md`
+
+## Ontology & Knowledge Graph
+
+The knowledge graph (`src/lib/knowledge/`) is the backbone that makes InfraFlow more than a drawing tool:
+
+- **Relationships**: How components connect and why (105+ typed relationships)
+- **Patterns**: Proven architecture designs (33+ patterns with detection)
+- **Anti-patterns**: Known bad designs to flag (45+ with severity)
+- **Vendor Catalog**: Real product data mapped to generic component types
+- **Recommendation**: Pattern + vendor catalog → product suggestions
+
+Rules: `.claude/rules/knowledge-rules.md`, `.claude/rules/recommendation-rules.md`
 
 ## Node Categories & Colors
 
@@ -80,7 +106,7 @@ Rules: `.claude/rules/infra-data-rules.md`
 
 ## Reference Documents
 
-- `docs/reference/project-vision.md` - Vision, goals, component library
+- `docs/reference/project-vision.md` - Vision, problem statement, three-layer value
 - `docs/reference/tech-stack.md` - Tech stack, agent roles
 - `docs/reference/development-roadmap.md` - Phase 1-3 roadmap
 - `docs/reference/skill-agent-integration.md` - Skill/agent integration workflows
