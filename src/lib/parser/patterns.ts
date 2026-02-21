@@ -55,6 +55,7 @@ export const nodeTypePatterns: NodeTypePattern[] = [
   { pattern: /router|라우터/i, type: 'router', label: 'Router', labelKo: '라우터' },
   { pattern: /switch.*l3|l3.*switch|레이어 ?3|스위치.*l3/i, type: 'switch-l3', label: 'L3 Switch', labelKo: 'L3 스위치' },
   { pattern: /switch|스위치/i, type: 'switch-l2', label: 'L2 Switch', labelKo: 'L2 스위치' },
+  { pattern: /wireless.*ap|wi-?fi.*ap|무선.*ap|액세스\s*포인트|access\s*point(?!.*control)/i, type: 'wireless-ap', label: 'Wireless AP', labelKo: '무선 AP' },
   { pattern: /sd-?wan|software.*defined.*wan/i, type: 'sd-wan', label: 'SD-WAN', labelKo: 'SD-WAN' },
   { pattern: /dns|도메인.*네임/i, type: 'dns', label: 'DNS', labelKo: 'DNS' },
 

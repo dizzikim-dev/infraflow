@@ -226,6 +226,7 @@ spec:
     app: ${sanitizeK8sName(node.id)}`,
 
   'sd-wan': () => `# SD-WAN: Managed externally`,
+  'wireless-ap': () => `# Wireless AP: Physical device, not applicable in Kubernetes`,
 
   'dns': (node, options) => `
 ---

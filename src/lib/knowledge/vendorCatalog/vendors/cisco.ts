@@ -105,12 +105,15 @@ export const ciscoCatalog: VendorCatalog = {
                 'Chassis': 'C9606R (6-slot, 8RU)',
                 'Max Switching Capacity': '25.6 Tbps',
                 'Max Forwarding Rate': '8 Bpps',
-                'Supported Optics': '400G QSFP-DD, 100G QSFP28, 50G SFP56, 25G SFP28, 10G SFP+',
+                'Supported Optics': '400G QSFP-DD, 200G QSFP56-DD, 100G QSFP28, 50G SFP56, 25G SFP28, 10G SFP+',
                 'Protocols': 'OSPF, EIGRP, BGP, ISIS, PIM, MPLS, VXLAN, EVPN',
                 'Security': 'MACsec, Encrypted Traffic Analytics, Talos',
                 'MTBF': '4,113,900 hours',
                 'Operating Temp': '-5°C to 45°C',
               },
+              formFactor: 'chassis',
+              licensingModel: 'perpetual',
+              maxThroughput: '25.6 Tbps',
               children: [
                 // ── Chassis ──
                 {
@@ -133,6 +136,8 @@ export const ciscoCatalog: VendorCatalog = {
                     'Operating Temp': '-5°C to 45°C (up to 6000 ft)',
                     'MTBF': '4,113,900 hours',
                   },
+                  formFactor: 'chassis',
+                  licensingModel: 'perpetual',
                   children: [],
                 },
                 // ── Supervisor Engines ──
@@ -165,6 +170,9 @@ export const ciscoCatalog: VendorCatalog = {
                     'Min IOS XE': '16.11.1',
                     'MTBF': '271,420 hours',
                   },
+                  formFactor: 'appliance',
+                  licensingModel: 'perpetual',
+                  maxThroughput: '9.6 Tbps',
                   children: [],
                 },
                 {
@@ -197,6 +205,9 @@ export const ciscoCatalog: VendorCatalog = {
                     'Min IOS XE': '17.7.1',
                     'MTBF': '305,880 hours',
                   },
+                  formFactor: 'appliance',
+                  licensingModel: 'perpetual',
+                  maxThroughput: '25.6 Tbps',
                   children: [],
                 },
                 // ── Line Cards ──
@@ -217,6 +228,8 @@ export const ciscoCatalog: VendorCatalog = {
                     'Supervisor': 'C9600X-SUP-2 only',
                     'Power': '420W',
                   },
+                  formFactor: 'appliance',
+                  licensingModel: 'perpetual',
                   children: [],
                 },
                 {
@@ -236,6 +249,8 @@ export const ciscoCatalog: VendorCatalog = {
                     'Supervisor': 'C9600X-SUP-2 only',
                     'Power': '420W',
                   },
+                  formFactor: 'appliance',
+                  licensingModel: 'perpetual',
                   children: [],
                 },
                 {
@@ -255,6 +270,8 @@ export const ciscoCatalog: VendorCatalog = {
                     'Uplink': '2×200G/100G + 2×400G',
                     'Power': '420W',
                   },
+                  formFactor: 'appliance',
+                  licensingModel: 'perpetual',
                   children: [],
                 },
                 {
@@ -273,6 +290,8 @@ export const ciscoCatalog: VendorCatalog = {
                     'Supervisor': 'SUP-1 and SUP-2',
                     'Power': '200-280W',
                   },
+                  formFactor: 'appliance',
+                  licensingModel: 'perpetual',
                   children: [],
                 },
                 {
@@ -291,6 +310,8 @@ export const ciscoCatalog: VendorCatalog = {
                     'Supervisor': 'SUP-1 and SUP-2',
                     'Power': '230-300W',
                   },
+                  formFactor: 'appliance',
+                  licensingModel: 'perpetual',
                   children: [],
                 },
                 {
@@ -309,6 +330,8 @@ export const ciscoCatalog: VendorCatalog = {
                     'Supervisor': 'SUP-1 and SUP-2',
                     'Power': '315W',
                   },
+                  formFactor: 'appliance',
+                  licensingModel: 'perpetual',
                   children: [],
                 },
                 {
@@ -327,6 +350,8 @@ export const ciscoCatalog: VendorCatalog = {
                     'Supervisor': 'SUP-1 only',
                     'Power': '160W',
                   },
+                  formFactor: 'appliance',
+                  licensingModel: 'perpetual',
                   children: [],
                 },
                 // ── Power Supplies ──
@@ -346,6 +371,8 @@ export const ciscoCatalog: VendorCatalog = {
                     'Efficiency': '94%',
                     'Input Current': '17.6A @ 115VAC',
                   },
+                  formFactor: 'appliance',
+                  licensingModel: 'perpetual',
                   children: [],
                 },
                 {
@@ -364,6 +391,8 @@ export const ciscoCatalog: VendorCatalog = {
                     'Efficiency': '94%',
                     'Input Current': '10.5A @ 115VAC',
                   },
+                  formFactor: 'appliance',
+                  licensingModel: 'perpetual',
                   children: [],
                 },
                 {
@@ -382,6 +411,8 @@ export const ciscoCatalog: VendorCatalog = {
                     'Efficiency': '92%',
                     'Input Current': '60A @ -40VDC',
                   },
+                  formFactor: 'appliance',
+                  licensingModel: 'perpetual',
                   children: [],
                 },
               ],

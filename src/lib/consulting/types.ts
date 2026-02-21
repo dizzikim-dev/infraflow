@@ -6,7 +6,7 @@
  */
 
 import type { InfraNodeType, InfraSpec, NodeCategory } from '@/types/infra';
-import type { ArchitecturePattern } from '@/lib/knowledge/types';
+import type { ArchitecturePattern, WafPillarScores } from '@/lib/knowledge/types';
 
 // ---------------------------------------------------------------------------
 // Requirements Intake
@@ -73,6 +73,9 @@ export interface ConsultingRequirements {
 
   // Additional notes
   notes?: string;
+
+  // Well-Architected Framework priorities
+  wafPriorities?: WafPillarScores;
 }
 
 // ---------------------------------------------------------------------------

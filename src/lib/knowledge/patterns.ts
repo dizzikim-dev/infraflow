@@ -91,6 +91,13 @@ const basicPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-004', 'PAT-006', 'PAT-018'],
     evolvesFrom: ['PAT-002', 'PAT-003'],
     tags: ['web', '3-tier', 'classic', 'layered', 'enterprise'],
+    wafPillars: {
+      operationalExcellence: 3,
+      security: 2,
+      reliability: 3,
+      performanceEfficiency: 3,
+      costOptimization: 3,
+    },
     trust: {
       confidence: 0.95,
       sources: [
@@ -137,6 +144,13 @@ const basicPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-001', 'PAT-004'],
     evolvesFrom: ['PAT-003'],
     tags: ['web', '2-tier', 'simple', 'small-scale'],
+    wafPillars: {
+      operationalExcellence: 2,
+      security: 1,
+      reliability: 2,
+      performanceEfficiency: 3,
+      costOptimization: 4,
+    },
     trust: {
       confidence: 0.9,
       sources: [
@@ -181,6 +195,13 @@ const basicPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-002', 'PAT-001'],
     evolvesFrom: [],
     tags: ['monolithic', 'single-server', 'simple', 'prototype'],
+    wafPillars: {
+      operationalExcellence: 2,
+      security: 1,
+      reliability: 1,
+      performanceEfficiency: 2,
+      costOptimization: 5,
+    },
     trust: {
       confidence: 0.9,
       sources: [
@@ -226,6 +247,13 @@ const basicPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-006', 'PAT-017', 'PAT-018'],
     evolvesFrom: ['PAT-001', 'PAT-002'],
     tags: ['load-balancer', 'horizontal-scaling', 'high-availability', 'web'],
+    wafPillars: {
+      operationalExcellence: 3,
+      security: 2,
+      reliability: 4,
+      performanceEfficiency: 4,
+      costOptimization: 3,
+    },
     trust: {
       confidence: 0.95,
       sources: [
@@ -273,6 +301,13 @@ const basicPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-012', 'PAT-014'],
     evolvesFrom: [],
     tags: ['dmz', 'security', 'firewall', 'waf', 'network-segmentation'],
+    wafPillars: {
+      operationalExcellence: 3,
+      security: 4,
+      reliability: 3,
+      performanceEfficiency: 3,
+      costOptimization: 3,
+    },
     trust: {
       confidence: 0.95,
       sources: [
@@ -328,6 +363,13 @@ const extendedPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-017'],
     evolvesFrom: ['PAT-001', 'PAT-004'],
     tags: ['microservices', 'kubernetes', 'container', 'distributed', 'cloud-native'],
+    wafPillars: {
+      operationalExcellence: 4,
+      security: 3,
+      reliability: 4,
+      performanceEfficiency: 4,
+      costOptimization: 2,
+    },
     trust: {
       confidence: 0.9,
       sources: [
@@ -375,6 +417,13 @@ const extendedPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-006'],
     evolvesFrom: ['PAT-001'],
     tags: ['event-driven', 'async', 'message-broker', 'scalable'],
+    wafPillars: {
+      operationalExcellence: 4,
+      security: 3,
+      reliability: 3,
+      performanceEfficiency: 4,
+      costOptimization: 3,
+    },
     trust: {
       confidence: 0.85,
       sources: [
@@ -421,6 +470,13 @@ const extendedPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-006'],
     evolvesFrom: ['PAT-001'],
     tags: ['api-gateway', 'waf', 'load-balancer', 'api', 'routing'],
+    wafPillars: {
+      operationalExcellence: 4,
+      security: 3,
+      reliability: 4,
+      performanceEfficiency: 5,
+      costOptimization: 3,
+    },
     trust: {
       confidence: 0.9,
       sources: [
@@ -468,6 +524,13 @@ const extendedPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-018'],
     evolvesFrom: [],
     tags: ['database', 'cluster', 'cache', 'backup', 'high-availability'],
+    wafPillars: {
+      operationalExcellence: 3,
+      security: 2,
+      reliability: 4,
+      performanceEfficiency: 5,
+      costOptimization: 3,
+    },
     trust: {
       confidence: 0.9,
       sources: [
@@ -514,6 +577,13 @@ const extendedPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-014', 'PAT-018'],
     evolvesFrom: ['PAT-001'],
     tags: ['cdn', 'dns', 'global', 'performance', 'content-delivery'],
+    wafPillars: {
+      operationalExcellence: 4,
+      security: 3,
+      reliability: 5,
+      performanceEfficiency: 4,
+      costOptimization: 2,
+    },
     trust: {
       confidence: 0.9,
       sources: [
@@ -571,6 +641,13 @@ const securityPatterns: ArchitecturePattern[] = [
     evolvesTo: [],
     evolvesFrom: ['PAT-012', 'PAT-013'],
     tags: ['zero-trust', 'security', 'nac', 'mfa', 'iam', 'micro-segmentation'],
+    wafPillars: {
+      operationalExcellence: 3,
+      security: 5,
+      reliability: 4,
+      performanceEfficiency: 2,
+      costOptimization: 2,
+    },
     trust: {
       confidence: 0.95,
       sources: [
@@ -619,6 +696,13 @@ const securityPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-011'],
     evolvesFrom: ['PAT-005'],
     tags: ['defense-in-depth', 'security', 'layered', 'ids-ips', 'dlp'],
+    wafPillars: {
+      operationalExcellence: 3,
+      security: 5,
+      reliability: 4,
+      performanceEfficiency: 2,
+      costOptimization: 2,
+    },
     trust: {
       confidence: 0.95,
       sources: [
@@ -668,6 +752,13 @@ const securityPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-011'],
     evolvesFrom: [],
     tags: ['vpn', 'remote-access', 'mfa', 'ldap', 'security'],
+    wafPillars: {
+      operationalExcellence: 3,
+      security: 4,
+      reliability: 3,
+      performanceEfficiency: 3,
+      costOptimization: 3,
+    },
     trust: {
       confidence: 0.95,
       sources: [
@@ -717,6 +808,13 @@ const securityPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-012', 'PAT-018'],
     evolvesFrom: ['PAT-005', 'PAT-010'],
     tags: ['web-hosting', 'security', 'firewall', 'waf', 'production'],
+    wafPillars: {
+      operationalExcellence: 3,
+      security: 4,
+      reliability: 4,
+      performanceEfficiency: 4,
+      costOptimization: 3,
+    },
     trust: {
       confidence: 0.95,
       sources: [
@@ -765,6 +863,13 @@ const securityPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-012', 'PAT-011'],
     evolvesFrom: [],
     tags: ['segmentation', 'network', 'firewall', 'switch', 'router', 'isolation'],
+    wafPillars: {
+      operationalExcellence: 4,
+      security: 5,
+      reliability: 4,
+      performanceEfficiency: 3,
+      costOptimization: 2,
+    },
     trust: {
       confidence: 0.95,
       sources: [
@@ -820,6 +925,13 @@ const cloudPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-017'],
     evolvesFrom: [],
     tags: ['hybrid-cloud', 'private-cloud', 'vpn', 'multi-cloud', 'migration'],
+    wafPillars: {
+      operationalExcellence: 4,
+      security: 3,
+      reliability: 4,
+      performanceEfficiency: 3,
+      costOptimization: 3,
+    },
     trust: {
       confidence: 0.9,
       sources: [
@@ -870,6 +982,13 @@ const cloudPatterns: ArchitecturePattern[] = [
     evolvesTo: [],
     evolvesFrom: ['PAT-004', 'PAT-006', 'PAT-016'],
     tags: ['cloud-native', 'aws', 'kubernetes', 'container', 'auto-scaling'],
+    wafPillars: {
+      operationalExcellence: 5,
+      security: 3,
+      reliability: 4,
+      performanceEfficiency: 5,
+      costOptimization: 3,
+    },
     trust: {
       confidence: 0.9,
       sources: [
@@ -921,6 +1040,13 @@ const cloudPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-017'],
     evolvesFrom: ['PAT-001', 'PAT-004', 'PAT-009', 'PAT-010', 'PAT-014'],
     tags: ['high-availability', 'redundancy', 'failover', 'backup', 'mission-critical'],
+    wafPillars: {
+      operationalExcellence: 5,
+      security: 3,
+      reliability: 4,
+      performanceEfficiency: 4,
+      costOptimization: 4,
+    },
     trust: {
       confidence: 0.95,
       sources: [
@@ -976,6 +1102,13 @@ const telecomPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-TEL-002'],
     evolvesFrom: [],
     tags: ['telecom', 'dedicated-line', 'single-access', 'enterprise', 'wan'],
+    wafPillars: {
+      operationalExcellence: 2,
+      security: 2,
+      reliability: 1,
+      performanceEfficiency: 3,
+      costOptimization: 4,
+    },
     trust: {
       confidence: 0.95,
       sources: [
@@ -1023,6 +1156,13 @@ const telecomPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-TEL-004'],
     evolvesFrom: ['PAT-TEL-001'],
     tags: ['telecom', 'dedicated-line', 'dual-access', 'redundancy', 'enterprise'],
+    wafPillars: {
+      operationalExcellence: 3,
+      security: 2,
+      reliability: 4,
+      performanceEfficiency: 3,
+      costOptimization: 3,
+    },
     trust: {
       confidence: 0.95,
       sources: [
@@ -1070,6 +1210,13 @@ const telecomPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-TEL-004'],
     evolvesFrom: [],
     tags: ['telecom', 'mpls', 'vpn', 'hub-spoke', 'multi-site', 'enterprise'],
+    wafPillars: {
+      operationalExcellence: 3,
+      security: 3,
+      reliability: 4,
+      performanceEfficiency: 4,
+      costOptimization: 2,
+    },
     trust: {
       confidence: 0.95,
       sources: [
@@ -1117,6 +1264,13 @@ const telecomPatterns: ArchitecturePattern[] = [
     evolvesTo: [],
     evolvesFrom: ['PAT-TEL-002', 'PAT-TEL-003'],
     tags: ['telecom', 'hybrid-wan', 'sd-wan', 'dedicated-line', 'internet', 'multi-path'],
+    wafPillars: {
+      operationalExcellence: 4,
+      security: 3,
+      reliability: 4,
+      performanceEfficiency: 4,
+      costOptimization: 4,
+    },
     trust: {
       confidence: 0.85,
       sources: [
@@ -1165,6 +1319,13 @@ const telecomPatterns: ArchitecturePattern[] = [
     evolvesTo: [],
     evolvesFrom: [],
     tags: ['telecom', '5g', 'private-5g', 'iot', 'smart-factory', 'low-latency'],
+    wafPillars: {
+      operationalExcellence: 3,
+      security: 3,
+      reliability: 4,
+      performanceEfficiency: 5,
+      costOptimization: 1,
+    },
     trust: {
       confidence: 0.85,
       sources: [
@@ -1212,6 +1373,13 @@ const telecomPatterns: ArchitecturePattern[] = [
     evolvesTo: [],
     evolvesFrom: [],
     tags: ['telecom', 'idc', 'dual-homing', 'ring-network', 'redundancy', 'high-availability'],
+    wafPillars: {
+      operationalExcellence: 3,
+      security: 2,
+      reliability: 3,
+      performanceEfficiency: 4,
+      costOptimization: 3,
+    },
     trust: {
       confidence: 0.85,
       sources: [
@@ -1266,6 +1434,13 @@ const k8sPatterns: ArchitecturePattern[] = [
     evolvesTo: [],
     evolvesFrom: ['PAT-006'],
     tags: ['kubernetes', 'service-mesh', 'microservices', 'istio', 'envoy'],
+    wafPillars: {
+      operationalExcellence: 4,
+      security: 3,
+      reliability: 4,
+      performanceEfficiency: 4,
+      costOptimization: 2,
+    },
     trust: {
       confidence: 0.85,
       sources: [
@@ -1312,6 +1487,13 @@ const k8sPatterns: ArchitecturePattern[] = [
     evolvesTo: [],
     evolvesFrom: ['PAT-007'],
     tags: ['kubernetes', 'gitops', 'cicd', 'argocd', 'flux'],
+    wafPillars: {
+      operationalExcellence: 5,
+      security: 4,
+      reliability: 5,
+      performanceEfficiency: 4,
+      costOptimization: 2,
+    },
     trust: {
       confidence: 0.85,
       sources: [
@@ -1359,6 +1541,13 @@ const k8sPatterns: ArchitecturePattern[] = [
     evolvesTo: [],
     evolvesFrom: ['PAT-K8S-002'],
     tags: ['kubernetes', 'blue-green', 'canary', 'zero-downtime', 'deployment'],
+    wafPillars: {
+      operationalExcellence: 5,
+      security: 4,
+      reliability: 5,
+      performanceEfficiency: 4,
+      costOptimization: 1,
+    },
     trust: {
       confidence: 0.85,
       sources: [
@@ -1413,6 +1602,13 @@ const securityExtPatterns: ArchitecturePattern[] = [
     evolvesTo: [],
     evolvesFrom: ['PAT-012', 'PAT-013'],
     tags: ['security', 'zero-trust', 'ztna', 'identity', 'micro-segmentation'],
+    wafPillars: {
+      operationalExcellence: 5,
+      security: 5,
+      reliability: 4,
+      performanceEfficiency: 2,
+      costOptimization: 1,
+    },
     trust: {
       confidence: 0.95,
       sources: [
@@ -1461,6 +1657,13 @@ const securityExtPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-SEC-018'],
     evolvesFrom: ['PAT-015'],
     tags: ['security', 'sase', 'sd-wan', 'zero-trust', 'cloud-security'],
+    wafPillars: {
+      operationalExcellence: 3,
+      security: 5,
+      reliability: 3,
+      performanceEfficiency: 2,
+      costOptimization: 2,
+    },
     trust: {
       confidence: 0.85,
       sources: [
@@ -1509,6 +1712,13 @@ const securityExtPatterns: ArchitecturePattern[] = [
     evolvesTo: [],
     evolvesFrom: ['PAT-SEC-017'],
     tags: ['security', 'soc', 'siem', 'soar', 'incident-response', 'monitoring'],
+    wafPillars: {
+      operationalExcellence: 4,
+      security: 5,
+      reliability: 4,
+      performanceEfficiency: 3,
+      costOptimization: 3,
+    },
     trust: {
       confidence: 0.90,
       sources: [
@@ -1563,6 +1773,13 @@ const hybridPatterns: ArchitecturePattern[] = [
     evolvesTo: ['PAT-HYB-002'],
     evolvesFrom: ['PAT-018'],
     tags: ['hybrid', 'disaster-recovery', 'cloud', 'failover', 'backup'],
+    wafPillars: {
+      operationalExcellence: 4,
+      security: 3,
+      reliability: 4,
+      performanceEfficiency: 3,
+      costOptimization: 3,
+    },
     trust: {
       confidence: 0.85,
       sources: [
@@ -1610,6 +1827,13 @@ const hybridPatterns: ArchitecturePattern[] = [
     evolvesTo: [],
     evolvesFrom: ['PAT-HYB-001', 'PAT-016'],
     tags: ['hybrid', 'multi-cloud', 'active-active', 'vendor-diversity', 'global'],
+    wafPillars: {
+      operationalExcellence: 5,
+      security: 4,
+      reliability: 5,
+      performanceEfficiency: 4,
+      costOptimization: 2,
+    },
     trust: {
       confidence: 0.85,
       sources: [

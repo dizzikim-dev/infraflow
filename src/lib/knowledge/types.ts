@@ -114,6 +114,22 @@ export interface ComponentRelationship extends KnowledgeEntryBase {
 // Layer 3: Architecture Patterns
 // ---------------------------------------------------------------------------
 
+// Well-Architected Framework Pillars
+export type WafPillar =
+  | 'operationalExcellence'
+  | 'security'
+  | 'reliability'
+  | 'performanceEfficiency'
+  | 'costOptimization';
+
+export interface WafPillarScores {
+  operationalExcellence: number; // 0-5
+  security: number;              // 0-5
+  reliability: number;           // 0-5
+  performanceEfficiency: number; // 0-5
+  costOptimization: number;      // 0-5
+}
+
 export interface ArchitecturePattern extends KnowledgeEntryBase {
   type: 'pattern';
   name: string;
@@ -128,6 +144,7 @@ export interface ArchitecturePattern extends KnowledgeEntryBase {
   notSuitableForKo: string[];
   evolvesTo: string[];
   evolvesFrom: string[];
+  wafPillars: WafPillarScores;
 }
 
 // ---------------------------------------------------------------------------

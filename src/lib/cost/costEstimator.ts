@@ -167,6 +167,12 @@ const BASE_COSTS: Record<InfraNodeType, {
     gcp: { service: 'Network Connectivity Center', cost: 50, tier: 'Standard' },
     onprem: { service: 'SD-WAN Appliance', cost: 400, tier: 'Estimated' },
   },
+  'wireless-ap': {
+    aws: { service: 'N/A (Physical AP)', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A (Physical AP)', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A (Physical AP)', cost: 0, tier: 'N/A' },
+    onprem: { service: 'Wireless Access Point', cost: 500, tier: 'Estimated' },
+  },
   dns: {
     aws: { service: 'Route 53', cost: 0.5, tier: 'Per Zone' },
     azure: { service: 'Azure DNS', cost: 0.5, tier: 'Per Zone' },

@@ -310,6 +310,49 @@ export const networkComponents: Record<string, InfraComponent> = {
     vendors: ['Cisco Viptela', 'VMware VeloCloud', 'Fortinet', 'Palo Alto Prisma'],
   },
 
+  'wireless-ap': {
+    id: 'wireless-ap',
+    name: 'Wireless Access Point',
+    nameKo: '무선 액세스 포인트',
+    category: 'network',
+    description: 'Provides wireless connectivity (Wi-Fi) for endpoints, managed centrally via controller or cloud.',
+    descriptionKo: '엔드포인트에 무선(Wi-Fi) 연결을 제공하며, 컨트롤러 또는 클라우드로 중앙 관리됩니다.',
+    functions: [
+      'Wi-Fi radio transmission (2.4G, 5G, 6G)',
+      'Client authentication (802.1X, PSK, OWE)',
+      'SSID broadcasting and VLAN mapping',
+      'Roaming support (802.11r/k/v)',
+      'Wireless intrusion detection (WIDS/WIPS)',
+    ],
+    functionsKo: [
+      'Wi-Fi 무선 전송 (2.4G, 5G, 6G)',
+      '클라이언트 인증 (802.1X, PSK, OWE)',
+      'SSID 브로드캐스팅 및 VLAN 매핑',
+      '로밍 지원 (802.11r/k/v)',
+      '무선 침입 탐지 (WIDS/WIPS)',
+    ],
+    features: [
+      'Wi-Fi 6/6E/7 support',
+      'PoE powered',
+      'Band steering and load balancing',
+      'Mesh networking',
+    ],
+    featuresKo: [
+      'Wi-Fi 6/6E/7 지원',
+      'PoE 전원 공급',
+      '밴드 스티어링 및 부하 분산',
+      '메시 네트워킹',
+    ],
+    recommendedPolicies: [
+      { name: 'WPA3 Enforcement', nameKo: 'WPA3 적용', description: 'Use WPA3 for wireless security', priority: 'critical', category: 'security' },
+      { name: 'Rogue AP Detection', nameKo: '불법 AP 탐지', description: 'Enable WIDS to detect unauthorized APs', priority: 'high', category: 'security' },
+      { name: 'Guest Network Isolation', nameKo: '게스트 네트워크 격리', description: 'Isolate guest SSID from corporate network', priority: 'high', category: 'access' },
+    ],
+    tier: 'internal',
+    protocols: ['802.11ax', '802.11be', '802.1X'],
+    vendors: ['Cisco Catalyst AP', 'Fortinet FortiAP', 'Aruba', 'Ruckus', 'Ubiquiti'],
+  },
+
   'api-gateway': {
     id: 'api-gateway',
     name: 'API Gateway',

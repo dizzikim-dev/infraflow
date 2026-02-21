@@ -59,6 +59,17 @@ export interface ProductNode {
   /** Security capabilities (MACsec, ETA, TrustSec, etc.) */
   securityCapabilities?: string[];
 
+  // ── Product Lifecycle & Classification Fields ──
+
+  /** nodeId of the replacement product (for EOL products, e.g., 'pan-pa-3400') */
+  replacedBy?: string;
+  /** Licensing model for procurement planning */
+  licensingModel?: 'perpetual' | 'subscription' | 'credit-based' | 'as-a-service';
+  /** Maximum throughput for performance tier matching (e.g., '520 Gbps', '25.6 Tbps') */
+  maxThroughput?: string;
+  /** Physical form factor for deployment environment filtering */
+  formFactor?: 'appliance' | 'chassis' | 'virtual' | 'cloud' | 'container' | 'rugged';
+
   /** Child nodes (sub-categories or models) */
   children: ProductNode[];
 }

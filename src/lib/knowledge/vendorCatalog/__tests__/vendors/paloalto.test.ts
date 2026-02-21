@@ -70,8 +70,8 @@ describe('Palo Alto Networks vendor catalog', () => {
       expect(paloaltoCatalog.stats.categoriesCount).toBe(computed.categoriesCount);
     });
 
-    it('should have 70 total nodes', () => {
-      expect(paloaltoCatalog.stats.totalProducts).toBe(70);
+    it('should have 76 total nodes', () => {
+      expect(paloaltoCatalog.stats.totalProducts).toBe(76);
     });
 
     it('should have maxDepth of 2', () => {
@@ -235,10 +235,10 @@ describe('Palo Alto Networks vendor catalog', () => {
   // Network Security category deep-dive
   // -------------------------------------------------------------------------
   describe('Network Security category', () => {
-    it('should have PA-Series with 23 models', () => {
+    it('should have PA-Series with 29 models', () => {
       const node = findNodeById(paloaltoCatalog.products, 'pan-pa-series');
       expect(node).toBeDefined();
-      expect(node!.children).toHaveLength(23);
+      expect(node!.children).toHaveLength(29);
       expect(node!.infraNodeTypes).toEqual(['firewall']);
     });
 
@@ -467,9 +467,9 @@ describe('Palo Alto Networks vendor catalog', () => {
   // Leaf node counts
   // -------------------------------------------------------------------------
   describe('leaf node counts', () => {
-    it('should have 57 total leaf nodes', () => {
+    it('should have 63 total leaf nodes', () => {
       const leaves = getLeafNodes(paloaltoCatalog.products);
-      expect(leaves).toHaveLength(57);
+      expect(leaves).toHaveLength(63);
     });
 
     it('should match countLeafNodes helper', () => {
@@ -493,10 +493,12 @@ describe('Palo Alto Networks vendor catalog', () => {
       const validTypes = new Set([
         'firewall', 'waf', 'ids-ips', 'vpn-gateway', 'nac', 'dlp',
         'sase-gateway', 'ztna-broker', 'casb', 'siem', 'soar',
-        'router', 'switch-l2', 'switch-l3', 'load-balancer', 'api-gateway', 'sd-wan', 'dns', 'cdn',
+        'cctv-camera', 'nvr', 'video-server', 'access-control',
+        'router', 'switch-l2', 'switch-l3', 'load-balancer', 'api-gateway', 'sd-wan', 'dns', 'cdn', 'wireless-ap',
         'web-server', 'app-server', 'db-server', 'container', 'vm', 'kubernetes',
+        'kafka', 'rabbitmq', 'prometheus', 'grafana',
         'aws-vpc', 'azure-vnet', 'gcp-network', 'private-cloud',
-        'san-nas', 'object-storage', 'backup', 'cache', 'storage',
+        'san-nas', 'object-storage', 'backup', 'cache', 'elasticsearch', 'storage',
         'ldap-ad', 'sso', 'mfa', 'iam',
         'user', 'internet', 'zone',
       ]);
@@ -583,9 +585,9 @@ describe('Palo Alto Networks vendor catalog', () => {
       expect(nodes).toHaveLength(21);
     });
 
-    it('should have 43 nodes at depth 2', () => {
+    it('should have 49 nodes at depth 2', () => {
       const nodes = getNodesByDepth(paloaltoCatalog.products, 2);
-      expect(nodes).toHaveLength(43);
+      expect(nodes).toHaveLength(49);
     });
 
     it('should have no nodes at depth 3', () => {

@@ -1,17 +1,18 @@
 /**
  * Pattern Matching Engine — Consulting Module
  *
- * Scores architecture patterns against user requirements (0-100) across four dimensions:
- *   1. Scale fitness (0-25)
- *   2. Security fit (0-25)
- *   3. Architecture fit (0-25)
- *   4. Complexity fit (0-25)
+ * Scores architecture patterns against user requirements (0-100) across five dimensions:
+ *   1. Scale fitness (0-20)
+ *   2. Security fit (0-20)
+ *   3. Architecture fit (0-20)
+ *   4. Complexity fit (0-20)
+ *   5. WAF pillar fit (0-20)
  *
  * Produces a primary recommendation, alternatives, and unmatched requirements.
  */
 
 import type { InfraNodeType } from '@/types/infra';
-import type { ArchitecturePattern } from '@/lib/knowledge/types';
+import type { ArchitecturePattern, WafPillarScores } from '@/lib/knowledge/types';
 import { ARCHITECTURE_PATTERNS } from '@/lib/knowledge/patterns';
 import type {
   ConsultingRequirements,
@@ -90,7 +91,7 @@ function getExpectedComplexityCeiling(
 // ---------------------------------------------------------------------------
 
 /**
- * Scale fitness (0-25).
+ * Scale fitness (0-20).
  * Compares org size / user counts to pattern scalability.
  */
 function scoreScaleFitness(
@@ -105,17 +106,17 @@ function scoreScaleFitness(
   const actual = SCALABILITY_RANK[pattern.scalability] ?? 1;
   const distance = Math.abs(expected - actual);
 
-  // Perfect match → 25, 1 step away → 17, 2 → 9, 3 → 0
-  let score = Math.max(0, 25 - distance * 8);
+  // Perfect match → 20, 1 step away → 14, 2 → 7, 3 → 0
+  let score = Math.max(0, 20 - distance * 6);
 
   // Bonus: auto scalability covers all sizes
   if (pattern.scalability === 'auto' && expected >= 2) {
-    score = 25;
+    score = 20;
   }
 
   const criteria: string[] = [];
   const criteriaKo: string[] = [];
-  if (score >= 17) {
+  if (score >= 14) {
     criteria.push(`Scalability matches: ${pattern.scalability} for ${requirements.organizationSize} org`);
     criteriaKo.push(`확장성 일치: ${requirements.organizationSize} 조직에 ${pattern.scalability} 확장성`);
   }
@@ -124,7 +125,7 @@ function scoreScaleFitness(
 }
 
 /**
- * Security fit (0-25).
+ * Security fit (0-20).
  * Matches security level + compliance frameworks to pattern security components.
  */
 function scoreSecurityFit(
@@ -159,30 +160,30 @@ function scoreSecurityFit(
 
   if (requirements.securityLevel === 'critical') {
     // Critical security: more security components = higher score
-    score = Math.min(20, securityCount * 4) * weight;
+    score = Math.min(16, securityCount * 3.2) * weight;
     if (securityCount >= minExpected) {
       criteria.push(`${securityCount} security components meet critical security needs`);
       criteriaKo.push(`${securityCount}개 보안 구성요소가 크리티컬 보안 요구사항 충족`);
     }
   } else if (requirements.securityLevel === 'basic') {
     // Basic: don't penalize simple patterns, but give moderate score to all
-    score = securityCount >= minExpected ? 15 : 10;
+    score = securityCount >= minExpected ? 12 : 8;
     // Simple patterns with no security are fine for basic
     if (securityCount === 0) {
-      score = 18;
+      score = 14;
       criteria.push('Simple architecture suitable for basic security needs');
       criteriaKo.push('기본 보안 요구에 적합한 단순 아키텍처');
     }
   } else {
     // Standard/High: proportional to security components
-    score = Math.min(20, securityCount * (20 / Math.max(minExpected, 1))) * weight;
+    score = Math.min(16, securityCount * (16 / Math.max(minExpected, 1))) * weight;
     if (securityCount >= minExpected) {
       criteria.push(`Security components match ${requirements.securityLevel} security level`);
       criteriaKo.push(`보안 구성요소가 ${requirements.securityLevel} 보안 수준에 부합`);
     }
   }
 
-  // Compliance framework matching (up to 5 bonus points)
+  // Compliance framework matching (up to 4 bonus points)
   if (requirements.complianceFrameworks.length > 0) {
     const tags = pattern.tags.map((t) => t.toLowerCase());
     const bestFor = pattern.bestForKo.join(' ').toLowerCase();
@@ -204,17 +205,17 @@ function scoreSecurityFit(
     }
 
     if (complianceMatches > 0) {
-      score += Math.min(5, complianceMatches * 2.5);
+      score += Math.min(4, complianceMatches * 2);
       criteria.push(`Compliance frameworks matched: ${complianceMatches}`);
       criteriaKo.push(`준수 프레임워크 일치: ${complianceMatches}개`);
     }
   }
 
-  return { score: Math.min(25, Math.round(score)), criteria, criteriaKo };
+  return { score: Math.min(20, Math.round(score)), criteria, criteriaKo };
 }
 
 /**
- * Architecture fit (0-25).
+ * Architecture fit (0-20).
  * Matches cloud preference + industry to pattern characteristics.
  */
 function scoreArchitectureFit(
@@ -227,19 +228,19 @@ function scoreArchitectureFit(
 
   const tags = pattern.tags.map((t) => t.toLowerCase());
 
-  // Cloud preference matching (0-15)
+  // Cloud preference matching (0-12)
   const cloudScore = scoreCloudPreference(requirements.cloudPreference, pattern, tags);
   score += cloudScore.score;
   criteria.push(...cloudScore.criteria);
   criteriaKo.push(...cloudScore.criteriaKo);
 
-  // Industry matching (0-10)
+  // Industry matching (0-8)
   const industryScore = scoreIndustryMatch(requirements.industry, pattern, tags);
   score += industryScore.score;
   criteria.push(...industryScore.criteria);
   criteriaKo.push(...industryScore.criteriaKo);
 
-  return { score: Math.min(25, Math.round(score)), criteria, criteriaKo };
+  return { score: Math.min(20, Math.round(score)), criteria, criteriaKo };
 }
 
 function scoreCloudPreference(
@@ -272,49 +273,49 @@ function scoreCloudPreference(
   switch (pref) {
     case 'cloud-native':
       if (hasCloudTag || hasCloudComponents) {
-        score = 15;
+        score = 12;
         criteria.push('Cloud-native architecture match');
         criteriaKo.push('클라우드 네이티브 아키텍처 일치');
       } else if (hasHybridTag) {
-        score = 8;
+        score = 6;
       } else {
-        score = 3;
+        score = 2;
       }
       break;
 
     case 'on-premise':
       if (hasOnPremTag && !hasCloudTag) {
-        score = 15;
+        score = 12;
         criteria.push('On-premise architecture match');
         criteriaKo.push('온프레미스 아키텍처 일치');
       } else if (hasHybridTag) {
-        score = 8;
+        score = 6;
       } else if (hasCloudTag) {
-        score = 3;
+        score = 2;
       } else {
-        score = 10;
+        score = 8;
       }
       break;
 
     case 'hybrid':
       if (hasHybridTag) {
-        score = 15;
+        score = 12;
         criteria.push('Hybrid architecture match');
         criteriaKo.push('하이브리드 아키텍처 일치');
       } else {
-        score = 8;
+        score = 6;
       }
       break;
 
     case 'multi-cloud':
       if (tags.includes('multi-cloud') || tags.includes('vendor-diversity')) {
-        score = 15;
+        score = 12;
         criteria.push('Multi-cloud architecture match');
         criteriaKo.push('멀티 클라우드 아키텍처 일치');
       } else if (hasCloudTag || hasHybridTag) {
-        score = 8;
+        score = 6;
       } else {
-        score = 3;
+        score = 2;
       }
       break;
   }
@@ -329,7 +330,7 @@ function scoreIndustryMatch(
 ): { score: number; criteria: string[]; criteriaKo: string[] } {
   const criteria: string[] = [];
   const criteriaKo: string[] = [];
-  let score = 5; // Base score — most patterns are somewhat applicable
+  let score = 4; // Base score — most patterns are somewhat applicable
 
   const bestFor = pattern.bestForKo.join(' ').toLowerCase();
   const allComponents = [
@@ -344,7 +345,7 @@ function scoreIndustryMatch(
         bestFor.includes('금융') ||
         allComponents.some((c) => ['siem', 'dlp', 'ids-ips', 'firewall'].includes(c))
       ) {
-        score = 10;
+        score = 8;
         criteria.push('Pattern suitable for financial industry');
         criteriaKo.push('금융 산업에 적합한 패턴');
       }
@@ -356,7 +357,7 @@ function scoreIndustryMatch(
         bestFor.includes('의료') ||
         allComponents.some((c) => ['dlp', 'iam', 'nac'].includes(c))
       ) {
-        score = 10;
+        score = 8;
         criteria.push('Pattern suitable for healthcare industry');
         criteriaKo.push('의료 산업에 적합한 패턴');
       }
@@ -369,7 +370,7 @@ function scoreIndustryMatch(
         bestFor.includes('공공기관') ||
         bestFor.includes('정부')
       ) {
-        score = 10;
+        score = 8;
         criteria.push('Pattern suitable for government sector');
         criteriaKo.push('정부/공공 부문에 적합한 패턴');
       }
@@ -383,7 +384,7 @@ function scoreIndustryMatch(
         bestFor.includes('이커머스') ||
         bestFor.includes('전자상거래')
       ) {
-        score = 10;
+        score = 8;
         criteria.push('Pattern suitable for e-commerce');
         criteriaKo.push('이커머스에 적합한 패턴');
       }
@@ -397,7 +398,7 @@ function scoreIndustryMatch(
         bestFor.includes('물류') ||
         bestFor.includes('제조')
       ) {
-        score = 10;
+        score = 8;
         criteria.push('Pattern suitable for manufacturing');
         criteriaKo.push('제조업에 적합한 패턴');
       }
@@ -409,7 +410,7 @@ function scoreIndustryMatch(
         tags.includes('simple') ||
         tags.includes('cloud-native')
       ) {
-        score = 8;
+        score = 6;
         criteria.push('Pattern suitable for education');
         criteriaKo.push('교육 분야에 적합한 패턴');
       }
@@ -417,7 +418,7 @@ function scoreIndustryMatch(
 
     case 'general':
       // General industry gets moderate scores for all patterns
-      score = 6;
+      score = 5;
       break;
   }
 
@@ -425,7 +426,7 @@ function scoreIndustryMatch(
 }
 
 /**
- * Complexity fit (0-25).
+ * Complexity fit (0-20).
  * Matches org size + budget to pattern complexity.
  */
 function scoreComplexityFit(
@@ -445,26 +446,74 @@ function scoreComplexityFit(
 
   if (diff === 0) {
     // Perfect match
-    score = 25;
+    score = 20;
     criteria.push(`Complexity ${pattern.complexity} matches ${requirements.organizationSize}/${requirements.budgetRange} budget`);
     criteriaKo.push(`복잡도 ${pattern.complexity}이(가) ${requirements.organizationSize}/${requirements.budgetRange} 예산에 적합`);
   } else if (diff === -1) {
     // Slightly simpler than expected — still good
-    score = 22;
+    score = 18;
     criteria.push('Slightly simpler than maximum budget allows — efficient choice');
     criteriaKo.push('예산 대비 약간 단순 — 효율적인 선택');
   } else if (diff === 1) {
     // Slightly over budget/size
-    score = 15;
+    score = 12;
   } else if (diff < -1) {
     // Significantly simpler
-    score = Math.max(5, 20 + diff * 5);
+    score = Math.max(4, 16 + diff * 4);
   } else {
     // Significantly over budget/size
-    score = Math.max(0, 15 - diff * 5);
+    score = Math.max(0, 12 - diff * 4);
   }
 
-  return { score: Math.min(25, Math.round(score)), criteria, criteriaKo };
+  return { score: Math.min(20, Math.round(score)), criteria, criteriaKo };
+}
+
+/**
+ * WAF pillar fit (0-20).
+ * Matches user WAF pillar priorities to pattern WAF pillar scores.
+ */
+function scoreWafFit(
+  requirements: ConsultingRequirements,
+  pattern: ArchitecturePattern,
+): { score: number; criteria: string[]; criteriaKo: string[] } {
+  const criteria: string[] = [];
+  const criteriaKo: string[] = [];
+
+  if (!requirements.wafPriorities) {
+    // No WAF priorities → neutral score (half of max)
+    return { score: 10, criteria, criteriaKo };
+  }
+
+  const pillars: (keyof WafPillarScores)[] = [
+    'operationalExcellence', 'security', 'reliability',
+    'performanceEfficiency', 'costOptimization',
+  ];
+
+  const priorities = requirements.wafPriorities;
+  const scores = pattern.wafPillars;
+
+  let totalWeightedScore = 0;
+  let totalWeight = 0;
+
+  for (const pillar of pillars) {
+    const priority = priorities[pillar]; // 0-5
+    const patternScore = scores[pillar]; // 0-5
+    totalWeight += priority;
+    totalWeightedScore += priority * patternScore;
+  }
+
+  // Normalize: max possible = 5 * 5 * 5 = 125 (all priorities 5, all scores 5)
+  // Scale to 0-20
+  const normalizedScore = totalWeight > 0
+    ? Math.round((totalWeightedScore / (totalWeight * 5)) * 20)
+    : 10;
+
+  if (normalizedScore >= 14) {
+    criteria.push('WAF pillar alignment: strong match with priorities');
+    criteriaKo.push('WAF 품질축 정렬: 우선순위와 높은 일치');
+  }
+
+  return { score: Math.min(20, normalizedScore), criteria, criteriaKo };
 }
 
 // ---------------------------------------------------------------------------
@@ -501,7 +550,7 @@ function buildReason(matchResult: PatternMatchResult): { reason: string; reasonK
 /**
  * Match consulting requirements to architecture patterns.
  *
- * Scores each of the 30+ patterns across four dimensions and returns
+ * Scores each of the 30+ patterns across five dimensions and returns
  * a primary recommendation, alternatives, and unmatched requirements.
  */
 export function matchRequirementsToPatterns(
@@ -514,20 +563,23 @@ export function matchRequirementsToPatterns(
     const security = scoreSecurityFit(requirements, pattern);
     const architecture = scoreArchitectureFit(requirements, pattern);
     const complexity = scoreComplexityFit(requirements, pattern);
+    const waf = scoreWafFit(requirements, pattern);
 
-    const totalScore = scale.score + security.score + architecture.score + complexity.score;
+    const totalScore = scale.score + security.score + architecture.score + complexity.score + waf.score;
 
     const matchedCriteria = [
       ...scale.criteria,
       ...security.criteria,
       ...architecture.criteria,
       ...complexity.criteria,
+      ...waf.criteria,
     ];
     const matchedCriteriaKo = [
       ...scale.criteriaKo,
       ...security.criteriaKo,
       ...architecture.criteriaKo,
       ...complexity.criteriaKo,
+      ...waf.criteriaKo,
     ];
 
     const suggestedComponents = suggestComponentsForPattern(pattern);

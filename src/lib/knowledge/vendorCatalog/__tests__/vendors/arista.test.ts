@@ -369,16 +369,16 @@ describe('Arista Networks vendor catalog', () => {
   // Network Observability category deep-dive
   // -------------------------------------------------------------------------
   describe('Network Observability category', () => {
-    it('should have DMF product mapped to siem type', () => {
+    it('should have DMF product mapped to ids-ips type', () => {
       const node = findNodeById(aristaCatalog.products, 'arista-dmf');
       expect(node).toBeDefined();
-      expect(node!.infraNodeTypes).toEqual(['siem']);
+      expect(node!.infraNodeTypes).toEqual(['ids-ips']);
     });
 
-    it('should have 7130 Monitoring mapped to siem type', () => {
+    it('should have 7130 Monitoring mapped to ids-ips type', () => {
       const node = findNodeById(aristaCatalog.products, 'arista-7130-monitoring');
       expect(node).toBeDefined();
-      expect(node!.infraNodeTypes).toEqual(['siem']);
+      expect(node!.infraNodeTypes).toEqual(['ids-ips']);
     });
   });
 
@@ -386,16 +386,16 @@ describe('Arista Networks vendor catalog', () => {
   // Network Management category deep-dive
   // -------------------------------------------------------------------------
   describe('Network Management category', () => {
-    it('should have CloudVision mapped to private-cloud type', () => {
+    it('should have CloudVision mapped to grafana type', () => {
       const node = findNodeById(aristaCatalog.products, 'arista-cloudvision');
       expect(node).toBeDefined();
-      expect(node!.infraNodeTypes).toEqual(['private-cloud']);
+      expect(node!.infraNodeTypes).toEqual(['grafana']);
     });
 
-    it('should have CVaaS mapped to private-cloud type', () => {
+    it('should have CVaaS mapped to grafana type', () => {
       const node = findNodeById(aristaCatalog.products, 'arista-cvaas');
       expect(node).toBeDefined();
-      expect(node!.infraNodeTypes).toEqual(['private-cloud']);
+      expect(node!.infraNodeTypes).toEqual(['grafana']);
     });
 
     it('should have CloudEOS mapped to private-cloud type', () => {
@@ -480,10 +480,12 @@ describe('Arista Networks vendor catalog', () => {
       const validTypes = new Set([
         'firewall', 'waf', 'ids-ips', 'vpn-gateway', 'nac', 'dlp',
         'sase-gateway', 'ztna-broker', 'casb', 'siem', 'soar',
-        'router', 'switch-l2', 'switch-l3', 'load-balancer', 'api-gateway', 'sd-wan', 'dns', 'cdn',
+        'cctv-camera', 'nvr', 'video-server', 'access-control',
+        'router', 'switch-l2', 'switch-l3', 'load-balancer', 'api-gateway', 'sd-wan', 'dns', 'cdn', 'wireless-ap',
         'web-server', 'app-server', 'db-server', 'container', 'vm', 'kubernetes',
+        'kafka', 'rabbitmq', 'prometheus', 'grafana',
         'aws-vpc', 'azure-vnet', 'gcp-network', 'private-cloud',
-        'san-nas', 'object-storage', 'backup', 'cache', 'storage',
+        'san-nas', 'object-storage', 'backup', 'cache', 'elasticsearch', 'storage',
         'ldap-ad', 'sso', 'mfa', 'iam',
         'user', 'internet', 'zone',
       ]);
@@ -509,9 +511,9 @@ describe('Arista Networks vendor catalog', () => {
       expect(node!.infraNodeTypes).toContain('router');
     });
 
-    it('should map observability to siem type', () => {
+    it('should map observability to ids-ips type', () => {
       const node = findNodeById(aristaCatalog.products, 'arista-observability');
-      expect(node!.infraNodeTypes).toContain('siem');
+      expect(node!.infraNodeTypes).toContain('ids-ips');
     });
 
     it('should map security to firewall and ids-ips types', () => {
@@ -520,9 +522,9 @@ describe('Arista Networks vendor catalog', () => {
       expect(node!.infraNodeTypes).toContain('ids-ips');
     });
 
-    it('should map management to private-cloud type', () => {
+    it('should map management to grafana type', () => {
       const node = findNodeById(aristaCatalog.products, 'arista-management');
-      expect(node!.infraNodeTypes).toContain('private-cloud');
+      expect(node!.infraNodeTypes).toContain('grafana');
     });
   });
 

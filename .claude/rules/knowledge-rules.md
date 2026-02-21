@@ -82,6 +82,8 @@ When adding vendor products to the catalog:
 - `architectureRole` describes WHERE in the network this product sits
 - `recommendedFor` lists specific deployment scenarios (min 3)
 - Follow `.claude/rules/vendor-catalog-rules.md` for crawling workflow
+- `lifecycle` is required for all products at depth 2+
+- When `lifecycle` is 'end-of-life', `replacedBy` must reference the successor product nodeId
 
 ## KG-007: Version and Sync
 
@@ -89,3 +91,10 @@ When adding vendor products to the catalog:
 - Run `npx vitest run src/lib/knowledge` after any knowledge change
 - Circular reference check: no A → B → C → A relationship chains
 - Test file required for every knowledge source file (`__tests__/` directory)
+
+## KG-008: ProductNode Completeness
+
+- Products that lack complete data must be marked with a `// STUB` comment at the node definition
+- Stub products are priority targets for vendor-catalog-crawler agent enrichment
+- Minimum viable product data: `name`, `nameKo`, `description`, `descriptionKo`, `sourceUrl`, `infraNodeTypes`, `lifecycle`, `children`
+- Products meeting VC-009 quality gate are considered "complete"

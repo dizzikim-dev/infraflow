@@ -70,8 +70,8 @@ describe('Fortinet vendor catalog', () => {
       expect(fortinetCatalog.stats.categoriesCount).toBe(computed.categoriesCount);
     });
 
-    it('should have 82 total nodes', () => {
-      expect(fortinetCatalog.stats.totalProducts).toBe(82);
+    it('should have 90 total nodes', () => {
+      expect(fortinetCatalog.stats.totalProducts).toBe(90);
     });
 
     it('should have maxDepth of 2', () => {
@@ -251,10 +251,12 @@ describe('Fortinet vendor catalog', () => {
       const validTypes = new Set([
         'firewall', 'waf', 'ids-ips', 'vpn-gateway', 'nac', 'dlp',
         'sase-gateway', 'ztna-broker', 'casb', 'siem', 'soar',
-        'router', 'switch-l2', 'switch-l3', 'load-balancer', 'api-gateway', 'sd-wan', 'dns', 'cdn',
+        'cctv-camera', 'nvr', 'video-server', 'access-control',
+        'router', 'switch-l2', 'switch-l3', 'load-balancer', 'api-gateway', 'sd-wan', 'dns', 'cdn', 'wireless-ap',
         'web-server', 'app-server', 'db-server', 'container', 'vm', 'kubernetes',
+        'kafka', 'rabbitmq', 'prometheus', 'grafana',
         'aws-vpc', 'azure-vnet', 'gcp-network', 'private-cloud',
-        'san-nas', 'object-storage', 'backup', 'cache', 'storage',
+        'san-nas', 'object-storage', 'backup', 'cache', 'elasticsearch', 'storage',
         'ldap-ad', 'sso', 'mfa', 'iam',
         'user', 'internet', 'zone',
       ]);
@@ -318,10 +320,10 @@ describe('Fortinet vendor catalog', () => {
   // FortiGate series deep-dive
   // -------------------------------------------------------------------------
   describe('FortiGate series', () => {
-    it('should have FortiGate with 24 series', () => {
+    it('should have FortiGate with 28 series', () => {
       const node = findNodeById(fortinetCatalog.products, 'fortinet-fortigate');
       expect(node).toBeDefined();
-      expect(node!.children).toHaveLength(24);
+      expect(node!.children).toHaveLength(28);
     });
 
     it('should have entry-level FortiGate models (40F, 60F, 70F, 80F, 90G)', () => {
@@ -390,10 +392,10 @@ describe('Fortinet vendor catalog', () => {
   // FortiSwitch deep-dive
   // -------------------------------------------------------------------------
   describe('FortiSwitch series', () => {
-    it('should have FortiSwitch with 8 series', () => {
+    it('should have FortiSwitch with 10 series', () => {
       const node = findNodeById(fortinetCatalog.products, 'fortinet-fortiswitch');
       expect(node).toBeDefined();
-      expect(node!.children).toHaveLength(8);
+      expect(node!.children).toHaveLength(10);
     });
 
     it('should have campus series (100, 200, 400)', () => {
@@ -495,9 +497,9 @@ describe('Fortinet vendor catalog', () => {
       expect(nodes).toHaveLength(35);
     });
 
-    it('should have 41 nodes at depth 2', () => {
+    it('should have 49 nodes at depth 2', () => {
       const nodes = getNodesByDepth(fortinetCatalog.products, 2);
-      expect(nodes).toHaveLength(41);
+      expect(nodes).toHaveLength(49);
     });
   });
 

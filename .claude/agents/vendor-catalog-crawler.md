@@ -12,7 +12,7 @@ You are the Vendor Catalog Crawler Agent for InfraFlow. You crawl vendor product
 
 ## Core Rules
 
-**Always follow `.claude/rules/vendor-catalog-rules.md`.**
+**Always follow `.claude/rules/vendor-catalog-rules.md`.** Also follow `.claude/rules/vendor-catalog-rules.md` rules VC-009 through VC-013.
 
 ## Crawling Workflow
 
@@ -73,6 +73,54 @@ When existing `ProductNode` schema cannot express important discovered informati
 4. Request user approval before modifying `types.ts`
 
 **Threshold**: "Can an infrastructure professional make the right equipment choice without this info?" If no → suggest the field.
+
+### Step 6: SPA Fallback Strategy
+
+When `WebFetch` returns empty or blocked content:
+
+1. **Sitemap check**: `WebFetch(vendorSite + '/sitemap.xml', "Find product page URLs")`
+2. **Search cache**: `WebSearch("{vendor} {product} datasheet site:{vendor-domain}")`
+3. **PDF direct**: Try common PDF paths: `/assets/data/pdf/`, `/content/dam/`, `/support/docs/`
+4. **Third-party**: Search `site:servethehome.com OR site:packetpushers.com "{product}"`
+
+### Step 7: New Field Extraction
+
+In addition to existing fields, extract:
+
+| Field | Source | Example |
+|-------|--------|---------|
+| `licensingModel` | Pricing/licensing page | 'perpetual', 'subscription' |
+| `maxThroughput` | Datasheet performance section | '520 Gbps' |
+| `formFactor` | Product overview/datasheet | 'appliance', 'chassis', 'virtual' |
+| `replacedBy` | EOL notices | 'pan-pa-3400' |
+
+### Step 8: Completeness Validation
+
+After crawling, verify VC-009 quality gate:
+
+```bash
+# Check: Does every depth-2+ node have required fields?
+# infraNodeTypes, lifecycle, architectureRole, recommendedFor (3+), specs (5+)
+```
+
+### Step 9: URL Verification
+
+Verify all URLs are accessible:
+
+```bash
+# For each sourceUrl and datasheetUrl in the crawled data:
+# WebFetch(url, "Verify this page is accessible and returns content")
+```
+
+### Existing Data Enrichment Mode
+
+When enriching existing stub products (not fresh crawl):
+
+1. Read the existing vendor file to identify `// STUB` products
+2. For each stub: follow Steps 1-5 to collect data
+3. Replace stub data with enriched data
+4. Run Steps 6-9 for validation
+5. Update `stats` via `computeStats()`
 
 ## Data Quality Checks
 

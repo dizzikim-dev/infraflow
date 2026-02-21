@@ -18,7 +18,8 @@ export type ModalType =
   | 'vendorRecommendation'
   | 'vendorComparison'
   | 'requirementsWizard'
-  | 'costComparison';
+  | 'costComparison'
+  | 'evidence';
 
 interface ModalState {
   templateGallery: boolean;
@@ -37,6 +38,7 @@ interface ModalState {
   vendorComparison: boolean;
   requirementsWizard: boolean;
   costComparison: boolean;
+  evidence: boolean;
 }
 
 /**
@@ -61,13 +63,14 @@ export function useModalManager() {
     vendorComparison: false,
     requirementsWizard: false,
     costComparison: false,
+    evidence: false,
   });
 
   /**
    * Analyze group — only one can be open at a time
    */
   const ANALYZE_GROUP: readonly ModalType[] = [
-    'healthCheck', 'insights', 'vulnerability', 'cloudCatalog', 'compliance', 'benchmark', 'graphVisualizer', 'vendorRecommendation', 'vendorComparison', 'requirementsWizard', 'costComparison',
+    'healthCheck', 'insights', 'vulnerability', 'cloudCatalog', 'compliance', 'benchmark', 'graphVisualizer', 'vendorRecommendation', 'vendorComparison', 'requirementsWizard', 'costComparison', 'evidence',
   ];
 
   /**
@@ -131,6 +134,7 @@ export function useModalManager() {
       vendorComparison: false,
       requirementsWizard: false,
       costComparison: false,
+      evidence: false,
     });
   }, []);
 
@@ -158,5 +162,6 @@ export function useModalManager() {
     showVendorComparison: modals.vendorComparison,
     showRequirementsWizard: modals.requirementsWizard,
     showCostComparison: modals.costComparison,
+    showEvidence: modals.evidence,
   };
 }

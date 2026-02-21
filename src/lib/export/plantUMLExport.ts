@@ -38,6 +38,7 @@ const c4ElementMap: Record<InfraNodeType, { stereotype: string; shape: string }>
   'load-balancer': { stereotype: 'Network', shape: 'Container' },
   'api-gateway': { stereotype: 'Network', shape: 'Container' },
   'sd-wan': { stereotype: 'Network', shape: 'Container' },
+  'wireless-ap': { stereotype: 'Network', shape: 'Container' },
   'dns': { stereotype: 'Network', shape: 'Container' },
   'cdn': { stereotype: 'Network', shape: 'Container' },
 

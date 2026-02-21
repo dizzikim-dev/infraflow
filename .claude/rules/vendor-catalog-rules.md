@@ -144,6 +144,51 @@ specs: {
 
 When adding/removing products, keep `stats.totalProducts` in sync with actual node count. Validate with `computeStats()` helper.
 
+### VC-009: Completeness Quality Gate
+
+Products at depth 2 (Series) or deeper MUST have ALL of the following:
+
+| Required Field | Criteria |
+|----------------|----------|
+| `infraNodeTypes` | At least 1 valid InfraNodeType |
+| `lifecycle` | Set to 'active', 'end-of-sale', or 'end-of-life' |
+| `architectureRole` / `architectureRoleKo` | Non-empty |
+| `recommendedFor` / `recommendedForKo` | At least 3 entries |
+| `specs` | At least 5 key-value pairs for Tier 1 products |
+
+Products that do not meet this gate should be marked with a `// STUB` comment for future crawling.
+
+### VC-010: Lifecycle Accuracy
+
+- `lifecycle` values must be based on official vendor EOL/EOS announcements
+- When a product is `end-of-life` or `end-of-sale`, set `replacedBy` to the nodeId of the successor product
+- Example: PA-3200 series → `replacedBy: 'pan-pa-3400'`
+
+### VC-011: URL Validation
+
+When crawling:
+- Verify `sourceUrl` and `datasheetUrl` return HTTP 200
+- If 404: search for alternative URLs using vendor sitemap or product redirects
+- Never leave known-broken URLs in the catalog
+
+### VC-012: SPA Site Crawling
+
+When WebFetch fails (e.g., SPA sites that block server-side rendering):
+
+1. Check `sitemap.xml` for direct product page URLs
+2. Try search engine cached versions
+3. Look for direct PDF datasheet URLs (usually `/assets/data/pdf/` or `/content/dam/`)
+4. Fall back to third-party review sites (ServeTheHome, PacketPushers, StorageReview)
+
+### VC-013: New Field Checklist
+
+When adding or updating products, verify these fields are populated:
+
+- `licensingModel` — perpetual, subscription, credit-based, or as-a-service
+- `maxThroughput` — primary throughput metric from specs
+- `formFactor` — appliance, chassis, virtual, cloud, container, or rugged
+- `replacedBy` — for EOL/EOS products, reference the successor nodeId
+
 ---
 
 ## 4. Checklist

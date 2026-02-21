@@ -104,6 +104,10 @@ Rules: `.claude/rules/knowledge-rules.md`, `.claude/rules/recommendation-rules.m
 | Encrypted | #a78bfa | Bold solid |
 | Sync | #fb923c | Bidirectional |
 
+## Agent Output Rule
+
+Every agent task (review, analysis, planning) MUST write results to `docs/plans/YYYY-MM-DD-<topic>.md`. Verbal-only delivery is not acceptable — always persist findings as a document.
+
 ## Reference Documents
 
 - `docs/reference/project-vision.md` - Vision, problem statement, three-layer value

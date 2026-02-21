@@ -94,10 +94,19 @@ export type { VulnerabilityEntry as VulnEntry, CVESeverity } from './vulnerabili
 // Cloud Catalog
 export {
   CLOUD_SERVICES,
+  AWS_SERVICES,
+  AZURE_SERVICES,
+  GCP_SERVICES,
   getCloudServices,
   getDeprecationWarnings,
   compareServices,
   getAlternatives,
+  getServicesByDeploymentModel,
+  getServicesWithCompliance,
+  getIntegrationPartners,
+  getServiceCategories,
+  getProviderCoverageStats,
+  compareServicesEnriched,
 } from './cloudCatalog';
 
 // Benchmarks

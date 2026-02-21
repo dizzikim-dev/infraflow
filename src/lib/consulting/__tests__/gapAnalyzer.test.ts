@@ -64,6 +64,13 @@ function threeTierPattern(): ArchitecturePattern {
     evolvesTo: [],
     evolvesFrom: [],
     tags: ['test'],
+    wafPillars: {
+      operationalExcellence: 3,
+      security: 2,
+      reliability: 3,
+      performanceEfficiency: 3,
+      costOptimization: 3,
+    },
     trust: {
       confidence: 0.95,
       sources: [],

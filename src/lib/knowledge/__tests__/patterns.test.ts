@@ -68,6 +68,17 @@ describe('patterns', () => {
         expect(pattern.tags.length).toBeGreaterThanOrEqual(2);
       }
     });
+
+    it('should have wafPillars on every pattern with 5 valid scores', () => {
+      for (const pattern of PATTERNS) {
+        expect(pattern.wafPillars).toBeDefined();
+        const pillars = ['operationalExcellence', 'security', 'reliability', 'performanceEfficiency', 'costOptimization'] as const;
+        for (const pillar of pillars) {
+          expect(pattern.wafPillars[pillar]).toBeGreaterThanOrEqual(0);
+          expect(pattern.wafPillars[pillar]).toBeLessThanOrEqual(5);
+        }
+      }
+    });
   });
 
   describe('specific patterns', () => {

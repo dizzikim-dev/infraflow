@@ -38,7 +38,8 @@ export type NetworkNodeType =
   | 'api-gateway'        // API 게이트웨이
   | 'sd-wan'
   | 'dns'
-  | 'cdn';
+  | 'cdn'
+  | 'wireless-ap';       // 무선 액세스 포인트 (Wi-Fi AP)
 
 // Compute/Server
 export type ComputeNodeType =

@@ -132,6 +132,118 @@ describe('ProductNode', () => {
 
     expect(eolNode.lifecycle).toBe('end-of-life');
   });
+
+  it('should support replacedBy for EOL products', () => {
+    const eolWithReplacement: ProductNode = {
+      nodeId: 'PN-EOL-002',
+      depth: 2,
+      depthLabel: 'Series',
+      depthLabelKo: '시리즈',
+      name: 'PA-3200 Series',
+      nameKo: 'PA-3200 시리즈',
+      description: 'Previous-gen mid-range NGFW (replaced by PA-3400)',
+      descriptionKo: '이전 세대 중급 차세대 방화벽 (PA-3400으로 대체)',
+      sourceUrl: 'https://www.paloaltonetworks.com/network-security',
+      lifecycle: 'end-of-life',
+      replacedBy: 'pan-pa-3400',
+      children: [],
+    };
+
+    expect(eolWithReplacement.lifecycle).toBe('end-of-life');
+    expect(eolWithReplacement.replacedBy).toBe('pan-pa-3400');
+  });
+
+  it('should support licensingModel field', () => {
+    const subscriptionProduct: ProductNode = {
+      nodeId: 'PN-LIC-001',
+      depth: 2,
+      depthLabel: 'Model',
+      depthLabelKo: '모델',
+      name: 'Prisma Access',
+      nameKo: 'Prisma Access',
+      description: 'Cloud-delivered SASE platform',
+      descriptionKo: '클라우드 기반 SASE 플랫폼',
+      sourceUrl: 'https://www.paloaltonetworks.com/sase/access',
+      licensingModel: 'subscription',
+      children: [],
+    };
+
+    expect(subscriptionProduct.licensingModel).toBe('subscription');
+
+    // Verify all valid licensing models compile
+    const models: ProductNode['licensingModel'][] = [
+      'perpetual', 'subscription', 'credit-based', 'as-a-service',
+    ];
+    expect(models).toHaveLength(4);
+  });
+
+  it('should support maxThroughput and formFactor fields', () => {
+    const chassisProduct: ProductNode = {
+      nodeId: 'PN-CHASSIS-001',
+      depth: 2,
+      depthLabel: 'Series',
+      depthLabelKo: '시리즈',
+      name: 'Catalyst 9600 Series',
+      nameKo: 'Catalyst 9600 시리즈',
+      description: 'Campus core chassis switch',
+      descriptionKo: '캠퍼스 코어 섀시 스위치',
+      sourceUrl: 'https://www.cisco.com/c/en/us/products/switches/catalyst-9600-series-switches/index.html',
+      maxThroughput: '25.6 Tbps',
+      formFactor: 'chassis',
+      licensingModel: 'perpetual',
+      children: [],
+    };
+
+    expect(chassisProduct.maxThroughput).toBe('25.6 Tbps');
+    expect(chassisProduct.formFactor).toBe('chassis');
+
+    // Verify all valid form factors compile
+    const formFactors: ProductNode['formFactor'][] = [
+      'appliance', 'chassis', 'virtual', 'cloud', 'container', 'rugged',
+    ];
+    expect(formFactors).toHaveLength(6);
+  });
+
+  it('should support all new fields together on a complete product', () => {
+    const completeProduct: ProductNode = {
+      nodeId: 'PN-COMPLETE-001',
+      depth: 2,
+      depthLabel: 'Series',
+      depthLabelKo: '시리즈',
+      name: 'FortiGate 900G',
+      nameKo: 'FortiGate 900G',
+      description: 'High-performance NGFW with SP5 ASIC',
+      descriptionKo: 'SP5 ASIC 기반 고성능 차세대 방화벽',
+      sourceUrl: 'https://www.fortinet.com/products/next-generation-firewall',
+      infraNodeTypes: ['firewall'],
+      lifecycle: 'active',
+      licensingModel: 'perpetual',
+      maxThroughput: '520 Gbps',
+      formFactor: 'appliance',
+      architectureRole: 'Data Center / Campus Core Firewall',
+      architectureRoleKo: '데이터센터 / 캠퍼스 코어 방화벽',
+      recommendedFor: ['Data center edge', 'Campus core', 'Large enterprise'],
+      recommendedForKo: ['데이터센터 에지', '캠퍼스 코어', '대규모 엔터프라이즈'],
+      specs: {
+        'Firewall Throughput': '520 Gbps',
+        'IPS Throughput': '75 Gbps',
+        'NGFW Throughput': '65 Gbps',
+        'Interfaces': '4x 100GE QSFP28, 16x 25GE SFP28',
+        'Form Factor': '2 RU',
+      },
+      haFeatures: ['Active-Active', 'Active-Passive', 'VRRP', 'Session Sync'],
+      securityCapabilities: ['IPS', 'AV', 'Web Filter', 'SSL Inspection', 'Sandboxing'],
+      children: [],
+    };
+
+    expect(completeProduct.replacedBy).toBeUndefined();
+    expect(completeProduct.licensingModel).toBe('perpetual');
+    expect(completeProduct.maxThroughput).toBe('520 Gbps');
+    expect(completeProduct.formFactor).toBe('appliance');
+    expect(completeProduct.specs!['Firewall Throughput']).toBe('520 Gbps');
+    expect(completeProduct.haFeatures).toHaveLength(4);
+    expect(completeProduct.securityCapabilities).toHaveLength(5);
+  });
 });
 
 // ---------------------------------------------------------------------------

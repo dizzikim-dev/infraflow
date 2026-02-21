@@ -42,13 +42,13 @@
 | 카테고리 | 장비 수 | 비고 |
 |----------|---------|------|
 | Security | 6개 | 방화벽, WAF, IDS/IPS 등 |
-| Network | 8개 | 라우터, 스위치, LB, API GW 등 |
+| Network | 9개 | 라우터, 스위치, LB, API GW, Wireless AP 등 |
 | Compute | 10개 | 서버, 컨테이너, K8s, Kafka, Prometheus 등 |
 | Cloud | 4개 | AWS, Azure, GCP, Private |
 | Storage | 6개 | SAN/NAS, 오브젝트, 캐시, Elasticsearch 등 |
 | Auth | 4개 | LDAP/AD, SSO, MFA, IAM |
 | External | 2개 | 사용자, 인터넷 |
-| **총합** | **40개** | Zone 타입 포함 시 41개 |
+| **총합** | **41개** | Zone 타입 포함 시 42개 |
 
 ---
 
@@ -664,6 +664,47 @@
 - Azure API Management
 - Google Apigee
 - NGINX
+
+---
+
+### 4.9 Wireless AP (무선 액세스 포인트)
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `wireless-ap` |
+| **영문명** | Wireless Access Point |
+| **한국어명** | 무선 액세스 포인트 |
+| **카테고리** | Network |
+| **티어** | Internal |
+| **프로토콜** | 802.11ax, 802.11be, 802.1X |
+
+#### 주요 기능
+- Wi-Fi 무선 전송 (2.4G, 5G, 6G)
+- 클라이언트 인증 (802.1X, PSK, OWE)
+- SSID 브로드캐스팅 및 VLAN 매핑
+- 로밍 지원 (802.11r/k/v)
+- 무선 침입 탐지 (WIDS/WIPS)
+
+#### 특징
+- Wi-Fi 6/6E/7 지원
+- PoE 전원 공급
+- 밴드 스티어링 및 부하 분산
+- 메시 네트워킹
+
+#### 권장 정책
+
+| 정책명 | 우선순위 | 분류 | 설명 |
+|--------|---------|------|------|
+| WPA3 적용 | Critical | Security | WPA3 무선 보안 적용 |
+| 불법 AP 탐지 | High | Security | WIDS로 비인가 AP 탐지 |
+| 게스트 네트워크 격리 | High | Access | 게스트 SSID를 기업 네트워크에서 격리 |
+
+#### 대표 벤더
+- Cisco Catalyst AP
+- Fortinet FortiAP
+- HPE Aruba
+- Ruckus
+- Ubiquiti
 
 ---
 

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FileCheck2 } from 'lucide-react';
 import { InfraNodeType } from '@/types';
 import { InfraComponent, PolicyRecommendation } from '@/lib/data';
 import { useInfraComponent } from '@/hooks/useInfrastructureData';
@@ -15,6 +16,7 @@ interface NodeDetailPanelProps {
   zone?: string;
   description?: string;
   onClose: () => void;
+  onOpenEvidence?: () => void;
 }
 
 // Tab types
@@ -57,6 +59,7 @@ export function NodeDetailPanel({
   zone,
   description,
   onClose,
+  onOpenEvidence,
 }: NodeDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [expandedPolicy, setExpandedPolicy] = useState<number | null>(null);
@@ -433,6 +436,15 @@ export function NodeDetailPanel({
         <div className="px-5 py-3 border-t border-zinc-800 bg-zinc-900/50">
           <div className="flex items-center justify-between text-xs text-zinc-500">
             <span>ID: {nodeId}</span>
+            {onOpenEvidence && (
+              <button
+                onClick={onOpenEvidence}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors text-xs font-medium"
+              >
+                <FileCheck2 className="w-3.5 h-3.5" />
+                Evidence
+              </button>
+            )}
             <span>Type: {nodeType}</span>
           </div>
         </div>

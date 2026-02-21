@@ -261,6 +261,7 @@ resource "azurerm_api_management" "${sanitizeId(node.id)}" {
   },
 
   'sd-wan': (node) => `# SD-WAN: ${node.label} - Software-defined WAN configuration`,
+  'wireless-ap': (node) => `# Wireless AP: ${node.label} - Physical access point (not Terraform-managed)`,
   'dns': (node, provider) => {
     if (provider === 'aws') {
       return `

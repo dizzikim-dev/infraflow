@@ -172,9 +172,20 @@ export default function VendorCatalogListPage() {
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">벤더 카탈로그 관리</h1>
         </div>
-        <p className="mt-1 text-sm text-gray-500">
-          인프라 벤더 제품 카탈로그 조회 및 관리
-        </p>
+        <div className="mt-1 flex items-center gap-3">
+          <p className="text-sm text-gray-500">
+            인프라 벤더 제품 카탈로그 조회 및 관리
+          </p>
+          <Link
+            href="/admin/knowledge/vendor-catalog/table"
+            className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-cyan-700 bg-cyan-50 rounded-md hover:bg-cyan-100 transition"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            테이블 뷰
+          </Link>
+        </div>
       </div>
 
       {/* 전체 통계 */}

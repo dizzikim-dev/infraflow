@@ -683,3 +683,87 @@ describe('suggestComponentsForRequirements', () => {
     expect(components).toContain('firewall');
   });
 });
+
+// ---------------------------------------------------------------------------
+// WAF pillar scoring
+// ---------------------------------------------------------------------------
+
+describe('WAF pillar scoring', () => {
+  it('backward compatible — wafPriorities=undefined gives neutral scoring', () => {
+    const result = matchRequirementsToPatterns(
+      makeRequirements({ wafPriorities: undefined }),
+    );
+    // Should still work, all patterns get neutral WAF score (10)
+    expect(result.matches.length).toBeGreaterThan(0);
+    expect(result.primaryRecommendation).not.toBeNull();
+  });
+
+  it('security-heavy WAF priorities favor security patterns', () => {
+    const result = matchRequirementsToPatterns(
+      makeRequirements({
+        organizationSize: 'large',
+        budgetRange: 'high',
+        securityLevel: 'high',
+        cloudPreference: 'on-premise',
+        wafPriorities: {
+          operationalExcellence: 1,
+          security: 5,
+          reliability: 2,
+          performanceEfficiency: 1,
+          costOptimization: 1,
+        },
+      }),
+    );
+
+    // Security-heavy patterns (PAT-011, PAT-012, PAT-SEC-*) should rank higher
+    const topPatternIds = result.matches.slice(0, 10).map((m) => m.pattern.id);
+    const hasSecurityPattern = topPatternIds.some((id) =>
+      ['PAT-011', 'PAT-012', 'PAT-015', 'PAT-SEC-016', 'PAT-SEC-017', 'PAT-SEC-018'].includes(id),
+    );
+    expect(hasSecurityPattern).toBe(true);
+  });
+
+  it('cost-focused WAF priorities favor cost-efficient patterns', () => {
+    const result = matchRequirementsToPatterns(
+      makeRequirements({
+        organizationSize: 'small',
+        budgetRange: 'low',
+        securityLevel: 'basic',
+        cloudPreference: 'on-premise',
+        wafPriorities: {
+          operationalExcellence: 1,
+          security: 1,
+          reliability: 1,
+          performanceEfficiency: 1,
+          costOptimization: 5,
+        },
+      }),
+    );
+
+    // Cost-efficient patterns (PAT-003 cost=5, PAT-002 cost=4) should score well
+    const topPatternIds = result.matches.slice(0, 5).map((m) => m.pattern.id);
+    const hasCostEfficient = topPatternIds.some((id) =>
+      ['PAT-002', 'PAT-003'].includes(id),
+    );
+    expect(hasCostEfficient).toBe(true);
+  });
+
+  it('total score still maxes at 100', () => {
+    const result = matchRequirementsToPatterns(
+      makeRequirements({
+        wafPriorities: {
+          operationalExcellence: 5,
+          security: 5,
+          reliability: 5,
+          performanceEfficiency: 5,
+          costOptimization: 5,
+        },
+      }),
+    );
+
+    for (const match of result.matches) {
+      expect(match.matchScore).toBeLessThanOrEqual(100);
+      expect(match.matchScore).toBeGreaterThanOrEqual(0);
+    }
+  });
+});

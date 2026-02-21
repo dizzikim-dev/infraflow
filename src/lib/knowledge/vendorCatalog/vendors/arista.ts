@@ -89,7 +89,7 @@ export const aristaCatalog: VendorCatalog = {
             'Max Switching Capacity': '57.6 Tbps',
             'Max 100GbE Ports': '576',
             'Max 400GbE Ports': '144',
-            'ASIC': 'Memory: DeepBuffer; Forwarding: Memory-based',
+            'ASIC': 'Broadcom Jericho2 (BCM88690)',
             'MAC Addresses': '1,024K',
             'IPv4 Routes': '1,024K',
             'IPv6 Routes': '512K',
@@ -194,7 +194,7 @@ export const aristaCatalog: VendorCatalog = {
           specs: {
             'Max System Capacity': '460.8 Tbps',
             'Max 400GbE Ports': '576',
-            'ASIC': 'Memory-based with deep buffers',
+            'ASIC': 'Broadcom Jericho2C+ (BCM88850)',
             'Operating Temp': '0°C to 40°C',
             'Power Redundancy': 'N+1 / N+N',
           },
@@ -1091,7 +1091,7 @@ export const aristaCatalog: VendorCatalog = {
       description: 'Network monitoring, packet capture, and traffic analysis solutions for network visibility, troubleshooting, and security analytics.',
       descriptionKo: '네트워크 가시성, 트러블슈팅 및 보안 분석을 위한 네트워크 모니터링, 패킷 캡처, 트래픽 분석 솔루션.',
       sourceUrl: 'https://www.arista.com/en/products/network-observability',
-      infraNodeTypes: ['siem'],
+      infraNodeTypes: ['ids-ips'],
       children: [
         {
           nodeId: 'arista-dmf',
@@ -1105,7 +1105,7 @@ export const aristaCatalog: VendorCatalog = {
           sourceUrl: 'https://www.arista.com/en/products/danz-monitoring-fabric',
           datasheetUrl: 'https://www.arista.com/assets/data/pdf/Datasheets/DMF-Data-Sheet.pdf',
           lifecycle: 'active',
-          infraNodeTypes: ['siem'],
+          infraNodeTypes: ['ids-ips'],
           architectureRole: 'Network Monitoring / Packet Broker',
           architectureRoleKo: '네트워크 모니터링 / 패킷 브로커',
           recommendedFor: [
@@ -1138,7 +1138,7 @@ export const aristaCatalog: VendorCatalog = {
           descriptionKo: '나노초 정확도의 정밀 네트워크 모니터링, 타임스탬핑 및 패킷 캡처용으로 구성된 7130 FPGA 플랫폼.',
           sourceUrl: 'https://www.arista.com/en/products/7130-series',
           lifecycle: 'active',
-          infraNodeTypes: ['siem'],
+          infraNodeTypes: ['ids-ips'],
           architectureRole: 'Precision Monitoring / Timestamping',
           architectureRoleKo: '정밀 모니터링 / 타임스탬핑',
           recommendedFor: [
@@ -1174,7 +1174,7 @@ export const aristaCatalog: VendorCatalog = {
       description: 'Centralized network management, automation, and cloud operations platforms for Arista EOS-based infrastructure.',
       descriptionKo: 'Arista EOS 기반 인프라를 위한 중앙 집중형 네트워크 관리, 자동화 및 클라우드 운영 플랫폼.',
       sourceUrl: 'https://www.arista.com/en/products/eos/cloudvision',
-      infraNodeTypes: ['private-cloud'],
+      infraNodeTypes: ['grafana'],
       children: [
         {
           nodeId: 'arista-cloudvision',
@@ -1188,7 +1188,7 @@ export const aristaCatalog: VendorCatalog = {
           sourceUrl: 'https://www.arista.com/en/products/eos/cloudvision',
           datasheetUrl: 'https://www.arista.com/assets/data/pdf/Datasheets/CloudVision-Data-Sheet.pdf',
           lifecycle: 'active',
-          infraNodeTypes: ['private-cloud'],
+          infraNodeTypes: ['grafana'],
           architectureRole: 'Network Management / Automation',
           architectureRoleKo: '네트워크 관리 / 자동화',
           recommendedFor: [
@@ -1222,7 +1222,7 @@ export const aristaCatalog: VendorCatalog = {
           descriptionKo: '온프레미스 인프라 없이 네트워크 관리, 자동화, 텔레메트리를 SaaS로 제공하는 클라우드 호스팅 CloudVision.',
           sourceUrl: 'https://www.arista.com/en/products/eos/cloudvision-as-a-service',
           lifecycle: 'active',
-          infraNodeTypes: ['private-cloud'],
+          infraNodeTypes: ['grafana'],
           architectureRole: 'Cloud-Hosted Network Management',
           architectureRoleKo: '클라우드 호스팅 네트워크 관리',
           recommendedFor: [
