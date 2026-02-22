@@ -25,10 +25,19 @@ import { getCategoryForType } from '@/lib/data/infrastructureDB';
 // Types
 // ---------------------------------------------------------------------------
 
+/** Best product per vendor for cross-vendor comparison */
+export interface VendorGroup {
+  vendorId: string;
+  vendorName: string;
+  best: ProductRecommendation;
+  alternatives: ProductRecommendation[];
+}
+
 export interface EvidenceData {
   relationships: ComponentRelationship[];
   suggestions: ComponentRelationship[];
   recommendations: ProductRecommendation[];
+  vendorGrouped: VendorGroup[];
   violations: AntiPattern[];
   vulnerabilities: VulnerabilityEntry[];
   complianceGaps: ComplianceGap[];
@@ -36,6 +45,7 @@ export interface EvidenceData {
   counts: {
     relationships: number;
     recommendations: number;
+    vendors: number;
     validationIssues: number;
     sources: number;
   };
@@ -129,6 +139,22 @@ export function useEvidence(
       // Recommendation engine may not be available
     }
 
+    // Group recommendations by vendor (best per vendor + alternatives)
+    const vendorMap = new Map<string, ProductRecommendation[]>();
+    for (const rec of recommendations) {
+      const list = vendorMap.get(rec.vendorId) ?? [];
+      list.push(rec);
+      vendorMap.set(rec.vendorId, list);
+    }
+    const vendorGrouped: VendorGroup[] = [...vendorMap.entries()]
+      .map(([vendorId, recs]) => ({
+        vendorId,
+        vendorName: recs[0].vendorName,
+        best: recs[0], // Already sorted by score desc from matchVendorProducts
+        alternatives: recs.slice(1),
+      }))
+      .sort((a, b) => b.best.score.overall - a.best.score.overall);
+
     // Aggregate all sources (deduplicated by title+url)
     const sourceMap = new Map<string, KnowledgeSource>();
     const addSources = (trust: { sources: KnowledgeSource[] } | undefined) => {
@@ -155,6 +181,7 @@ export function useEvidence(
       relationships,
       suggestions,
       recommendations,
+      vendorGrouped,
       violations,
       vulnerabilities,
       complianceGaps,
@@ -162,6 +189,7 @@ export function useEvidence(
       counts: {
         relationships: relationships.length + suggestions.length,
         recommendations: recommendations.length,
+        vendors: vendorGrouped.length,
         validationIssues,
         sources: sources.length,
       },

@@ -5,6 +5,7 @@ import { Edge, Node, XYPosition } from '@xyflow/react';
 import { InfraNodeType, InfraSpec } from '@/types';
 import { ComponentData } from './useNodes';
 import { createLogger } from '@/lib/utils/logger';
+import { trackActivity } from '@/lib/activity/trackActivity';
 
 const log = createLogger('useEdges');
 
@@ -71,6 +72,10 @@ export function useEdges(config: UseEdgesConfig): UseEdgesReturn {
 
         return prevEdges.filter((e) => e.id !== edgeId);
       });
+
+      trackActivity('edge_delete', {
+        detail: { edgeId },
+      });
     },
     [onSpecUpdate, setEdges]
   );
@@ -110,6 +115,10 @@ export function useEdges(config: UseEdgesConfig): UseEdgesReturn {
           }
           return e;
         });
+      });
+
+      trackActivity('edge_reverse', {
+        detail: { edgeId },
       });
     },
     [onSpecUpdate, setEdges]

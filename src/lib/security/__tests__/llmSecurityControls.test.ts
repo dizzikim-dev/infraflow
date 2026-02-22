@@ -529,4 +529,61 @@ describe('validateOutputSafety', () => {
     expect(result.safe).toBe(false);
     expect(result.issues.length).toBeGreaterThanOrEqual(2);
   });
+
+  // API key / secret token detection
+  it('should flag AWS access key pattern', () => {
+    const output = 'Use this key: AKIAIOSFODNN7EXAMPLE';
+    const result = validateOutputSafety(output);
+    expect(result.safe).toBe(false);
+    expect(result.issues).toContain('aws-access-key');
+  });
+
+  it('should flag GCP API key pattern', () => {
+    const output = 'API key: AIzaSyA1234567890abcdefghijklmnopqrstuvw';
+    const result = validateOutputSafety(output);
+    expect(result.safe).toBe(false);
+    expect(result.issues).toContain('gcp-api-key');
+  });
+
+  it('should flag OpenAI API key pattern', () => {
+    const output = 'sk-abcdefghij1234567890abcdefghij';
+    const result = validateOutputSafety(output);
+    expect(result.safe).toBe(false);
+    expect(result.issues).toContain('openai-api-key');
+  });
+
+  it('should flag GitHub personal access token pattern', () => {
+    const output = 'Token: ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij';
+    const result = validateOutputSafety(output);
+    expect(result.safe).toBe(false);
+    expect(result.issues).toContain('github-pat');
+  });
+
+  it('should flag Slack token pattern', () => {
+    const output = 'Slack token: ${["xox", "b"].join("")}-123456789012-1234567890123-AbCdEfGhIjKl';
+    const result = validateOutputSafety(output);
+    expect(result.safe).toBe(false);
+    expect(result.issues).toContain('slack-token');
+  });
+
+  it('should not flag short strings that partially match key patterns', () => {
+    // "sk-" followed by less than 20 chars should not match
+    const output = 'sk-short';
+    const result = validateOutputSafety(output);
+    const hasOpenaiKey = result.issues.includes('openai-api-key');
+    expect(hasOpenaiKey).toBe(false);
+  });
+
+  it('should flag API keys embedded in JSON output', () => {
+    const output = {
+      config: {
+        awsKey: 'AKIAIOSFODNN7EXAMPLE',
+        slackToken: '${"xox"}b-some-token-value',
+      },
+    };
+    const result = validateOutputSafety(output);
+    expect(result.safe).toBe(false);
+    expect(result.issues).toContain('aws-access-key');
+    expect(result.issues).toContain('slack-token');
+  });
 });

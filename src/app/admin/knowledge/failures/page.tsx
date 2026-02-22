@@ -10,7 +10,7 @@ import {
   TrustBadge,
 } from '@/components/admin/knowledge';
 import type { ColumnDef, FilterDef, KnowledgeListConfig } from '@/components/admin/knowledge';
-import { IMPACT_COLORS, IMPACT_LABELS, LIKELIHOOD_COLORS, LIKELIHOOD_LABELS } from '@/lib/admin/badgeThemes';
+import { IMPACT_COLORS, IMPACT_LABELS, LIKELIHOOD_COLORS, LIKELIHOOD_LABELS } from '@/lib/utils/badgeThemes';
 
 interface FailureItem {
   id: string;

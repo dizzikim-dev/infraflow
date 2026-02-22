@@ -7,7 +7,7 @@
 import Link from 'next/link';
 import { KnowledgeListPage } from '@/components/admin/knowledge';
 import type { ColumnDef, FilterDef, KnowledgeListConfig } from '@/components/admin/knowledge';
-import { SCALING_STRATEGY_COLORS } from '@/lib/admin/badgeThemes';
+import { SCALING_STRATEGY_COLORS } from '@/lib/utils/badgeThemes';
 
 interface LatencyRange {
   min: number;

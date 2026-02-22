@@ -36,8 +36,8 @@ describe('RegisterSchema', () => {
   const validInput = {
     name: 'Test User',
     email: 'user@example.com',
-    password: 'Password1',
-    confirmPassword: 'Password1',
+    password: 'Password1!',
+    confirmPassword: 'Password1!',
   };
 
   it('should accept valid registration input', () => {
@@ -63,8 +63,8 @@ describe('RegisterSchema', () => {
   it('should reject password shorter than 8 chars', () => {
     const result = RegisterSchema.safeParse({
       ...validInput,
-      password: 'Pass1',
-      confirmPassword: 'Pass1',
+      password: 'Pa1!x',
+      confirmPassword: 'Pa1!x',
     });
     expect(result.success).toBe(false);
   });
@@ -72,8 +72,8 @@ describe('RegisterSchema', () => {
   it('should reject password without uppercase', () => {
     const result = RegisterSchema.safeParse({
       ...validInput,
-      password: 'password1',
-      confirmPassword: 'password1',
+      password: 'password1!',
+      confirmPassword: 'password1!',
     });
     expect(result.success).toBe(false);
   });
@@ -81,8 +81,8 @@ describe('RegisterSchema', () => {
   it('should reject password without lowercase', () => {
     const result = RegisterSchema.safeParse({
       ...validInput,
-      password: 'PASSWORD1',
-      confirmPassword: 'PASSWORD1',
+      password: 'PASSWORD1!',
+      confirmPassword: 'PASSWORD1!',
     });
     expect(result.success).toBe(false);
   });
@@ -90,16 +90,38 @@ describe('RegisterSchema', () => {
   it('should reject password without digit', () => {
     const result = RegisterSchema.safeParse({
       ...validInput,
-      password: 'Passwordd',
-      confirmPassword: 'Passwordd',
+      password: 'Passwordd!',
+      confirmPassword: 'Passwordd!',
     });
     expect(result.success).toBe(false);
+  });
+
+  it('should reject password without special character', () => {
+    const result = RegisterSchema.safeParse({
+      ...validInput,
+      password: 'Password1',
+      confirmPassword: 'Password1',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should accept password with each allowed special character', () => {
+    const specialChars = ['@', '$', '!', '%', '*', '?', '&', '#'];
+    for (const char of specialChars) {
+      const pw = `Password1${char}`;
+      const result = RegisterSchema.safeParse({
+        ...validInput,
+        password: pw,
+        confirmPassword: pw,
+      });
+      expect(result.success).toBe(true);
+    }
   });
 
   it('should reject mismatched passwords', () => {
     const result = RegisterSchema.safeParse({
       ...validInput,
-      confirmPassword: 'Different1',
+      confirmPassword: 'Different1!',
     });
     expect(result.success).toBe(false);
     if (!result.success) {

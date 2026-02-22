@@ -19,8 +19,6 @@ export type {
   FailureScenario,
   FailureImpact,
   PerformanceProfile,
-  QuickTip,
-  TipCategory,
   EnrichedKnowledge,
 } from './types';
 

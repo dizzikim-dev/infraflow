@@ -12,6 +12,7 @@ import {
 } from '@/lib/export';
 import { InfraSpec } from '@/types';
 import { createLogger } from '@/lib/utils/logger';
+import { trackActivity } from '@/lib/activity/trackActivity';
 
 const log = createLogger('ExportPanel');
 
@@ -96,6 +97,9 @@ export function ExportPanel({ onClose, canvasRef, currentSpec }: ExportPanelProp
       }
 
       downloadFile(data, filename, mimeType);
+      trackActivity('export', {
+        detail: { format, filename },
+      });
       setExportStatus({ type: 'success', message: `${format.toUpperCase()} 파일이 다운로드되었습니다` });
     } catch (error) {
       log.error('Export failed', error instanceof Error ? error : undefined);

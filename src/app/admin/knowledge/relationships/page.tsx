@@ -15,7 +15,7 @@ import {
   RELATIONSHIP_TYPE_LABELS,
   STRENGTH_COLORS,
   STRENGTH_LABELS,
-} from '@/lib/admin/badgeThemes';
+} from '@/lib/utils/badgeThemes';
 
 interface RelationshipItem {
   id: string;

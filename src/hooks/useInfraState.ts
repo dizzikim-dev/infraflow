@@ -201,6 +201,7 @@ export function useInfraState() {
     addNode,
     deleteNode: nodesHook.deleteNode,
     duplicateNode,
+    updateNodeVendor: nodesHook.updateNodeVendor,
     insertNodeBetween,
     deleteEdge,
     reverseEdge,

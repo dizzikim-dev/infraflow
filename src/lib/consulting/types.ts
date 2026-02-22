@@ -25,7 +25,7 @@ export type IndustryType =
 
 export type AvailabilityTarget = 99 | 99.9 | 99.95 | 99.99 | 99.999;
 
-export type SecurityLevel = 'basic' | 'standard' | 'high' | 'critical';
+export type ConsultingSecurityLevel = 'basic' | 'standard' | 'high' | 'critical';
 
 export type BudgetRange = 'low' | 'medium' | 'high' | 'enterprise';
 
@@ -59,7 +59,7 @@ export interface ConsultingRequirements {
   rtoMinutes?: number; // Recovery Time Objective
 
   // Security & Compliance
-  securityLevel: SecurityLevel;
+  securityLevel: ConsultingSecurityLevel;
   complianceFrameworks: string[];
 
   // Budget
@@ -116,7 +116,8 @@ export type GapType =
   | 'upgrade'     // Component exists but needs enhancement
   | 'security'    // Security gap
   | 'compliance'  // Compliance gap
-  | 'performance'; // Performance gap
+  | 'performance' // Performance gap
+  | 'companion';  // Missing required/recommended companion component
 
 /** Individual gap item */
 export interface GapItem {
@@ -144,6 +145,7 @@ export interface GapAnalysisResult {
   securityGaps: GapItem[];
   complianceGaps: GapItem[];
   performanceGaps: GapItem[];
+  companionGaps: GapItem[];
   overallScore: number; // 0-100 (100 = fully compliant)
   summary: string;
   summaryKo: string;

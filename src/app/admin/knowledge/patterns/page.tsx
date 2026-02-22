@@ -10,7 +10,7 @@ import {
   TrustBadge,
 } from '@/components/admin/knowledge';
 import type { ColumnDef, FilterDef, KnowledgeListConfig } from '@/components/admin/knowledge';
-import { SCALABILITY_COLORS } from '@/lib/admin/badgeThemes';
+import { SCALABILITY_COLORS } from '@/lib/utils/badgeThemes';
 
 interface PatternItem {
   id: string;

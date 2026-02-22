@@ -127,6 +127,12 @@ export interface InfraNodeData {
   zone?: string;
   policies?: PolicyRule[];
   metadata?: Record<string, unknown>;
+  /** Selected vendor ID (e.g., 'cisco', 'fortinet', 'paloalto', 'arista') */
+  vendorId?: string;
+  /** Selected cloud provider (e.g., 'aws', 'azure', 'gcp') */
+  cloudProvider?: string;
+  /** Display name of the selected product/service */
+  productName?: string;
   [key: string]: unknown; // Index signature for React Flow compatibility
 }
 
@@ -179,6 +185,9 @@ export interface InfraNodeSpec {
   tier?: TierType;
   zone?: string;
   description?: string;
+  vendorId?: string;
+  cloudProvider?: string;
+  productName?: string;
 }
 
 export interface ConnectionSpec {

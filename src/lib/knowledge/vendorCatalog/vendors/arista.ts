@@ -85,6 +85,14 @@ export const aristaCatalog: VendorCatalog = {
             'ACL (L2/L3/L4)',
             'FIPS 140-2 compliance',
           ],
+          formFactor: 'chassis',
+          licensingModel: 'subscription',
+          maxThroughput: '57.6 Tbps',
+          operationalComplexity: 'complex',
+          ecosystemMaturity: 'mature',
+          disasterRecovery: {
+            multiRegionSupported: false,
+          },
           specs: {
             'Max Switching Capacity': '57.6 Tbps',
             'Max 100GbE Ports': '576',
@@ -191,6 +199,14 @@ export const aristaCatalog: VendorCatalog = {
             'Control plane policing (CoPP)',
             'ACL (L2/L3/L4)',
           ],
+          formFactor: 'chassis',
+          licensingModel: 'subscription',
+          maxThroughput: '460.8 Tbps',
+          operationalComplexity: 'complex',
+          ecosystemMaturity: 'mature',
+          disasterRecovery: {
+            multiRegionSupported: false,
+          },
           specs: {
             'Max System Capacity': '460.8 Tbps',
             'Max 400GbE Ports': '576',
@@ -294,6 +310,14 @@ export const aristaCatalog: VendorCatalog = {
             'DHCP snooping',
             'Dynamic ARP inspection',
           ],
+          formFactor: 'appliance',
+          licensingModel: 'subscription',
+          maxThroughput: '12.8 Tbps',
+          operationalComplexity: 'moderate',
+          ecosystemMaturity: 'mature',
+          disasterRecovery: {
+            multiRegionSupported: false,
+          },
           specs: {
             'Switching Capacity': 'Up to 12.8 Tbps',
             'Latency': '< 4 microseconds',
@@ -394,6 +418,14 @@ export const aristaCatalog: VendorCatalog = {
             'ACL (L2/L3/L4)',
             'Storm control',
           ],
+          formFactor: 'appliance',
+          licensingModel: 'subscription',
+          maxThroughput: '12.8 Tbps',
+          operationalComplexity: 'moderate',
+          ecosystemMaturity: 'mature',
+          disasterRecovery: {
+            multiRegionSupported: false,
+          },
           specs: {
             'Switching Capacity': 'Up to 12.8 Tbps',
             'Latency': '< 1 microsecond (cut-through)',
@@ -494,6 +526,14 @@ export const aristaCatalog: VendorCatalog = {
             'Dynamic ARP inspection',
             'Port security',
           ],
+          formFactor: 'appliance',
+          licensingModel: 'subscription',
+          maxThroughput: '3.2 Tbps',
+          operationalComplexity: 'moderate',
+          ecosystemMaturity: 'mature',
+          disasterRecovery: {
+            multiRegionSupported: false,
+          },
           specs: {
             'Switching Capacity': 'Up to 3.2 Tbps',
             'Latency': '< 1 microsecond',
@@ -738,6 +778,14 @@ export const aristaCatalog: VendorCatalog = {
             'Dynamic ARP inspection',
             'ACL (L2/L3)',
           ],
+          formFactor: 'appliance',
+          licensingModel: 'subscription',
+          maxThroughput: '176 Gbps',
+          operationalComplexity: 'simple',
+          ecosystemMaturity: 'stable',
+          disasterRecovery: {
+            multiRegionSupported: false,
+          },
           specs: {
             'PoE Budget': 'Up to 1440W (PoE++, 802.3bt)',
             'Ports': 'Up to 48x 1G/2.5G/5G PoE + uplinks',
@@ -916,6 +964,14 @@ export const aristaCatalog: VendorCatalog = {
             'ACL (L2/L3/L4)',
             'Control plane policing (CoPP)',
           ],
+          formFactor: 'appliance',
+          licensingModel: 'subscription',
+          maxThroughput: '12.8 Tbps',
+          operationalComplexity: 'moderate',
+          ecosystemMaturity: 'stable',
+          disasterRecovery: {
+            multiRegionSupported: false,
+          },
           specs: {
             'Switching Capacity': '12.8 Tbps',
             'Ports': 'Up to 64x 100GbE or 32x 400GbE',
@@ -1120,6 +1176,22 @@ export const aristaCatalog: VendorCatalog = {
             '네트워크 성능 모니터링 및 트러블슈팅',
             '컴플라이언스 기반 트래픽 캡처 및 보관',
           ],
+          haFeatures: [
+            'Controller HA (active-standby)',
+            'Redundant monitoring paths',
+          ],
+          securityCapabilities: [
+            'Packet filtering and slicing',
+            'Inline tool insertion for IDS/IPS',
+            'Encrypted traffic metadata export',
+          ],
+          formFactor: 'appliance',
+          licensingModel: 'subscription',
+          operationalComplexity: 'moderate',
+          ecosystemMaturity: 'mature',
+          disasterRecovery: {
+            multiRegionSupported: false,
+          },
           specs: {
             'Architecture': 'Software-defined monitoring fabric',
             'Features': 'Aggregation, filtering, dedup, timestamping',
@@ -1203,6 +1275,22 @@ export const aristaCatalog: VendorCatalog = {
             '변경 관리 및 컴플라이언스 감사',
             '네트워크 전체 소프트웨어 이미지 관리',
           ],
+          haFeatures: [
+            'Redundant cluster deployment',
+            'Continuous streaming state sync',
+          ],
+          securityCapabilities: [
+            'Role-based access control (RBAC)',
+            'Configuration change auditing',
+            'Compliance monitoring and alerting',
+          ],
+          formFactor: 'virtual',
+          licensingModel: 'subscription',
+          operationalComplexity: 'moderate',
+          ecosystemMaturity: 'mature',
+          disasterRecovery: {
+            multiRegionSupported: false,
+          },
           specs: {
             'Deployment': 'On-premises (VM or appliance)',
             'Telemetry': 'Streaming (gNMI, OpenConfig)',
@@ -1235,6 +1323,22 @@ export const aristaCatalog: VendorCatalog = {
             '온프레미스 관리 인프라가 없는 조직',
             'SaaS 기반 운영을 통한 신속한 배포',
           ],
+          haFeatures: [
+            'Cloud-native multi-region availability',
+            'Automatic failover',
+          ],
+          securityCapabilities: [
+            'Role-based access control (RBAC)',
+            'Encrypted agent-to-cloud communication',
+            'Configuration compliance monitoring',
+          ],
+          formFactor: 'cloud',
+          licensingModel: 'as-a-service',
+          operationalComplexity: 'simple',
+          ecosystemMaturity: 'stable',
+          disasterRecovery: {
+            multiRegionSupported: true,
+          },
           specs: {
             'Deployment': 'Cloud-hosted (SaaS)',
             'Features': 'Same as CloudVision + zero on-prem',

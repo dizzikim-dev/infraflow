@@ -15,10 +15,10 @@ import {
   ComponentPicker,
 } from '@/components/contextMenu';
 import { EditorPanels } from './EditorPanels';
+import { LoginPromptModal } from '@/components/auth/LoginPromptModal';
 import { useInfraState, useModalManager, useContextMenu, useComparisonMode, useHistory, type ComponentData } from '@/hooks';
 import { useDiagramPersistence } from '@/hooks/useDiagramPersistence';
 import { useSidebar } from '@/hooks/useSidebar';
-import { useLocalHistory } from '@/hooks/useLocalHistory';
 import { useDbHistory } from '@/hooks/useDbHistory';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -69,6 +69,7 @@ export function InfraEditor({
     handleNodeClick,
     loadFromSpec,
     updateNodeData,
+    updateNodeVendor,
     // State setters
     setNodes,
     setEdges,
@@ -170,14 +171,17 @@ export function InfraEditor({
   const isAuthenticated = sessionStatus === 'authenticated';
   const router = useRouter();
 
-  // Sidebar + History
+  // Sidebar + History (DB only — login required for save)
   const sidebar = useSidebar();
-  const localHistory = useLocalHistory();
   const dbHistory = useDbHistory(isAuthenticated, diagramId);
 
-  // Unified history entries for sidebar
-  const historyEntries = isAuthenticated ? dbHistory.entries : localHistory.entries;
-  const historyActiveId = isAuthenticated ? dbHistory.activeId : localHistory.activeId;
+  // Login prompt modal for unauthenticated users
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const loginPromptShownRef = useRef(false);
+
+  // Sidebar entries (only when authenticated)
+  const historyEntries = isAuthenticated ? dbHistory.entries : [];
+  const historyActiveId = isAuthenticated ? dbHistory.activeId : null;
   const historyLoading = isAuthenticated ? dbHistory.loading : false;
 
   // ── Auto-save on spec OR title change ──
@@ -210,12 +214,28 @@ export function InfraEditor({
     }
 
     if (isAuthenticated && !diagramId) {
+      // Authenticated: auto-save to DB
       dbHistory.saveSession(currentSpec, effectiveTitle || undefined, nodes, edges);
-    } else if (!isAuthenticated) {
-      localHistory.saveSession(currentSpec, effectiveTitle || undefined);
+    } else if (!isAuthenticated && !loginPromptShownRef.current) {
+      // Unauthenticated: show login prompt (once per session)
+      loginPromptShownRef.current = true;
+      setShowLoginPrompt(true);
     }
     // When diagramId is set, useDiagramPersistence handles DB auto-save
-  }, [currentSpec, effectiveTitle, isAuthenticated, diagramId, localHistory, dbHistory, nodes, edges]);
+  }, [currentSpec, effectiveTitle, isAuthenticated, diagramId, dbHistory, nodes, edges]);
+
+  // ── Save pending diagram after login ──
+  const pendingSaveRef = useRef(false);
+  useEffect(() => {
+    if (!isAuthenticated || !currentSpec?.nodes?.length || !nodes.length) return;
+    if (diagramId) return; // Already persisted
+    if (pendingSaveRef.current) return;
+    // If user just logged in with a diagram on canvas, save it
+    if (loginPromptShownRef.current) {
+      pendingSaveRef.current = true;
+      dbHistory.saveSession(currentSpec, effectiveTitle || undefined, nodes, edges);
+    }
+  }, [isAuthenticated, currentSpec, nodes, edges, effectiveTitle, diagramId, dbHistory]);
 
   // ── Auto-title from first prompt (GPT-like: first message = thread title) ──
   const wrappedPromptSubmit = useCallback((prompt: string) => {
@@ -228,33 +248,25 @@ export function InfraEditor({
 
   // Select a diagram from sidebar
   const handleDiagramSelect = useCallback(async (id: string) => {
+    if (!isAuthenticated) return;
     // Flag: loading existing diagram — don't trigger auto-save
     justLoadedRef.current = true;
-    if (isAuthenticated) {
-      const diagram = await dbHistory.selectSession(id);
-      if (diagram) {
-        loadFromSpec(diagram.spec, diagram.nodesJson ?? undefined, diagram.edgesJson ?? undefined);
-        setLocalTitle(diagram.title);
-      }
-    } else {
-      const entry = localHistory.selectSession(id);
-      if (entry) {
-        loadFromSpec(entry.spec);
-        setLocalTitle(entry.title);
-      }
+    const diagram = await dbHistory.selectSession(id);
+    if (diagram) {
+      loadFromSpec(diagram.spec, diagram.nodesJson ?? undefined, diagram.edgesJson ?? undefined);
+      setLocalTitle(diagram.title);
     }
-  }, [isAuthenticated, dbHistory, localHistory, loadFromSpec]);
+  }, [isAuthenticated, dbHistory, loadFromSpec]);
 
   // New diagram from sidebar
   const handleNewDiagram = useCallback(() => {
     if (isAuthenticated) {
       dbHistory.startNewSession();
-    } else {
-      localHistory.startNewSession();
     }
     // Reset refs to prevent ghost saves (title clear / spec clear triggering auto-save)
     prevSpecRef.current = null;
     prevTitleRef.current = '';
+    loginPromptShownRef.current = false;
     setLocalTitle('');
     setNodes([]);
     setEdges([]);
@@ -262,16 +274,14 @@ export function InfraEditor({
     if (diagramId) {
       router.push('/');
     }
-  }, [isAuthenticated, dbHistory, localHistory, setNodes, setEdges, diagramId, router]);
+  }, [isAuthenticated, dbHistory, setNodes, setEdges, diagramId, router]);
 
   // Delete a diagram from sidebar
   const handleDiagramDelete = useCallback((id: string) => {
     if (isAuthenticated) {
       dbHistory.deleteEntry(id);
-    } else {
-      localHistory.deleteEntry(id);
     }
-  }, [isAuthenticated, dbHistory, localHistory]);
+  }, [isAuthenticated, dbHistory]);
 
   // Handle scenario selection with modal management
   const onScenarioSelect = useCallback((type: Parameters<typeof handleScenarioSelect>[0]) => {
@@ -514,6 +524,7 @@ export function InfraEditor({
         openModal={openModal}
         setSelectedNodeDetail={setSelectedNodeDetail}
         setSelectedNodePolicy={setSelectedNodePolicy}
+        onNodeVendorUpdate={updateNodeVendor}
       />
 
       {/* Prompt Panel */}
@@ -604,6 +615,12 @@ export function InfraEditor({
           }}
         />
       )}
+
+      {/* Login Prompt Modal for unauthenticated users */}
+      <LoginPromptModal
+        isOpen={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+      />
     </div>
   );
 }

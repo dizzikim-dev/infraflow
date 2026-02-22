@@ -212,6 +212,53 @@ export interface PerformanceProfile extends KnowledgeEntryBase {
 }
 
 // ---------------------------------------------------------------------------
+// Shared Catalog Comparison Types (used by both ProductNode & CloudService)
+// ---------------------------------------------------------------------------
+
+/** Operational complexity for product/service comparison */
+export type OperationalComplexity = 'simple' | 'moderate' | 'complex';
+
+/** Ecosystem maturity level */
+export type EcosystemMaturity = 'emerging' | 'stable' | 'mature';
+
+/** Disaster recovery capabilities */
+export interface DisasterRecoveryInfo {
+  /** Recovery Time Objective in minutes */
+  maxRTOMinutes?: number;
+  /** Recovery Point Objective in minutes */
+  maxRPOMinutes?: number;
+  /** Backup frequency */
+  backupFrequency?: 'continuous' | 'hourly' | 'daily' | 'weekly';
+  /** Multi-region failover supported */
+  multiRegionSupported: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Companion Dependency Types (used by both ProductNode & CloudService)
+// ---------------------------------------------------------------------------
+
+/** Component-level companion reference */
+export interface CompanionRef {
+  /** Target generic component type */
+  componentType: InfraNodeType;
+  /** Why this companion is needed */
+  reason: string;
+  reasonKo: string;
+}
+
+/** Required companion — MUST exist for this product/service to function */
+export interface RequiredCompanion extends CompanionRef {
+  /** critical = cannot function, high = operationally unacceptable without */
+  severity: 'critical' | 'high';
+}
+
+/** Recommended companion — strongly advised for production */
+export interface RecommendedCompanion extends CompanionRef {
+  /** high = best practice, medium = nice-to-have */
+  severity: 'high' | 'medium';
+}
+
+// ---------------------------------------------------------------------------
 // Context Enricher output
 // ---------------------------------------------------------------------------
 

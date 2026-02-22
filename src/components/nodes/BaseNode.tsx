@@ -4,7 +4,7 @@ import { memo, ReactNode, useCallback } from 'react';
 import { Handle, Position, useNodeId } from '@xyflow/react';
 import { motion } from 'framer-motion';
 import { InfraNodeData, NodeCategory } from '@/types';
-import { getColorsForNode, nodeIcons } from '@/lib/design';
+import { getColorsForNode, nodeIcons, getLogoForNode, getVendorNameForNode } from '@/lib/design';
 import { EditableLabel } from './EditableLabel';
 
 interface BaseNodeProps {
@@ -126,6 +126,9 @@ function arePropsEqual(prevProps: BaseNodeProps, nextProps: BaseNodeProps): bool
     prevProps.data.nodeType === nextProps.data.nodeType &&
     prevProps.data.category === nextProps.data.category &&
     prevProps.data.policies?.length === nextProps.data.policies?.length &&
+    prevProps.data.vendorId === nextProps.data.vendorId &&
+    prevProps.data.cloudProvider === nextProps.data.cloudProvider &&
+    prevProps.data.productName === nextProps.data.productName &&
     prevProps.selected === nextProps.selected &&
     prevProps.isEditingLabel === nextProps.isEditingLabel &&
     prevProps.isEditingDescription === nextProps.isEditingDescription
@@ -145,6 +148,9 @@ export const BaseNode = memo(function BaseNode({
 }: BaseNodeProps) {
   const styles = categoryStyles[data.category] || categoryStyles.external;
   const nodeType = data.nodeType || 'user';
+  const logoPath = getLogoForNode(data);
+  const vendorName = getVendorNameForNode(data);
+  const hasPolicies = data.policies && data.policies.length > 0;
 
   const handleLabelCommit = useCallback((value: string) => {
     onCommitEdit?.('label', value);
@@ -254,25 +260,48 @@ export const BaseNode = memo(function BaseNode({
           </div>
         </div>
 
-        {/* Policy Indicator */}
-        {data.policies && data.policies.length > 0 && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className={`
-              absolute -top-1.5 -right-1.5
-              w-5 h-5 rounded-full
-              ${styles.iconBg}
-              flex items-center justify-center
-              text-[10px] font-bold text-white
-              shadow-lg
-              ring-2 ring-zinc-900
-            `}
-          >
-            {data.policies.length}
-          </motion.div>
-        )}
       </div>
+
+      {/* Vendor/Cloud Badge — logo + name strip below card */}
+      {logoPath && vendorName && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.1 }}
+          className="flex items-center gap-1.5 mt-1 px-2 py-1 rounded-md bg-zinc-800/90 border border-zinc-700/60"
+          title={data.productName || vendorName || undefined}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={logoPath}
+            alt={vendorName}
+            className="w-4 h-4 object-contain flex-shrink-0"
+          />
+          <span className="text-[10px] text-zinc-300 font-medium truncate">
+            {data.productName || vendorName}
+          </span>
+        </motion.div>
+      )}
+
+      {/* Policy Indicator — outside card to avoid overflow-hidden clipping */}
+      {data.policies && data.policies.length > 0 && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className={`
+            absolute -top-1.5 -right-1.5
+            w-5 h-5 rounded-full
+            ${styles.iconBg}
+            flex items-center justify-center
+            text-[10px] font-bold text-white
+            shadow-lg
+            ring-2 ring-zinc-900
+            z-10
+          `}
+        >
+          {data.policies.length}
+        </motion.div>
+      )}
 
       {/* Handles - 4 directions */}
       {/* Left - Target */}

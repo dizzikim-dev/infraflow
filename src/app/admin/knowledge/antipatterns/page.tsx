@@ -10,7 +10,7 @@ import {
   TrustBadge,
 } from '@/components/admin/knowledge';
 import type { ColumnDef, FilterDef, KnowledgeListConfig } from '@/components/admin/knowledge';
-import { SEVERITY_COLORS, SEVERITY_LABELS } from '@/lib/admin/badgeThemes';
+import { SEVERITY_COLORS, SEVERITY_LABELS } from '@/lib/utils/badgeThemes';
 
 interface AntiPatternItem {
   id: string;

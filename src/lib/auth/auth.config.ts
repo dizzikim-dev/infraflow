@@ -11,7 +11,11 @@ import Google from 'next-auth/providers/google';
 import GitHub from 'next-auth/providers/github';
 
 export const authConfig = {
-  session: { strategy: 'jwt' },
+  session: {
+    strategy: 'jwt',
+    maxAge: 24 * 60 * 60,     // 24 hours
+    updateAge: 2 * 60 * 60,   // Refresh every 2 hours
+  },
   pages: {
     signIn: '/auth/login',
   },

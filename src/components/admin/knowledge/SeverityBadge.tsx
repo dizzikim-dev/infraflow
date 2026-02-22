@@ -6,7 +6,7 @@
  * critical, high, medium, low 값에 따라 색상이 변하는 필 형태 배지
  */
 
-import { SEVERITY_COLORS } from '@/lib/admin/badgeThemes';
+import { SEVERITY_COLORS } from '@/lib/utils/badgeThemes';
 
 interface SeverityBadgeProps {
   severity: string;

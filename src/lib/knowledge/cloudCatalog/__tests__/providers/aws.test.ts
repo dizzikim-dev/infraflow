@@ -6,8 +6,8 @@ import { describe, it, expect } from 'vitest';
 import { AWS_SERVICES } from '../../providers/aws';
 
 describe('AWS_SERVICES', () => {
-  it('should have at least 20 services', () => {
-    expect(AWS_SERVICES.length).toBeGreaterThanOrEqual(20);
+  it('should have at least 40 services', () => {
+    expect(AWS_SERVICES.length).toBeGreaterThanOrEqual(40);
   });
 
   it('all entries should have provider "aws"', () => {

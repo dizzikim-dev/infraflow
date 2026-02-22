@@ -1,25 +1,30 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 const STORAGE_KEY = 'infraflow-sidebar-open';
 
-function getInitialState(): boolean {
-  if (typeof window === 'undefined') return true;
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    // Default to OPEN if never set (first visit)
-    return stored === null ? true : stored === 'true';
-  } catch {
-    return true;
-  }
-}
-
 export function useSidebar() {
-  const [isOpen, setIsOpen] = useState(getInitialState);
+  // Always start with true (open) for consistent SSR/client hydration
+  const [isOpen, setIsOpen] = useState(true);
+  const hydrated = useRef(false);
 
-  // Persist to localStorage
+  // After hydration, sync with localStorage
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored !== null && stored !== 'true') {
+        setIsOpen(false);
+      }
+    } catch {
+      // ignore
+    }
+    hydrated.current = true;
+  }, []);
+
+  // Persist to localStorage (skip the initial hydration sync)
+  useEffect(() => {
+    if (!hydrated.current) return;
     try {
       localStorage.setItem(STORAGE_KEY, String(isOpen));
     } catch {

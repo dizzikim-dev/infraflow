@@ -17,6 +17,8 @@ interface NodeDetailPanelProps {
   description?: string;
   onClose: () => void;
   onOpenEvidence?: () => void;
+  /** Called when user selects a product from the Products tab */
+  onProductSelect?: (vendorId: string | undefined, cloudProvider: string | undefined, productName: string) => void;
 }
 
 // Tab types
@@ -60,9 +62,11 @@ export function NodeDetailPanel({
   description,
   onClose,
   onOpenEvidence,
+  onProductSelect,
 }: NodeDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [expandedPolicy, setExpandedPolicy] = useState<number | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   // Get infrastructure info from DB (with SWR caching and static fallback)
   const { component: infraInfo, isLoading } = useInfraComponent(nodeType);
@@ -291,12 +295,35 @@ export function NodeDetailPanel({
               {products.slice(0, 8).map((product) => (
                 <div
                   key={product.nodeId}
-                  className="p-2.5 rounded-lg bg-zinc-800/30 border border-zinc-700/30 hover:bg-zinc-800/50 transition-colors"
+                  onClick={() => {
+                    if (onProductSelect) {
+                      const isDeselect = selectedProductId === product.nodeId;
+                      if (isDeselect) {
+                        setSelectedProductId(null);
+                        onProductSelect(undefined, undefined, '');
+                      } else {
+                        setSelectedProductId(product.nodeId);
+                        onProductSelect(vendorId, undefined, product.name);
+                      }
+                    }
+                  }}
+                  className={`p-2.5 rounded-lg border transition-colors ${
+                    onProductSelect ? 'cursor-pointer' : ''
+                  } ${
+                    selectedProductId === product.nodeId
+                      ? 'bg-orange-500/10 border-orange-500/40 ring-1 ring-orange-500/30'
+                      : 'bg-zinc-800/30 border-zinc-700/30 hover:bg-zinc-800/50'
+                  }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm text-white font-medium truncate">
-                        {product.name}
+                      <div className="text-sm text-white font-medium truncate flex items-center gap-1.5">
+                        {selectedProductId === product.nodeId && (
+                          <svg className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                        <span className="truncate">{product.name}</span>
                       </div>
                       <div className="text-xs text-zinc-400 truncate">
                         {product.nameKo}

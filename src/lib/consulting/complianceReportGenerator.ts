@@ -19,7 +19,7 @@ import type {
   GapItem,
   GapSeverity,
   IndustryType,
-  SecurityLevel,
+  ConsultingSecurityLevel,
 } from './types';
 import { checkCompliance, type ComplianceFramework } from '@/lib/audit/complianceChecker';
 import { detectAntiPatterns } from '@/lib/knowledge/antipatterns';
@@ -33,7 +33,7 @@ export interface ComplianceReportOptions {
   industry: IndustryType;
   organization: string;
   frameworks: string[]; // 'pci-dss', 'hipaa', 'iso-27001', 'soc2', 'gdpr', 'nist-800-53'
-  securityLevel?: SecurityLevel;
+  securityLevel?: ConsultingSecurityLevel;
   includeAntiPatterns?: boolean; // default true
   includeRecommendations?: boolean; // default true
 }
@@ -107,14 +107,14 @@ const FRAMEWORK_DATA: Record<string, FrameworkInfo> = {
 // Security Level Requirements
 // ---------------------------------------------------------------------------
 
-interface SecurityLevelRequirement {
+interface ConsultingSecurityLevelRequirement {
   encryption: InfraNodeType[];
   perimeterDefense: InfraNodeType[];
   monitoring: InfraNodeType[];
   accessControl: InfraNodeType[];
 }
 
-const SECURITY_LEVEL_REQUIREMENTS: Record<SecurityLevel, SecurityLevelRequirement> = {
+const SECURITY_LEVEL_REQUIREMENTS: Record<ConsultingSecurityLevel, ConsultingSecurityLevelRequirement> = {
   basic: {
     encryption: ['vpn-gateway'],
     perimeterDefense: ['firewall'],
@@ -546,7 +546,7 @@ function buildAntiPatternSection(spec: InfraSpec): ComplianceReportSection {
 
 function buildSecurityPostureSection(
   spec: InfraSpec,
-  securityLevel: SecurityLevel,
+  securityLevel: ConsultingSecurityLevel,
 ): ComplianceReportSection {
   const presentTypes = new Set(spec.nodes.map((n) => n.type));
   const requirements = SECURITY_LEVEL_REQUIREMENTS[securityLevel];
@@ -622,7 +622,7 @@ interface RecommendationEntry {
 function buildRecommendations(
   gaps: GapItem[],
   frameworks: string[],
-  securityLevel: SecurityLevel,
+  securityLevel: ConsultingSecurityLevel,
   includeRecommendations: boolean,
 ): {
   recommendations: string[];

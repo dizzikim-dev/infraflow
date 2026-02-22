@@ -7,10 +7,6 @@ export {
   updateTemplate,
   getTemplateById,
   searchTemplates,
-  exportTemplate,
-  importTemplate,
-  generateShareLink,
-  parseShareLink,
   builtInTemplates,
   type Template,
   type TemplateCategory,
@@ -18,8 +14,5 @@ export {
 
 export {
   recommendTemplates,
-  getPopularTemplates,
-  getTemplatesByUseCase,
-  findSimilarTemplates,
   type TemplateRecommendation,
 } from './templateRecommender';

@@ -16,7 +16,7 @@ import {
   compareCosts,
   formatCost,
   exportCostToCSV,
-  type CloudProvider,
+  type CostProvider,
   type CostBreakdown,
 } from '@/lib/cost';
 import type { InfraSpec } from '@/types';
@@ -27,7 +27,7 @@ interface CostEstimatorPanelProps {
 }
 
 export function CostEstimatorPanel({ spec, onClose }: CostEstimatorPanelProps) {
-  const [selectedProvider, setSelectedProvider] = useState<CloudProvider>('aws');
+  const [selectedProvider, setSelectedProvider] = useState<CostProvider>('aws');
   const [currency, setCurrency] = useState<'USD' | 'KRW'>('USD');
   const [showComparison, setShowComparison] = useState(false);
 
@@ -50,14 +50,14 @@ export function CostEstimatorPanel({ spec, onClose }: CostEstimatorPanelProps) {
     link.click();
   };
 
-  const providerIcons: Record<CloudProvider, React.ReactNode> = {
+  const providerIcons: Record<CostProvider, React.ReactNode> = {
     aws: <Cloud className="w-4 h-4" />,
     azure: <Cloud className="w-4 h-4" />,
     gcp: <Cloud className="w-4 h-4" />,
     onprem: <Server className="w-4 h-4" />,
   };
 
-  const providerLabels: Record<CloudProvider, string> = {
+  const providerLabels: Record<CostProvider, string> = {
     aws: 'AWS',
     azure: 'Azure',
     gcp: 'GCP',
@@ -101,7 +101,7 @@ export function CostEstimatorPanel({ spec, onClose }: CostEstimatorPanelProps) {
       <div className="p-4 border-b border-white/10 space-y-3">
         {/* Provider Selection */}
         <div className="flex gap-2">
-          {(['aws', 'azure', 'gcp', 'onprem'] as CloudProvider[]).map((provider) => (
+          {(['aws', 'azure', 'gcp', 'onprem'] as CostProvider[]).map((provider) => (
             <button
               key={provider}
               onClick={() => setSelectedProvider(provider)}
@@ -171,7 +171,7 @@ export function CostEstimatorPanel({ spec, onClose }: CostEstimatorPanelProps) {
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
             <h3 className="text-sm font-medium text-gray-300 mb-3">클라우드 비용 비교 (월간)</h3>
             <div className="space-y-2">
-              {(['aws', 'azure', 'gcp', 'onprem'] as CloudProvider[]).map((provider) => {
+              {(['aws', 'azure', 'gcp', 'onprem'] as CostProvider[]).map((provider) => {
                 const cost = comparison[provider].totalMonthlyCost;
                 const maxCost = Math.max(...Object.values(comparison).map((c) => c.totalMonthlyCost));
                 const percentage = maxCost > 0 ? (cost / maxCost) * 100 : 0;

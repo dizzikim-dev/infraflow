@@ -12,7 +12,7 @@ import {
   INDUSTRY_TYPE_LABELS,
   SECURITY_LEVEL_COLORS,
   SECURITY_LEVEL_LABELS,
-} from '@/lib/admin/badgeThemes';
+} from '@/lib/utils/badgeThemes';
 
 interface IndustryPresetItem {
   id: string;

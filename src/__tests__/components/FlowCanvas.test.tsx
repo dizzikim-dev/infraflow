@@ -15,12 +15,12 @@ vi.mock('@xyflow/react', async () => {
     ),
     ReactFlowProvider: ({ children }: any) => <div data-testid="react-flow-provider">{children}</div>,
     Background: () => <div data-testid="background" />,
-    Controls: () => <div data-testid="controls" />,
     MiniMap: () => <div data-testid="minimap" />,
     useNodesState: (initialNodes: Node[]) => [initialNodes, vi.fn(), vi.fn()],
     useEdgesState: (initialEdges: Edge[]) => [initialEdges, vi.fn(), vi.fn()],
     useReactFlow: () => ({
       screenToFlowPosition: vi.fn((pos) => pos),
+      setNodes: vi.fn(),
     }),
     addEdge: vi.fn((params, edges) => [...edges, params]),
     Position: { Left: 'left', Right: 'right', Top: 'top', Bottom: 'bottom' },
@@ -68,10 +68,6 @@ describe('FlowCanvas', () => {
       expect(screen.getByTestId('background')).toBeInTheDocument();
     });
 
-    it('should render Controls component', () => {
-      render(<FlowCanvas />);
-      expect(screen.getByTestId('controls')).toBeInTheDocument();
-    });
 
     it('should render MiniMap component', () => {
       render(<FlowCanvas />);

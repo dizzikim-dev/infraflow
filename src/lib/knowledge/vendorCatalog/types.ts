@@ -6,6 +6,14 @@
  */
 
 import type { InfraNodeType } from '@/types/infra';
+import type {
+  OperationalComplexity,
+  EcosystemMaturity,
+  DisasterRecoveryInfo,
+  RequiredCompanion,
+  RecommendedCompanion,
+  CompanionRef,
+} from '../types';
 
 // ---------------------------------------------------------------------------
 // Product Tree Node
@@ -69,6 +77,28 @@ export interface ProductNode {
   maxThroughput?: string;
   /** Physical form factor for deployment environment filtering */
   formFactor?: 'appliance' | 'chassis' | 'virtual' | 'cloud' | 'container' | 'rugged';
+
+  // ── Comparison Fields (shared with CloudService) ──
+
+  /** Operational complexity for comparison */
+  operationalComplexity?: OperationalComplexity;
+
+  /** Ecosystem maturity level */
+  ecosystemMaturity?: EcosystemMaturity;
+
+  /** Disaster recovery capabilities */
+  disasterRecovery?: DisasterRecoveryInfo;
+
+  // ── Companion Dependencies ──
+
+  /** Components that MUST exist for this product to function */
+  requiredCompanions?: RequiredCompanion[];
+
+  /** Components strongly recommended alongside this product */
+  recommendedCompanions?: RecommendedCompanion[];
+
+  /** Component types this product conflicts with */
+  conflictsWith?: CompanionRef[];
 
   /** Child nodes (sub-categories or models) */
   children: ProductNode[];

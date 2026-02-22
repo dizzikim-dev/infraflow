@@ -102,6 +102,35 @@ interface KnowledgeRouteConfig {
 }
 
 // ============================================
+// CSRF Protection
+// ============================================
+
+/**
+ * Reusable CSRF check for mutating requests (POST, PUT, DELETE).
+ * Validates Origin and Sec-Fetch-Site headers to prevent cross-site request forgery.
+ *
+ * @returns NextResponse with 403 if CSRF check fails, or null if the request passes.
+ */
+function checkCsrf(request: NextRequest): NextResponse | null {
+  const origin = request.headers.get('origin');
+  const host = request.headers.get('host') || '';
+  const secFetchSite = request.headers.get('sec-fetch-site');
+  const allowedOrigins = [`http://${host}`, `https://${host}`];
+
+  // Check Sec-Fetch-Site header (modern browsers)
+  if (secFetchSite && secFetchSite !== 'same-origin' && secFetchSite !== 'none') {
+    return NextResponse.json({ error: 'CSRF check failed' }, { status: 403 });
+  }
+
+  // Check Origin header (fallback for older browsers)
+  if (origin && !allowedOrigins.includes(origin)) {
+    return NextResponse.json({ error: 'CSRF check failed' }, { status: 403 });
+  }
+
+  return null; // pass
+}
+
+// ============================================
 // Helpers
 // ============================================
 
@@ -407,6 +436,10 @@ export function createKnowledgeListRoute(config: KnowledgeRouteConfig) {
 
   async function POST(request: NextRequest) {
     try {
+      // CSRF protection
+      const csrfError = checkCsrf(request);
+      if (csrfError) return csrfError;
+
       await requireAdmin();
 
       const body = await request.json();
@@ -491,6 +524,10 @@ export function createKnowledgeDetailRoute(config: KnowledgeRouteConfig) {
 
   async function PUT(request: NextRequest, context: RouteContext) {
     try {
+      // CSRF protection
+      const csrfError = checkCsrf(request);
+      if (csrfError) return csrfError;
+
       await requireAdmin();
       const { id } = await context.params;
       const body = await request.json();
@@ -589,6 +626,10 @@ export function createKnowledgeDetailRoute(config: KnowledgeRouteConfig) {
 
   async function DELETE(request: NextRequest, context: RouteContext) {
     try {
+      // CSRF protection
+      const csrfError = checkCsrf(request);
+      if (csrfError) return csrfError;
+
       await requireAdmin();
       const { id } = await context.params;
       const { searchParams } = new URL(request.url);

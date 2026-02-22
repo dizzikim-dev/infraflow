@@ -13,7 +13,7 @@
 
 import type { InfraNodeSpec, InfraSpec, InfraNodeType } from '@/types/infra';
 import type { ProductNode } from '@/lib/knowledge/vendorCatalog/types';
-import type { MatchScore } from './types';
+import type { VendorMatchScore } from './types';
 import { getCategoryForType } from '@/lib/data/infrastructureDB';
 
 // ---------------------------------------------------------------------------
@@ -80,7 +80,7 @@ export function scoreProduct(
   product: ProductNode,
   node: InfraNodeSpec,
   spec: InfraSpec,
-): MatchScore {
+): VendorMatchScore {
   const typeMatch = scoreTypeMatch(product, node);
   const architectureRoleFit = scoreArchitectureRoleFit(product, node);
   const useCaseOverlap = scoreUseCaseOverlap(product, spec);

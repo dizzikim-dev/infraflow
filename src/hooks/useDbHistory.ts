@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import type { InfraSpec } from '@/types';
 import type { Node, Edge } from '@xyflow/react';
 import { createLogger } from '@/lib/utils/logger';
+import { trackActivity } from '@/lib/activity/trackActivity';
 
 const log = createLogger('useDbHistory');
 const UPDATE_DEBOUNCE_MS = 3000;
@@ -123,7 +124,13 @@ export function useDbHistory(enabled: boolean, initialActiveId?: string | null) 
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ spec, nodesJson: nodes, edgesJson: edges, title: diagramTitle }),
             });
-            if (res.ok) setLastSavedAt(new Date());
+            if (res.ok) {
+              setLastSavedAt(new Date());
+              trackActivity('diagram_update', {
+                diagramId: id,
+                detail: { title: diagramTitle },
+              });
+            }
           } catch {
             log.warn('Failed to update diagram');
           } finally {
@@ -150,6 +157,10 @@ export function useDbHistory(enabled: boolean, initialActiveId?: string | null) 
                 ...prev,
               ]);
               setLastSavedAt(new Date());
+              trackActivity('diagram_create', {
+                diagramId: newId,
+                detail: { title: diagramTitle, nodeCount: spec.nodes?.length ?? 0 },
+              });
             }
           } catch {
             log.warn('Failed to create diagram');

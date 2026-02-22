@@ -173,6 +173,7 @@ export interface EditorPanelsProps {
   openModal: (name: ModalType) => void;
   setSelectedNodeDetail: (detail: NodeDetail | null) => void;
   setSelectedNodePolicy: (policy: NodePolicy | null) => void;
+  onNodeVendorUpdate?: (nodeId: string, vendorId: string | undefined, cloudProvider: string | undefined, productName: string | undefined) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -210,6 +211,7 @@ export function EditorPanels({
   openModal,
   setSelectedNodeDetail,
   setSelectedNodePolicy,
+  onNodeVendorUpdate,
 }: EditorPanelsProps) {
   return (
     <>
@@ -258,6 +260,7 @@ export function EditorPanels({
             zone={selectedNodeDetail.zone}
             description={selectedNodeDetail.description}
             onClose={() => setSelectedNodeDetail(null)}
+            onProductSelect={onNodeVendorUpdate ? (vendorId, cloudProvider, productName) => onNodeVendorUpdate(selectedNodeDetail.id, vendorId, cloudProvider, productName) : undefined}
           />
         )}
       </AnimatePresence>

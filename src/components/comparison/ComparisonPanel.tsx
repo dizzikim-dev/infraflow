@@ -4,7 +4,8 @@ import { memo, useMemo, useCallback } from 'react';
 import { Node, Edge } from '@xyflow/react';
 import { FlowCanvas } from '@/components/shared';
 import { PanelState, DiffResult } from '@/hooks/useComparisonMode';
-import { InfraNodeData, isInfraNodeData } from '@/types';
+import { InfraNodeData, InfraSpec, isInfraNodeData } from '@/types';
+import { ComparisonPromptBar } from './ComparisonPromptBar';
 
 interface ComparisonPanelProps {
   side: 'left' | 'right';
@@ -15,6 +16,7 @@ interface ComparisonPanelProps {
   onEdgesChange?: (edges: Edge[]) => void;
   onNodeClick?: (event: React.MouseEvent, node: Node) => void;
   onNodeDataUpdate?: (nodeId: string, field: 'label' | 'description', value: string) => void;
+  onPanelUpdate?: (spec: InfraSpec | null, nodes: Node[], edges: Edge[]) => void;
 }
 
 /**
@@ -29,6 +31,7 @@ export const ComparisonPanel = memo(function ComparisonPanel({
   onEdgesChange,
   onNodeClick,
   onNodeDataUpdate,
+  onPanelUpdate,
 }: ComparisonPanelProps) {
   // Apply diff styling to nodes
   const styledNodes = useMemo(() => {
@@ -181,6 +184,15 @@ export const ComparisonPanel = memo(function ComparisonPanel({
           </div>
         )}
       </div>
+
+      {/* Prompt Bar */}
+      {onPanelUpdate && (
+        <ComparisonPromptBar
+          side={side}
+          panel={panel}
+          onPanelUpdate={onPanelUpdate}
+        />
+      )}
     </div>
   );
 });

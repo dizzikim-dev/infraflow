@@ -150,10 +150,12 @@ describe('getAlternatives', () => {
 // ---------------------------------------------------------------------------
 
 describe('getServicesByDeploymentModel', () => {
-  it('should return empty when no services have deployment model set', () => {
-    // Current data has no deploymentModel set yet — returns empty
+  it('should return serverless services', () => {
     const result = getServicesByDeploymentModel('serverless');
-    expect(result).toEqual([]);
+    expect(result.length).toBeGreaterThan(0);
+    for (const svc of result) {
+      expect(svc.deploymentModel).toBe('serverless');
+    }
   });
 
   it('should filter by provider when specified', () => {
@@ -170,15 +172,24 @@ describe('getServicesByDeploymentModel', () => {
 // ---------------------------------------------------------------------------
 
 describe('getServicesWithCompliance', () => {
-  it('should return empty when no services have compliance set', () => {
+  it('should return services with SOC 2 compliance', () => {
     const result = getServicesWithCompliance(['SOC 2']);
-    expect(result).toEqual([]);
+    expect(result.length).toBeGreaterThan(0);
+    for (const svc of result) {
+      expect(svc.complianceCertifications).toBeDefined();
+      expect(svc.complianceCertifications!.some((c) => c.toLowerCase() === 'soc 2')).toBe(true);
+    }
   });
 
-  it('should be case-insensitive', () => {
-    const result = getServicesWithCompliance(['soc 2', 'HIPAA']);
-    // Currently empty, but validates no crash
-    expect(Array.isArray(result)).toBe(true);
+  it('should filter by multiple frameworks (any match)', () => {
+    const result = getServicesWithCompliance(['SOC 2', 'HIPAA']);
+    expect(result.length).toBeGreaterThan(0);
+    for (const svc of result) {
+      const certsLower = svc.complianceCertifications!.map((c) => c.toLowerCase());
+      // At least one of the requested frameworks must be present
+      const hasAny = certsLower.includes('soc 2') || certsLower.includes('hipaa');
+      expect(hasAny).toBe(true);
+    }
   });
 });
 
@@ -203,9 +214,17 @@ describe('getIntegrationPartners', () => {
 // ---------------------------------------------------------------------------
 
 describe('getServiceCategories', () => {
-  it('should return empty when no services have serviceCategory set', () => {
+  it('should return categories with counts', () => {
     const result = getServiceCategories();
-    expect(result).toEqual([]);
+    expect(result.length).toBeGreaterThan(0);
+    const categoryNames = result.map((c) => c.category);
+    expect(categoryNames).toContain('Security');
+    expect(categoryNames).toContain('Networking');
+    expect(categoryNames).toContain('Compute');
+    for (const cat of result) {
+      expect(cat.categoryKo).toBeTruthy();
+      expect(cat.count).toBeGreaterThan(0);
+    }
   });
 });
 
@@ -235,12 +254,11 @@ describe('getProviderCoverageStats', () => {
     }
   });
 
-  it('enrichedServices should be 0 when no services are enriched', () => {
+  it('enrichedServices should be greater than 0 after Phase 3', () => {
     const stats = getProviderCoverageStats();
-    // No services have architectureRole + recommendedFor(3+) + sla yet
-    expect(stats.aws.enrichedServices).toBe(0);
-    expect(stats.azure.enrichedServices).toBe(0);
-    expect(stats.gcp.enrichedServices).toBe(0);
+    expect(stats.aws.enrichedServices).toBeGreaterThan(0);
+    expect(stats.azure.enrichedServices).toBeGreaterThan(0);
+    expect(stats.gcp.enrichedServices).toBeGreaterThan(0);
   });
 });
 
@@ -261,13 +279,15 @@ describe('compareServicesEnriched', () => {
     expect(result.mostFeatures!.count).toBeGreaterThan(0);
   });
 
-  it('bestSLA should be undefined when no services have SLA', () => {
+  it('bestSLA should be populated for enriched services', () => {
     const result = compareServicesEnriched('firewall');
-    expect(result.bestSLA).toBeUndefined();
+    expect(result.bestSLA).toBeDefined();
+    expect(result.bestSLA!.sla).toBeTruthy();
   });
 
-  it('cheapest should be undefined when no services have cost', () => {
+  it('cheapest should be populated for enriched services', () => {
     const result = compareServicesEnriched('firewall');
-    expect(result.cheapest).toBeUndefined();
+    expect(result.cheapest).toBeDefined();
+    expect(result.cheapest!.cost).toBeGreaterThanOrEqual(0);
   });
 });

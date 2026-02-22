@@ -42,6 +42,14 @@ export interface FlatProduct {
   path: string[];
   pathKo: string[];
   childCount: number;
+  operationalComplexity?: string;
+  ecosystemMaturity?: string;
+  disasterRecovery?: {
+    maxRTOMinutes?: number;
+    maxRPOMinutes?: number;
+    backupFrequency?: string;
+    multiRegionSupported: boolean;
+  };
 }
 
 export async function GET() {
@@ -84,6 +92,9 @@ export async function GET() {
           path: pathNodes.map((n) => n.name),
           pathKo: pathNodes.map((n) => n.nameKo),
           childCount: node.children.length,
+          operationalComplexity: node.operationalComplexity,
+          ecosystemMaturity: node.ecosystemMaturity,
+          disasterRecovery: node.disasterRecovery,
         });
       }
     }

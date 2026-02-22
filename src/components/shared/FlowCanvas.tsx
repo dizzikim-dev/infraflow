@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState, memo } from 'react';
 import {
   ReactFlow,
   Background,
-  Controls,
   MiniMap,
   Node,
   Edge,
@@ -27,6 +26,7 @@ import { nodeTypes } from '@/components/nodes';
 import { edgeTypes } from '@/components/edges';
 import { NodeEditingProvider } from '@/hooks/useNodeEditing';
 import { createLogger } from '@/lib/utils/logger';
+import { trackActivity } from '@/lib/activity/trackActivity';
 
 const log = createLogger('FlowCanvas');
 
@@ -74,7 +74,11 @@ const FlowCanvasInner = memo(function FlowCanvasInner({
 }: FlowCanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, setNodes: setFlowNodes } = useReactFlow();
+
+  // Ref for direct store updates — avoids adding setFlowNodes to effect deps
+  const setFlowNodesRef = useRef(setFlowNodes);
+  setFlowNodesRef.current = setFlowNodes;
 
   // Space key tracking: Space held → pan mode, otherwise → selection/drag mode
   const [isSpaceHeld, setIsSpaceHeld] = useState(false);
@@ -114,6 +118,9 @@ const FlowCanvasInner = memo(function FlowCanvasInner({
     }
     setNodes(initialNodes);
     setEdges(initialEdges);
+    // Direct store update: bypasses the useNodesState → StoreUpdater chain
+    // to ensure data changes (vendor assignment, etc.) propagate immediately
+    setFlowNodesRef.current(initialNodes);
   }, [initialNodes, initialEdges, setNodes, setEdges]);
 
   // Propagate node position changes to parent after drag ends
@@ -137,6 +144,10 @@ const FlowCanvasInner = memo(function FlowCanvasInner({
           setTimeout(() => onEdgesChangeCallback(newEdges), 0);
         }
         return newEdges;
+      });
+
+      trackActivity('edge_add', {
+        detail: { source: params.source, target: params.target },
       });
     },
     [setEdges, onEdgesChangeCallback]
@@ -217,7 +228,6 @@ const FlowCanvasInner = memo(function FlowCanvasInner({
             size={1}
             color="rgba(255, 255, 255, 0.08)"
           />
-          <Controls className="bg-zinc-800 border-zinc-700" />
           <MiniMap
             nodeColor={minimapNodeColor}
             className="bg-zinc-800 border-zinc-700"

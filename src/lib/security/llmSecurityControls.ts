@@ -127,6 +127,12 @@ const DANGEROUS_OUTPUT_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
   { pattern: /process\.env\b/gi, label: 'env-access' },
   { pattern: /require\s*\(\s*['"](?:child_process|fs|os|net|http)/gi, label: 'dangerous-require' },
   { pattern: /import\s+.*(?:child_process|fs|os|net|http)/gi, label: 'dangerous-import' },
+  // API key / secret token patterns
+  { pattern: /AKIA[0-9A-Z]{16}/g, label: 'aws-access-key' },
+  { pattern: /AIza[0-9A-Za-z_-]{35}/g, label: 'gcp-api-key' },
+  { pattern: /sk-[a-zA-Z0-9]{20,}/g, label: 'openai-api-key' },
+  { pattern: /ghp_[a-zA-Z0-9]{36}/g, label: 'github-pat' },
+  { pattern: /xox[bpors]-[a-zA-Z0-9-]+/g, label: 'slack-token' },
 ];
 
 // ============================================================

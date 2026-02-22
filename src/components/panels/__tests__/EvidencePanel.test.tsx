@@ -85,11 +85,23 @@ describe('EvidencePanel', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('renders footer summary', () => {
+  it('renders footer summary with vendor count', () => {
     render(<EvidencePanel {...defaultProps} />);
 
-    // Footer should contain "relationships" and "products" text
+    // Footer should contain "relationships", "products", and "vendors" text
     expect(screen.getByText(/relationships/)).toBeDefined();
     expect(screen.getByText(/products/)).toBeDefined();
+    expect(screen.getByText(/vendors/)).toBeDefined();
+  });
+
+  it('shows view toggle when recommendations tab is active', () => {
+    render(<EvidencePanel {...defaultProps} />);
+
+    // Switch to recommendations tab
+    fireEvent.click(screen.getByText('제품 추천'));
+
+    // View toggle should exist
+    expect(screen.getByText(/점수순/)).toBeDefined();
+    expect(screen.getByText(/벤더별 비교/)).toBeDefined();
   });
 });

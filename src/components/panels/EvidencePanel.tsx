@@ -20,10 +20,12 @@ import {
   CheckCircle2,
   ArrowRight,
   ExternalLink,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import type { InfraNodeType, InfraSpec } from '@/types';
 import { useEvidence } from '@/hooks/useEvidence';
-import type { EvidenceData } from '@/hooks/useEvidence';
+import type { EvidenceData, VendorGroup } from '@/hooks/useEvidence';
 
 // ============================================================
 // Types
@@ -170,7 +172,7 @@ export function EvidencePanel({
         <div className="border-t border-white/10 px-4 py-3 text-xs text-zinc-400">
           <div className="flex items-center justify-between">
             <span>
-              {evidence.counts.relationships} relationships, {evidence.counts.recommendations} products
+              {evidence.counts.relationships} relationships, {evidence.counts.recommendations} products ({evidence.counts.vendors} vendors)
             </span>
             {evidence.counts.validationIssues > 0 && (
               <span className="text-amber-400">
@@ -248,7 +250,11 @@ function RelationshipsTab({ evidence, nodeType }: { evidence: EvidenceData; node
 // Tab: Recommendations
 // ============================================================
 
+type RecViewMode = 'byScore' | 'byVendor';
+
 function RecommendationsTab({ evidence }: { evidence: EvidenceData }) {
+  const [viewMode, setViewMode] = useState<RecViewMode>('byScore');
+
   if (evidence.recommendations.length === 0) {
     return (
       <div className="text-center text-zinc-500 py-12">
@@ -261,42 +267,147 @@ function RecommendationsTab({ evidence }: { evidence: EvidenceData }) {
 
   return (
     <>
-      {evidence.recommendations.slice(0, 5).map((rec) => {
-        const { breakdown } = rec.score;
-        const maxScore = { type: 40, role: 25, useCase: 20, ha: 15 };
+      {/* View mode toggle */}
+      <div className="flex items-center gap-1 mb-3 bg-zinc-800/50 rounded-lg p-1">
+        <button
+          onClick={() => setViewMode('byScore')}
+          className={`flex-1 text-xs py-1.5 px-2 rounded-md transition-colors ${
+            viewMode === 'byScore'
+              ? 'bg-emerald-500/20 text-emerald-300'
+              : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          점수순 / By Score
+        </button>
+        <button
+          onClick={() => setViewMode('byVendor')}
+          className={`flex-1 text-xs py-1.5 px-2 rounded-md transition-colors ${
+            viewMode === 'byVendor'
+              ? 'bg-emerald-500/20 text-emerald-300'
+              : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          벤더별 비교 / By Vendor
+        </button>
+      </div>
+
+      {viewMode === 'byScore' && (
+        <ByScoreView recommendations={evidence.recommendations} />
+      )}
+
+      {viewMode === 'byVendor' && (
+        <ByVendorView vendorGrouped={evidence.vendorGrouped} />
+      )}
+    </>
+  );
+}
+
+function ByScoreView({ recommendations }: { recommendations: EvidenceData['recommendations'] }) {
+  return (
+    <>
+      {recommendations.slice(0, 5).map((rec) => (
+        <ProductCard key={rec.product.nodeId} rec={rec} />
+      ))}
+    </>
+  );
+}
+
+function ByVendorView({ vendorGrouped }: { vendorGrouped: VendorGroup[] }) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (vendorId: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(vendorId)) next.delete(vendorId);
+      else next.add(vendorId);
+      return next;
+    });
+  };
+
+  return (
+    <>
+      {vendorGrouped.map((group) => {
+        const isExpanded = expanded.has(group.vendorId);
+        const hasAlts = group.alternatives.length > 0;
 
         return (
-          <div key={rec.product.nodeId} className="bg-zinc-800/50 rounded-lg p-3 border border-white/5">
-            <div className="flex items-start justify-between">
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-white truncate">
-                  {rec.product.name}
-                </div>
-                <div className="text-xs text-zinc-400 truncate">
-                  {rec.product.nameKo}
-                </div>
-                <div className="text-[10px] text-zinc-500 mt-0.5">
-                  {rec.vendorName} &middot; {rec.path.join(' > ')}
-                </div>
-              </div>
-              <span className="text-sm font-bold text-emerald-400 ml-2">
-                {rec.score.overall}
+          <div key={group.vendorId} className="space-y-2">
+            {/* Vendor header */}
+            <button
+              onClick={() => hasAlts && toggleExpand(group.vendorId)}
+              className="w-full flex items-center gap-2 text-left"
+            >
+              <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                {group.vendorName}
               </span>
-            </div>
+              <span className="text-[10px] text-zinc-500">
+                Best: {group.best.score.overall}점
+              </span>
+              {hasAlts && (
+                <span className="text-[10px] text-zinc-500 ml-auto flex items-center gap-0.5">
+                  +{group.alternatives.length}
+                  {isExpanded ? (
+                    <ChevronDown className="w-3 h-3" />
+                  ) : (
+                    <ChevronRight className="w-3 h-3" />
+                  )}
+                </span>
+              )}
+            </button>
 
-            {/* Score breakdown bars */}
-            <div className="mt-2 space-y-1">
-              <ScoreBar label="Type" value={breakdown.typeMatch} max={maxScore.type} />
-              <ScoreBar label="Role" value={breakdown.architectureRoleFit} max={maxScore.role} />
-              <ScoreBar label="Use Case" value={breakdown.useCaseOverlap} max={maxScore.useCase} />
-              <ScoreBar label="HA" value={breakdown.haFeatureMatch} max={maxScore.ha} />
-            </div>
+            {/* Best product */}
+            <ProductCard rec={group.best} />
 
-            <p className="text-xs text-zinc-400 mt-2">{rec.reasonKo}</p>
+            {/* Expandable alternatives */}
+            {isExpanded && group.alternatives.map((alt) => (
+              <div key={alt.product.nodeId} className="ml-3 border-l-2 border-zinc-700 pl-2">
+                <ProductCard rec={alt} compact />
+              </div>
+            ))}
           </div>
         );
       })}
     </>
+  );
+}
+
+function ProductCard({ rec, compact }: { rec: EvidenceData['recommendations'][0]; compact?: boolean }) {
+  const { breakdown } = rec.score;
+  const maxScore = { type: 40, role: 25, useCase: 20, ha: 15 };
+
+  return (
+    <div className="bg-zinc-800/50 rounded-lg p-3 border border-white/5">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium text-white truncate">
+            {rec.product.name}
+          </div>
+          <div className="text-xs text-zinc-400 truncate">
+            {rec.product.nameKo}
+          </div>
+          <div className="text-[10px] text-zinc-500 mt-0.5">
+            {rec.vendorName} &middot; {rec.path.join(' > ')}
+          </div>
+        </div>
+        <span className="text-sm font-bold text-emerald-400 ml-2">
+          {rec.score.overall}
+        </span>
+      </div>
+
+      {!compact && (
+        <>
+          {/* Score breakdown bars */}
+          <div className="mt-2 space-y-1">
+            <ScoreBar label="Type" value={breakdown.typeMatch} max={maxScore.type} />
+            <ScoreBar label="Role" value={breakdown.architectureRoleFit} max={maxScore.role} />
+            <ScoreBar label="Use Case" value={breakdown.useCaseOverlap} max={maxScore.useCase} />
+            <ScoreBar label="HA" value={breakdown.haFeatureMatch} max={maxScore.ha} />
+          </div>
+
+          <p className="text-xs text-zinc-400 mt-2">{rec.reasonKo}</p>
+        </>
+      )}
+    </div>
   );
 }
 

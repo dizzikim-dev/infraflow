@@ -6,8 +6,8 @@ import { describe, it, expect } from 'vitest';
 import { AZURE_SERVICES } from '../../providers/azure';
 
 describe('AZURE_SERVICES', () => {
-  it('should have at least 18 services', () => {
-    expect(AZURE_SERVICES.length).toBeGreaterThanOrEqual(18);
+  it('should have at least 34 services', () => {
+    expect(AZURE_SERVICES.length).toBeGreaterThanOrEqual(34);
   });
 
   it('all entries should have provider "azure"', () => {

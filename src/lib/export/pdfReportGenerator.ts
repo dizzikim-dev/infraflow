@@ -6,7 +6,7 @@
 
 import type { InfraSpec } from '@/types';
 import { runSecurityAudit, checkAllCompliance, type SecurityAuditResult, type ComplianceReport } from '@/lib/audit';
-import { estimateCost, compareCosts, formatCost, type CostBreakdown, type CloudProvider } from '@/lib/cost';
+import { estimateCost, compareCosts, formatCost, type CostBreakdown, type CostProvider } from '@/lib/cost';
 import { createLogger } from '@/lib/utils/logger';
 
 const logger = createLogger('PDFReportGenerator');
@@ -25,7 +25,7 @@ export interface PDFReportOptions {
   includeSecurityAudit: boolean;
   includeCompliance: boolean;
   includeCostEstimate: boolean;
-  provider?: CloudProvider;
+  provider?: CostProvider;
   currency?: 'USD' | 'KRW';
   diagramImage?: string; // Base64 data URL
 }

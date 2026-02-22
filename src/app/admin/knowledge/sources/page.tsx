@@ -7,7 +7,7 @@
 import Link from 'next/link';
 import { KnowledgeListPage } from '@/components/admin/knowledge';
 import type { ColumnDef, FilterDef, KnowledgeListConfig } from '@/components/admin/knowledge';
-import { SOURCE_TYPE_COLORS, SOURCE_TYPE_LABELS } from '@/lib/admin/badgeThemes';
+import { SOURCE_TYPE_COLORS, SOURCE_TYPE_LABELS } from '@/lib/utils/badgeThemes';
 
 interface SourceItem {
   id: string;

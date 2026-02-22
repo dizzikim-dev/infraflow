@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Azure - simplified -->
+  <path d="M22 12L10 48h14l18-28H28L38 12H22z" fill="#0078D4"/>
+  <path d="M34 24l-10 20h26L34 24z" fill="#50E6FF" opacity="0.7"/>
+  <path d="M24 44h26l-4 8H20l4-8z" fill="#0078D4"/>
+</svg>

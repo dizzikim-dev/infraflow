@@ -50,6 +50,7 @@ export function PromptPanel({
   const [prompt, setPrompt] = useState('');
   const [mode, setMode] = useState<'create' | 'modify'>('create');
   const [lastSubmittedPrompt, setLastSubmittedPrompt] = useState('');
+  const [explanationDismissed, setExplanationDismissed] = useState(false);
 
   // Auto-switch to modify mode if there's an existing diagram and LLM is available
   const effectiveMode = hasExistingDiagram && llmAvailable && mode === 'modify' ? 'modify' : 'create';
@@ -59,6 +60,7 @@ export function PromptPanel({
     if (!prompt.trim() || isLoading) return;
     const trimmed = prompt.trim();
     setLastSubmittedPrompt(trimmed);
+    setExplanationDismissed(false);
 
     if (effectiveMode === 'modify' && onModify) {
       onModify(trimmed);
@@ -203,28 +205,39 @@ export function PromptPanel({
 
         {/* Generation Explanation Display */}
         <AnimatePresence>
-          {lastResult?.explanation && !lastReasoning && (
+          {lastResult?.explanation && !lastReasoning && !explanationDismissed && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               className="mb-3 p-3 bg-blue-900/20 rounded-xl border border-blue-500/30"
             >
-              <div className="flex items-center gap-2 mb-1">
-                <svg
-                  className="w-4 h-4 text-blue-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4 text-blue-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                    />
+                  </svg>
+                  <span className="text-xs font-medium text-blue-400">생성 설명</span>
+                </div>
+                <button
+                  onClick={() => setExplanationDismissed(true)}
+                  className="text-zinc-500 hover:text-zinc-300 transition-colors p-0.5 rounded hover:bg-zinc-700/50"
+                  aria-label="닫기"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                  />
-                </svg>
-                <span className="text-xs font-medium text-blue-400">생성 설명</span>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
               <p className="text-sm text-zinc-300 whitespace-pre-line">
                 {lastResult.explanation}

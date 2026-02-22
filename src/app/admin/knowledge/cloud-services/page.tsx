@@ -7,7 +7,7 @@
 import Link from 'next/link';
 import { KnowledgeListPage } from '@/components/admin/knowledge';
 import type { ColumnDef, FilterDef, KnowledgeListConfig } from '@/components/admin/knowledge';
-import { PROVIDER_COLORS, STATUS_COLORS, STATUS_LABELS } from '@/lib/admin/badgeThemes';
+import { PROVIDER_COLORS, STATUS_COLORS, STATUS_LABELS } from '@/lib/utils/badgeThemes';
 
 interface CloudServiceItem {
   id: string;

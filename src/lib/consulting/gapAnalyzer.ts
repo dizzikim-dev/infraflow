@@ -22,9 +22,10 @@ import type {
   GapItem,
   GapSeverity,
   GapType,
-  SecurityLevel,
+  ConsultingSecurityLevel,
 } from './types';
 import { getCategoryForType } from '@/lib/data/infrastructureDB';
+import { findMissingCompanions } from '@/lib/knowledge/companionResolver';
 
 // ---------------------------------------------------------------------------
 // Public options interface
@@ -41,7 +42,7 @@ export interface GapAnalysisOptions {
 // Security-level → required component mapping
 // ---------------------------------------------------------------------------
 
-const SECURITY_COMPONENT_MAP: Record<SecurityLevel, InfraNodeType[]> = {
+const SECURITY_COMPONENT_MAP: Record<ConsultingSecurityLevel, InfraNodeType[]> = {
   basic: ['firewall'],
   standard: ['firewall', 'waf'],
   high: ['firewall', 'waf', 'ids-ips', 'vpn-gateway'],
@@ -495,6 +496,63 @@ function detectPerformanceGaps(
 }
 
 // ---------------------------------------------------------------------------
+// 7. Companion Gaps (from relationship graph + product/service overrides)
+// ---------------------------------------------------------------------------
+
+function detectCompanionGaps(
+  spec: InfraSpec,
+  _options: GapAnalysisOptions,
+): GapItem[] {
+  const gaps: GapItem[] = [];
+  const nodeTypes = currentNodeTypes(spec);
+  const flaggedPairs = new Set<string>(); // avoid duplicates: "source→target"
+
+  for (const type of nodeTypes) {
+    const missing = findMissingCompanions(type, nodeTypes);
+
+    for (const req of missing.missingRequired) {
+      const key = `${type}→${req.componentType}`;
+      if (flaggedPairs.has(key)) continue;
+      flaggedPairs.add(key);
+
+      gaps.push({
+        type: 'companion',
+        severity: req.severity === 'critical' ? 'critical' : 'high',
+        component: req.componentType,
+        category: resolveCategoryForGap(req.componentType),
+        description: `"${type}" requires "${req.componentType}": ${req.reason}`,
+        descriptionKo: `"${type}"에 "${req.componentType}"이(가) 필수입니다: ${req.reasonKo}`,
+        suggestedAction: `Add "${req.componentType}" to support "${type}".`,
+        suggestedActionKo: `"${type}"을(를) 지원하기 위해 "${req.componentType}"을(를) 추가하세요.`,
+        effort: 'medium',
+        estimatedCostImpact: 'medium',
+      });
+    }
+
+    for (const rec of missing.missingRecommended) {
+      const key = `${type}→${rec.componentType}`;
+      if (flaggedPairs.has(key)) continue;
+      flaggedPairs.add(key);
+
+      gaps.push({
+        type: 'companion',
+        severity: rec.severity === 'high' ? 'medium' : 'low',
+        component: rec.componentType,
+        category: resolveCategoryForGap(rec.componentType),
+        description: `"${type}" recommends "${rec.componentType}": ${rec.reason}`,
+        descriptionKo: `"${type}"에 "${rec.componentType}"을(를) 권장합니다: ${rec.reasonKo}`,
+        suggestedAction: `Consider adding "${rec.componentType}" alongside "${type}".`,
+        suggestedActionKo: `"${type}"과(와) 함께 "${rec.componentType}" 추가를 고려하세요.`,
+        effort: 'low',
+        estimatedCostImpact: 'low',
+      });
+    }
+  }
+
+  return gaps;
+}
+
+// ---------------------------------------------------------------------------
 // Score calculation
 // ---------------------------------------------------------------------------
 
@@ -576,7 +634,7 @@ function generateSummary(
  * Get the list of required infrastructure components for a given security level.
  */
 export function getRequiredComponentsForSecurity(
-  level: SecurityLevel,
+  level: ConsultingSecurityLevel,
 ): InfraNodeType[] {
   return [...(SECURITY_COMPONENT_MAP[level] ?? [])];
 }
@@ -608,6 +666,7 @@ export function analyzeGaps(
   const securityGaps = detectSecurityGaps(currentSpec, options);
   const complianceGaps = detectComplianceGaps(currentSpec, options);
   const performanceGaps = detectPerformanceGaps(currentSpec, options);
+  const companionGaps = detectCompanionGaps(currentSpec, options);
 
   const allGaps: GapItem[] = [
     ...missingComponents,
@@ -616,6 +675,7 @@ export function analyzeGaps(
     ...securityGaps,
     ...complianceGaps,
     ...performanceGaps,
+    ...companionGaps,
   ];
 
   const overallScore = calculateGapScore(allGaps);
@@ -632,6 +692,7 @@ export function analyzeGaps(
     securityGaps,
     complianceGaps,
     performanceGaps,
+    companionGaps,
     overallScore,
     summary,
     summaryKo,

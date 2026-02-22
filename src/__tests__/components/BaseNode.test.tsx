@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { InfraNodeData, NodeCategory } from '@/types';
+import { getLogoForNode, getVendorNameForNode } from '@/lib/design';
 
 // Mock @xyflow/react
 vi.mock('@xyflow/react', () => ({
@@ -30,6 +31,8 @@ vi.mock('@/lib/design', () => ({
     firewall: 'M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z',
     user: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2',
   },
+  getLogoForNode: vi.fn(() => null),
+  getVendorNameForNode: vi.fn(() => null),
 }));
 
 // Mock EditableLabel
@@ -206,6 +209,69 @@ describe('BaseNode', () => {
       fireEvent.keyDown(input, { key: 'Escape' });
 
       expect(onCancelEdit).toHaveBeenCalled();
+    });
+  });
+
+  describe('Vendor Logo Badge', () => {
+    it('should not show logo when no vendor is selected', () => {
+      const { container } = render(<BaseNode data={mockData} icon="🔥" color="red" />);
+      expect(container.querySelector('img')).toBeNull();
+    });
+
+    it('should show logo when vendorId is set', () => {
+      vi.mocked(getLogoForNode).mockReturnValue('/logos/cisco.svg');
+      vi.mocked(getVendorNameForNode).mockReturnValue('Cisco');
+
+      const dataWithVendor: InfraNodeData = {
+        ...mockData,
+        vendorId: 'cisco',
+        productName: 'Firepower 2130',
+      };
+      const { container } = render(<BaseNode data={dataWithVendor} icon="🔥" color="red" />);
+      const img = container.querySelector('img');
+      expect(img).toBeInTheDocument();
+      expect(img?.getAttribute('src')).toBe('/logos/cisco.svg');
+      expect(img?.getAttribute('alt')).toBe('Cisco');
+    });
+
+    it('should show logo when cloudProvider is set', () => {
+      vi.mocked(getLogoForNode).mockReturnValue('/logos/aws.svg');
+      vi.mocked(getVendorNameForNode).mockReturnValue('AWS');
+
+      const dataWithCloud: InfraNodeData = {
+        ...mockData,
+        cloudProvider: 'aws',
+        productName: 'AWS WAF',
+      };
+      const { container } = render(<BaseNode data={dataWithCloud} icon="🔥" color="red" />);
+      const img = container.querySelector('img');
+      expect(img).toBeInTheDocument();
+      expect(img?.getAttribute('src')).toBe('/logos/aws.svg');
+    });
+
+    it('should show vendor name alongside logo', () => {
+      vi.mocked(getLogoForNode).mockReturnValue('/logos/cisco.svg');
+      vi.mocked(getVendorNameForNode).mockReturnValue('Cisco');
+
+      const dataWithVendor: InfraNodeData = {
+        ...mockData,
+        vendorId: 'cisco',
+      };
+      render(<BaseNode data={dataWithVendor} icon="🔥" color="red" />);
+      expect(screen.getByText('Cisco')).toBeInTheDocument();
+    });
+
+    it('should show productName over vendorName when both exist', () => {
+      vi.mocked(getLogoForNode).mockReturnValue('/logos/cisco.svg');
+      vi.mocked(getVendorNameForNode).mockReturnValue('Cisco');
+
+      const dataWithProduct: InfraNodeData = {
+        ...mockData,
+        vendorId: 'cisco',
+        productName: 'Cisco ASA 5500-X',
+      };
+      render(<BaseNode data={dataWithProduct} icon="🔥" color="red" />);
+      expect(screen.getByText('Cisco ASA 5500-X')).toBeInTheDocument();
     });
   });
 

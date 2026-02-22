@@ -20,8 +20,9 @@ import {
   type PDFReportOptions,
 } from '@/lib/export';
 import type { InfraSpec } from '@/types';
-import type { CloudProvider } from '@/lib/cost';
+import type { CostProvider } from '@/lib/cost';
 import { createLogger } from '@/lib/utils/logger';
+import { trackActivity } from '@/lib/activity/trackActivity';
 
 const logger = createLogger('ReportExportPanel');
 
@@ -43,7 +44,7 @@ export function ReportExportPanel({ spec, canvasRef, onClose }: ReportExportPane
   const [includeSecurityAudit, setIncludeSecurityAudit] = useState(true);
   const [includeCompliance, setIncludeCompliance] = useState(true);
   const [includeCostEstimate, setIncludeCostEstimate] = useState(true);
-  const [provider, setProvider] = useState<CloudProvider>('aws');
+  const [provider, setProvider] = useState<CostProvider>('aws');
   const [currency, setCurrency] = useState<'USD' | 'KRW'>('KRW');
   const [includeDiagram, setIncludeDiagram] = useState(true);
 
@@ -91,6 +92,9 @@ export function ReportExportPanel({ spec, canvasRef, onClose }: ReportExportPane
       const blob = await generatePDFReport(spec, options);
       const filename = generateFilename('infraflow-report', 'pdf');
       downloadFile(blob, filename);
+      trackActivity('export', {
+        detail: { format: 'pdf-report', filename },
+      });
 
       setStatus({ type: 'success', message: 'PDF 보고서가 생성되었습니다' });
     } catch (error) {
@@ -244,7 +248,7 @@ export function ReportExportPanel({ spec, canvasRef, onClose }: ReportExportPane
                   <label className="text-xs text-gray-400 block mb-1">클라우드 제공자</label>
                   <select
                     value={provider}
-                    onChange={(e) => setProvider(e.target.value as CloudProvider)}
+                    onChange={(e) => setProvider(e.target.value as CostProvider)}
                     className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="aws">AWS</option>

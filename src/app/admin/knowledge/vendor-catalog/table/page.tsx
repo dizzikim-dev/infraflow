@@ -45,6 +45,14 @@ interface FlatProduct {
   path: string[];
   pathKo: string[];
   childCount: number;
+  operationalComplexity?: string;
+  ecosystemMaturity?: string;
+  disasterRecovery?: {
+    maxRTOMinutes?: number;
+    maxRPOMinutes?: number;
+    backupFrequency?: string;
+    multiRegionSupported: boolean;
+  };
 }
 
 type SortDir = 'asc' | 'desc';
@@ -87,6 +95,9 @@ const COLUMNS: ColumnDef[] = [
   { key: 'path', label: 'path', getValue: (p) => p.path.join(' > ') },
   { key: 'pathKo', label: 'pathKo', getValue: (p) => p.pathKo.join(' > ') },
   { key: 'childCount', label: 'childCount', getValue: (p) => p.childCount },
+  { key: 'operationalComplexity', label: 'operationalComplexity', getValue: (p) => p.operationalComplexity || '' },
+  { key: 'ecosystemMaturity', label: 'ecosystemMaturity', getValue: (p) => p.ecosystemMaturity || '' },
+  { key: 'disasterRecovery', label: 'disasterRecovery', getValue: (p) => p.disasterRecovery ? `RTO:${p.disasterRecovery.maxRTOMinutes ?? '-'}m RPO:${p.disasterRecovery.maxRPOMinutes ?? '-'}m ${p.disasterRecovery.multiRegionSupported ? 'Multi-Region' : 'Single-Region'}` : '' },
 ];
 
 const PAGE_SIZE = 50;

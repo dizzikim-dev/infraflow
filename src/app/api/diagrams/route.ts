@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { requireAuth, AuthError } from '@/lib/auth/authHelpers';
 import { CreateDiagramSchema } from '@/lib/validations/diagram';
 import { createLogger } from '@/lib/utils/logger';
@@ -7,8 +6,15 @@ import type { InputJsonValue } from '@/generated/prisma/runtime/library';
 
 const log = createLogger('DiagramsAPI');
 
+const hasDb = !!process.env.DATABASE_URL;
+
 export async function GET() {
+  if (!hasDb) {
+    return NextResponse.json({ diagrams: [] });
+  }
+
   try {
+    const { prisma } = await import('@/lib/db/prisma');
     const session = await requireAuth();
 
     const diagrams = await prisma.diagram.findMany({
@@ -36,7 +42,12 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!hasDb) {
+    return NextResponse.json({ diagram: null, skipped: 'no-database' });
+  }
+
   try {
+    const { prisma } = await import('@/lib/db/prisma');
     const session = await requireAuth();
     const body = await req.json();
     const parsed = CreateDiagramSchema.safeParse(body);

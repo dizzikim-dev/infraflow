@@ -128,6 +128,13 @@ class RateLimitStore {
 // Global store instance
 const store = new RateLimitStore();
 
+// Warn if running in-memory rate limiter on serverless without Redis
+if (process.env.VERCEL && !process.env.REDIS_URL) {
+  console.warn(
+    '[RateLimiter] WARNING: In-memory rate limiter on serverless. Configure REDIS_URL for production.'
+  );
+}
+
 // ============================================================
 // Helper Functions
 // ============================================================

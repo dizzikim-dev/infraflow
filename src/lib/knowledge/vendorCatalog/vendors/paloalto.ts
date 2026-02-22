@@ -210,6 +210,27 @@ export const paloaltoCatalog: VendorCatalog = {
               descriptionKo: 'PoE 지원 대규모 지사용 데스크탑 NGFW. 방화벽 처리량 5.4 Gbps.',
               sourceUrl: 'https://www.paloaltonetworks.com/network-security/next-generation-firewall/pa-400-series',
               lifecycle: 'active',
+              infraNodeTypes: ['firewall'],
+              architectureRole: 'Branch Perimeter / Small Campus Edge',
+              architectureRoleKo: '지사 경계 / 소규모 캠퍼스 에지',
+              recommendedFor: [
+                'Large branch office perimeter with PoE',
+                'Small campus edge security',
+                'Retail store or clinic perimeter firewall',
+              ],
+              recommendedForKo: [
+                'PoE 기능의 대규모 지사 경계',
+                '소규모 캠퍼스 에지 보안',
+                '소매점 또는 클리닉 경계 방화벽',
+              ],
+              formFactor: 'appliance',
+              licensingModel: 'subscription',
+              maxThroughput: '5.4 Gbps',
+              operationalComplexity: 'moderate',
+              ecosystemMaturity: 'mature',
+              disasterRecovery: {
+                multiRegionSupported: false,
+              },
               specs: {
                 'Firewall Throughput': '5.4 Gbps',
                 'Threat Prevention Throughput': '2.8 Gbps',
@@ -391,9 +412,27 @@ export const paloaltoCatalog: VendorCatalog = {
               descriptionKo: '중규모 엔터프라이즈용 인터넷 게이트웨이 NGFW. 방화벽 처리량 14.5 Gbps.',
               sourceUrl: 'https://www.paloaltonetworks.com/network-security/next-generation-firewall/pa-3400-series',
               lifecycle: 'active',
+              infraNodeTypes: ['firewall'],
+              architectureRole: 'Enterprise Internet Gateway',
+              architectureRoleKo: '엔터프라이즈 인터넷 게이트웨이',
+              recommendedFor: [
+                'Medium enterprise internet gateway',
+                'Campus perimeter with threat prevention',
+                'Hybrid cloud edge security',
+              ],
+              recommendedForKo: [
+                '중규모 엔터프라이즈 인터넷 게이트웨이',
+                '위협 차단을 갖춘 캠퍼스 경계',
+                '하이브리드 클라우드 에지 보안',
+              ],
               formFactor: 'appliance',
               licensingModel: 'subscription',
               maxThroughput: '14.5 Gbps',
+              operationalComplexity: 'moderate',
+              ecosystemMaturity: 'mature',
+              disasterRecovery: {
+                multiRegionSupported: false,
+              },
               specs: {
                 'Firewall Throughput': '14.5 Gbps',
                 'Threat Prevention Throughput': '7.8 Gbps',
@@ -657,6 +696,29 @@ export const paloaltoCatalog: VendorCatalog = {
               descriptionKo: '최대 6개 DPC 모듈 장착 가능한 모듈형 섀시 기반 데이터센터 NGFW. 위협 차단 처리량 150 Gbps.',
               sourceUrl: 'https://www.paloaltonetworks.com/network-security/next-generation-firewall/pa-5400-series',
               lifecycle: 'active',
+              infraNodeTypes: ['firewall'],
+              architectureRole: 'Data Center Core Firewall',
+              architectureRoleKo: '데이터센터 코어 방화벽',
+              recommendedFor: [
+                'Large data center perimeter security',
+                'Service provider edge security',
+                'High-throughput SSL decryption at scale',
+                'Multi-tenant data center firewall',
+              ],
+              recommendedForKo: [
+                '대규모 데이터센터 경계 보안',
+                '서비스 프로바이더 에지 보안',
+                '대규모 고처리량 SSL 복호화',
+                '멀티테넌트 데이터센터 방화벽',
+              ],
+              formFactor: 'chassis',
+              licensingModel: 'subscription',
+              maxThroughput: '227 Gbps',
+              operationalComplexity: 'complex',
+              ecosystemMaturity: 'mature',
+              disasterRecovery: {
+                multiRegionSupported: false,
+              },
               specs: {
                 'Firewall Throughput': '227 Gbps',
                 'Threat Prevention Throughput': '150 Gbps',
@@ -722,6 +784,29 @@ export const paloaltoCatalog: VendorCatalog = {
               descriptionKo: 'FE400 네트워킹 프로세서 탑재 차세대 섀시 기반 NGFW. App-ID 성능 1.5 Tbps.',
               sourceUrl: 'https://www.paloaltonetworks.com/network-security/next-generation-firewall/pa-7500-series',
               lifecycle: 'active',
+              infraNodeTypes: ['firewall'],
+              architectureRole: 'Hyperscale Data Center / Service Provider Core Firewall',
+              architectureRoleKo: '하이퍼스케일 데이터센터 / 서비스 프로바이더 코어 방화벽',
+              recommendedFor: [
+                'Hyperscale data center security (1 Tbps+)',
+                'Service provider core firewall',
+                'Carrier-grade NAT and security',
+                'Large enterprise consolidated security platform',
+              ],
+              recommendedForKo: [
+                '하이퍼스케일 데이터센터 보안 (1 Tbps+)',
+                '서비스 프로바이더 코어 방화벽',
+                '캐리어급 NAT 및 보안',
+                '대기업 통합 보안 플랫폼',
+              ],
+              formFactor: 'chassis',
+              licensingModel: 'subscription',
+              maxThroughput: '1.5 Tbps',
+              operationalComplexity: 'complex',
+              ecosystemMaturity: 'mature',
+              disasterRecovery: {
+                multiRegionSupported: false,
+              },
               specs: {
                 'Firewall Throughput': '1.5 Tbps',
                 'Threat Prevention Throughput': '400+ Gbps',
@@ -811,6 +896,15 @@ export const paloaltoCatalog: VendorCatalog = {
               sourceUrl: 'https://www.paloaltonetworks.com/network-security/next-generation-firewall/vm-series',
               lifecycle: 'end-of-life',
               replacedBy: 'pan-sw-ngfw',
+              infraNodeTypes: ['firewall'],
+              formFactor: 'virtual',
+              licensingModel: 'subscription',
+              maxThroughput: '4 Gbps',
+              operationalComplexity: 'moderate',
+              ecosystemMaturity: 'mature',
+              disasterRecovery: {
+                multiRegionSupported: true,
+              },
               specs: {
                 'Firewall Throughput': '4 Gbps',
                 'Threat Prevention Throughput': '2 Gbps',
@@ -984,6 +1078,24 @@ export const paloaltoCatalog: VendorCatalog = {
             'SaaS 애플리케이션 보안 및 DLP',
             '레거시 VPN을 ZTNA 2.0으로 대체',
           ],
+          haFeatures: [
+            '100+ global PoP redundancy',
+            'Automatic failover to nearest PoP',
+            'SLA-backed uptime guarantee',
+          ],
+          securityCapabilities: [
+            'ZTNA 2.0 (Zero Trust Network Access)',
+            'Secure Web Gateway (SWG)',
+            'CASB (inline and API)',
+            'FWaaS (Firewall as a Service)',
+            'DLP (Data Loss Prevention)',
+            'DNS Security',
+          ],
+          operationalComplexity: 'simple',
+          ecosystemMaturity: 'mature',
+          disasterRecovery: {
+            multiRegionSupported: true,
+          },
           children: [
             {
               nodeId: 'pan-prisma-access-browser',
@@ -1182,6 +1294,22 @@ export const paloaltoCatalog: VendorCatalog = {
             '클라우드 인프라 권한 관리 (CIEM)',
             'CI/CD 파이프라인 IaC 보안 스캔',
           ],
+          haFeatures: [
+            'Multi-region cloud deployment',
+            'Auto-scaling SaaS infrastructure',
+          ],
+          securityCapabilities: [
+            'Cloud Security Posture Management (CSPM)',
+            'Cloud Workload Protection (CWPP)',
+            'Cloud Infrastructure Entitlement Management (CIEM)',
+            'IaC Security Scanning',
+            'Container/Serverless runtime protection',
+          ],
+          operationalComplexity: 'moderate',
+          ecosystemMaturity: 'mature',
+          disasterRecovery: {
+            multiRegionSupported: true,
+          },
           children: [
             {
               nodeId: 'pan-prisma-cloud-cspm',
@@ -1305,6 +1433,22 @@ export const paloaltoCatalog: VendorCatalog = {
             '크로스 데이터 소스 위협 상관 분석 (XDR)',
             '자동 근본 원인 분석 및 조사',
           ],
+          haFeatures: [
+            'Cloud-hosted SaaS (always available)',
+            'Multi-region data lake',
+          ],
+          securityCapabilities: [
+            'Endpoint Detection and Response (EDR)',
+            'Network Detection and Response (NDR)',
+            'Cloud Detection and Response',
+            'AI/ML behavioral analytics',
+            'Automated root cause analysis',
+          ],
+          operationalComplexity: 'moderate',
+          ecosystemMaturity: 'mature',
+          disasterRecovery: {
+            multiRegionSupported: true,
+          },
           children: [],
         },
         // ── Cortex XSOAR ──
@@ -1331,6 +1475,21 @@ export const paloaltoCatalog: VendorCatalog = {
             '보안 도구 전반의 SOC 워크플로우 오케스트레이션',
             '위협 인텔리전스 관리 및 강화',
           ],
+          haFeatures: [
+            'Cloud-hosted / On-prem HA',
+            'Multi-tenant support',
+          ],
+          securityCapabilities: [
+            'Playbook-driven incident response automation',
+            '700+ third-party integrations',
+            'Case management and collaboration',
+            'Threat intelligence management (TIM)',
+          ],
+          operationalComplexity: 'moderate',
+          ecosystemMaturity: 'mature',
+          disasterRecovery: {
+            multiRegionSupported: true,
+          },
           children: [],
         },
         // ── Cortex XSIAM ──
@@ -1601,6 +1760,21 @@ export const paloaltoCatalog: VendorCatalog = {
             '로그 집계 및 컴플라이언스 리포팅',
             '대규모 NGFW 배포 오케스트레이션',
           ],
+          haFeatures: [
+            'Active/Passive HA (dedicated or virtual)',
+            'Panorama Interconnect for distributed management',
+          ],
+          securityCapabilities: [
+            'Centralized policy management',
+            'Log aggregation and correlation',
+            'Role-based access control (RBAC)',
+            'Compliance reporting',
+          ],
+          operationalComplexity: 'complex',
+          ecosystemMaturity: 'mature',
+          disasterRecovery: {
+            multiRegionSupported: true,
+          },
           children: [
             {
               nodeId: 'pan-panorama-m-600',

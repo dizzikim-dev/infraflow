@@ -176,9 +176,10 @@ model User {
   passwordHash  String?
   role          UserRole  @default(USER)
 
-  accounts Account[]
-  sessions Session[]
-  diagrams Diagram[]
+  accounts   Account[]
+  sessions   Session[]
+  diagrams   Diagram[]
+  activities ActivityEvent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -611,4 +612,45 @@ model KnowledgeSourceEntry {
   @@index([sourceType])
   @@index([isActive])
   @@map("knowledge_sources")
+}
+
+// ============================================
+// ACTIVITY TRACKING
+// ============================================
+
+enum ActivityType {
+  prompt_submit
+  llm_modify
+  template_select
+  node_add
+  node_delete
+  node_duplicate
+  node_update
+  edge_add
+  edge_delete
+  edge_reverse
+  diagram_create
+  diagram_update
+  export
+}
+
+model ActivityEvent {
+  id         String       @id @default(cuid())
+  userId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type       ActivityType
+  diagramId  String?
+  prompt     String?      @db.Text
+  detail     Json?
+
+  sessionId  String
+  createdAt  DateTime     @default(now())
+
+  @@index([userId])
+  @@index([diagramId])
+  @@index([type])
+  @@index([createdAt])
+  @@index([sessionId])
+  @@map("activity_events")
 }

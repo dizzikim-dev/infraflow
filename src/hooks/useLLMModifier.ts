@@ -8,6 +8,7 @@ import { InfraSpec, InfraNodeData } from '@/types';
 import type { Operation } from '@/lib/parser/diffApplier';
 import type { ModifyResponse } from '@/app/api/modify/route';
 import { createLogger } from '@/lib/utils/logger';
+import { trackActivity } from '@/lib/activity/trackActivity';
 import { withRetry, isRetryableError } from '@/lib/utils/retry';
 import type { ParseResultInfo } from './usePromptParser';
 
@@ -195,6 +196,15 @@ export function useLLMModifier(config: UseLLMModifierConfig): UseLLMModifierRetu
 
           // Notify feedback system
           onDiagramGenerated?.(result.spec, 'llm-modify', trimmedPrompt);
+
+          trackActivity('llm_modify', {
+            prompt: trimmedPrompt,
+            detail: {
+              operations: result.operations?.map((op: any) => op.type) ?? [],
+              reasoning: result.reasoning?.slice(0, 200) ?? null,
+              nodeCount: result.spec.nodes?.length ?? 0,
+            },
+          });
 
           // Update conversation context
           onContextUpdate(trimmedPrompt, {

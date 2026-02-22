@@ -8,6 +8,7 @@ import { Template } from '@/lib/templates';
 import { InfraSpec, InfraNodeData } from '@/types';
 import { LOADING_DELAY_MS } from '@/lib/constants';
 import { createLogger } from '@/lib/utils/logger';
+import { trackActivity } from '@/lib/activity/trackActivity';
 import type { ParseResultInfo } from './usePromptParser';
 
 const log = createLogger('useLocalParser');
@@ -182,6 +183,15 @@ export function useLocalParser(config: UseLocalParserConfig): UseLocalParserRetu
 
           // Notify feedback system
           onDiagramGenerated?.(result.spec, 'local-parser', trimmedPrompt);
+
+          trackActivity('prompt_submit', {
+            prompt: trimmedPrompt,
+            detail: {
+              confidence: result.confidence,
+              nodeCount: result.spec.nodes?.length ?? 0,
+              templateUsed: result.templateUsed ?? null,
+            },
+          });
         } else {
           // Handle parse failure
           const errorMessage = result.error || '프롬프트를 해석할 수 없습니다.';
@@ -246,6 +256,14 @@ export function useLocalParser(config: UseLocalParserConfig): UseLocalParserRetu
 
         // Notify feedback system
         onDiagramGenerated?.(template.spec, 'template');
+
+        trackActivity('template_select', {
+          detail: {
+            templateId: template.id,
+            templateName: template.name,
+            nodeCount: template.spec.nodes?.length ?? 0,
+          },
+        });
 
         // Reset animation
         onAnimationReset?.();

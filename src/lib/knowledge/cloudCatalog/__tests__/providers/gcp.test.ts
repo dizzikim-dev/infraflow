@@ -6,8 +6,8 @@ import { describe, it, expect } from 'vitest';
 import { GCP_SERVICES } from '../../providers/gcp';
 
 describe('GCP_SERVICES', () => {
-  it('should have at least 17 services', () => {
-    expect(GCP_SERVICES.length).toBeGreaterThanOrEqual(17);
+  it('should have at least 35 services', () => {
+    expect(GCP_SERVICES.length).toBeGreaterThanOrEqual(35);
   });
 
   it('all entries should have provider "gcp"', () => {

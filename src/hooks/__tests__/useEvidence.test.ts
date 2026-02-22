@@ -66,6 +66,7 @@ describe('useEvidence', () => {
     // Counts structure
     expect(data.counts).toHaveProperty('relationships');
     expect(data.counts).toHaveProperty('recommendations');
+    expect(data.counts).toHaveProperty('vendors');
     expect(data.counts).toHaveProperty('validationIssues');
     expect(data.counts).toHaveProperty('sources');
 
@@ -73,6 +74,7 @@ describe('useEvidence', () => {
     expect(Array.isArray(data.relationships)).toBe(true);
     expect(Array.isArray(data.suggestions)).toBe(true);
     expect(Array.isArray(data.recommendations)).toBe(true);
+    expect(Array.isArray(data.vendorGrouped)).toBe(true);
     expect(Array.isArray(data.violations)).toBe(true);
     expect(Array.isArray(data.vulnerabilities)).toBe(true);
     expect(Array.isArray(data.complianceGaps)).toBe(true);
@@ -129,6 +131,58 @@ describe('useEvidence', () => {
     expect(data.counts.validationIssues).toBe(
       data.violations.length + data.vulnerabilities.length + data.complianceGaps.length,
     );
+  });
+
+  it('vendorGrouped contains one entry per vendor', () => {
+    const spec = makeSpec(['firewall', 'router', 'switch-l2']);
+    const { result } = renderHook(() =>
+      useEvidence('node-0', 'firewall', spec),
+    );
+
+    const data = result.current!;
+    // Each vendor should appear at most once
+    const vendorIds = data.vendorGrouped.map((g) => g.vendorId);
+    const uniqueVendorIds = new Set(vendorIds);
+    expect(vendorIds.length).toBe(uniqueVendorIds.size);
+  });
+
+  it('vendorGrouped.best is the highest-scoring product for that vendor', () => {
+    const spec = makeSpec(['firewall', 'router', 'switch-l2']);
+    const { result } = renderHook(() =>
+      useEvidence('node-0', 'firewall', spec),
+    );
+
+    const data = result.current!;
+    for (const group of data.vendorGrouped) {
+      for (const alt of group.alternatives) {
+        expect(group.best.score.overall).toBeGreaterThanOrEqual(alt.score.overall);
+      }
+    }
+  });
+
+  it('vendorGrouped is sorted by best score descending', () => {
+    const spec = makeSpec(['firewall', 'router', 'switch-l2']);
+    const { result } = renderHook(() =>
+      useEvidence('node-0', 'firewall', spec),
+    );
+
+    const data = result.current!;
+    if (data.vendorGrouped.length > 1) {
+      for (let i = 1; i < data.vendorGrouped.length; i++) {
+        expect(data.vendorGrouped[i - 1].best.score.overall)
+          .toBeGreaterThanOrEqual(data.vendorGrouped[i].best.score.overall);
+      }
+    }
+  });
+
+  it('vendors count matches vendorGrouped length', () => {
+    const spec = makeSpec(['firewall', 'router', 'switch-l2']);
+    const { result } = renderHook(() =>
+      useEvidence('node-0', 'firewall', spec),
+    );
+
+    const data = result.current!;
+    expect(data.counts.vendors).toBe(data.vendorGrouped.length);
   });
 
   it('sources are sorted by type', () => {

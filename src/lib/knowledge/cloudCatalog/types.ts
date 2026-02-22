@@ -6,7 +6,15 @@
  */
 
 import type { InfraNodeType } from '@/types/infra';
-import type { TrustMetadata } from '../types';
+import type {
+  TrustMetadata,
+  OperationalComplexity,
+  EcosystemMaturity,
+  DisasterRecoveryInfo,
+  RequiredCompanion,
+  RecommendedCompanion,
+  CompanionRef,
+} from '../types';
 
 // ---------------------------------------------------------------------------
 // Enums / Unions
@@ -80,6 +88,39 @@ export interface CloudService {
 
   /** Maximum capacity: '100 Gbps', '10M requests/sec', etc. */
   maxCapacity?: string;
+
+  // ── Vendor-Parity Fields (aligns with ProductNode) ──
+
+  /** Supported protocols/APIs for connectivity planning */
+  supportedProtocols?: string[];
+
+  /** High availability features */
+  haFeatures?: string[];
+
+  /** Security capabilities beyond basic features */
+  securityCapabilities?: string[];
+
+  // ── Comparison Fields (shared with ProductNode) ──
+
+  /** Operational complexity for comparison */
+  operationalComplexity?: OperationalComplexity;
+
+  /** Ecosystem maturity level */
+  ecosystemMaturity?: EcosystemMaturity;
+
+  /** Disaster recovery capabilities */
+  disasterRecovery?: DisasterRecoveryInfo;
+
+  // ── Companion Dependencies ──
+
+  /** Components that MUST exist for this service to function */
+  requiredCompanions?: RequiredCompanion[];
+
+  /** Components strongly recommended alongside this service */
+  recommendedCompanions?: RecommendedCompanion[];
+
+  /** Component types this service conflicts with */
+  conflictsWith?: CompanionRef[];
 }
 
 // ---------------------------------------------------------------------------

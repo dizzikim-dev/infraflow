@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { Node, XYPosition } from '@xyflow/react';
 import { nanoid } from 'nanoid';
 import { InfraNodeType, InfraNodeData, InfraSpec, isInfraNodeData } from '@/types';
+import { trackActivity } from '@/lib/activity/trackActivity';
 
 export interface UseNodesReturn {
   nodes: Node[];
@@ -19,6 +20,12 @@ export interface UseNodesReturn {
     nodeId: string,
     field: 'label' | 'description',
     value: string
+  ) => void;
+  updateNodeVendor: (
+    nodeId: string,
+    vendorId: string | undefined,
+    cloudProvider: string | undefined,
+    productName: string | undefined
   ) => void;
 }
 
@@ -133,6 +140,10 @@ export function useNodes(config: UseNodesConfig = {}): UseNodesReturn {
         };
       });
 
+      trackActivity('node_add', {
+        detail: { nodeId, nodeType, category: nodeData.category },
+      });
+
       return nodeId;
     },
     [onSpecUpdate]
@@ -167,6 +178,10 @@ export function useNodes(config: UseNodesConfig = {}): UseNodesReturn {
 
       // Clear selection if deleted node was selected
       onSelectionClear?.(nodeId);
+
+      trackActivity('node_delete', {
+        detail: { nodeId },
+      });
     },
     [onSpecUpdate, onEdgesUpdate, onSelectionClear]
   );
@@ -217,6 +232,10 @@ export function useNodes(config: UseNodesConfig = {}): UseNodesReturn {
         };
       });
 
+      trackActivity('node_duplicate', {
+        detail: { sourceNodeId: nodeId, newNodeId: newId },
+      });
+
       return newId;
     },
     [nodes, onSpecUpdate]
@@ -260,6 +279,58 @@ export function useNodes(config: UseNodesConfig = {}): UseNodesReturn {
           }),
         };
       });
+      trackActivity('node_update', {
+        detail: { nodeId, field, value: value.slice(0, 100) },
+      });
+    },
+    [onSpecUpdate]
+  );
+
+  /**
+   * Update vendor/cloud product assignment on a node
+   * Updates both React Flow nodes and InfraSpec (matching updateNodeData pattern)
+   */
+  const updateNodeVendor = useCallback(
+    (
+      nodeId: string,
+      vendorId: string | undefined,
+      cloudProvider: string | undefined,
+      productName: string | undefined
+    ) => {
+      setNodes((prevNodes) =>
+        prevNodes.map((node) => {
+          if (node.id === nodeId) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                vendorId,
+                cloudProvider,
+                productName,
+              },
+            };
+          }
+          return node;
+        })
+      );
+
+      // Update InfraSpec (source of truth) — keeps vendor info in sync
+      onSpecUpdate?.((prevSpec) => {
+        if (!prevSpec) return prevSpec;
+        return {
+          ...prevSpec,
+          nodes: prevSpec.nodes.map((node) => {
+            if (node.id === nodeId) {
+              return { ...node, vendorId, cloudProvider, productName };
+            }
+            return node;
+          }),
+        };
+      });
+
+      trackActivity('node_update', {
+        detail: { nodeId, field: 'vendor', value: productName || vendorId || cloudProvider || '' },
+      });
     },
     [onSpecUpdate]
   );
@@ -271,5 +342,6 @@ export function useNodes(config: UseNodesConfig = {}): UseNodesReturn {
     deleteNode,
     duplicateNode,
     updateNodeData,
+    updateNodeVendor,
   };
 }

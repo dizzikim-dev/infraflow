@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- GCP - simplified hexagonal cloud -->
+  <path d="M40 16H24l-8 14 8 14h16l8-14-8-14z" fill="#4285F4" opacity="0.15"/>
+  <path d="M40 16H24l-8 14 8 14h16l8-14-8-14z" stroke="#4285F4" stroke-width="3" fill="none"/>
+  <circle cx="32" cy="30" r="8" fill="#4285F4"/>
+  <path d="M32 22v-6M24 30h-8M40 30h8M28 36l-4 6M36 36l4 6" stroke="#4285F4" stroke-width="2" stroke-linecap="round"/>
+</svg>

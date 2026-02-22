@@ -11,8 +11,8 @@ import type { CloudService } from '../types';
 // ---------------------------------------------------------------------------
 
 describe('CLOUD_SERVICES data integrity', () => {
-  it('should have at least 60 entries', () => {
-    expect(CLOUD_SERVICES.length).toBeGreaterThanOrEqual(60);
+  it('should have at least 100 entries', () => {
+    expect(CLOUD_SERVICES.length).toBeGreaterThanOrEqual(100);
   });
 
   it('merged array equals sum of provider arrays', () => {
@@ -82,22 +82,10 @@ describe('CLOUD_SERVICES data integrity', () => {
 // ---------------------------------------------------------------------------
 
 describe('CloudService optional fields', () => {
-  it('existing services without new fields should still be valid', () => {
-    // All 70 original services have no new fields — backward compatible
-    const service = CLOUD_SERVICES[0];
-    expect(service.serviceCategory).toBeUndefined();
-    expect(service.architectureRole).toBeUndefined();
-    expect(service.recommendedFor).toBeUndefined();
-    expect(service.specs).toBeUndefined();
-    expect(service.sla).toBeUndefined();
-    expect(service.regions).toBeUndefined();
-    expect(service.complianceCertifications).toBeUndefined();
-    expect(service.integrationsWith).toBeUndefined();
-    expect(service.pricingModel).toBeUndefined();
-    expect(service.typicalMonthlyCostUsd).toBeUndefined();
-    expect(service.deploymentModel).toBeUndefined();
-    expect(service.documentationUrl).toBeUndefined();
-    expect(service.maxCapacity).toBeUndefined();
+  it('most services should have enriched architecture fields', () => {
+    const enriched = CLOUD_SERVICES.filter((s) => s.architectureRole && s.recommendedFor);
+    // After Phase 3, most services (excluding deprecated stubs) are enriched
+    expect(enriched.length).toBeGreaterThanOrEqual(100);
   });
 
   it('enriched services should have bilingual pairs for architecture fields', () => {
@@ -157,6 +145,56 @@ describe('CloudService optional fields', () => {
     const withRec = CLOUD_SERVICES.filter((s) => s.recommendedFor);
     for (const svc of withRec) {
       expect(svc.recommendedFor!.length).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('supportedProtocols should be non-empty array when present', () => {
+    const withProto = CLOUD_SERVICES.filter((s) => s.supportedProtocols);
+    for (const svc of withProto) {
+      expect(svc.supportedProtocols!.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('haFeatures should be non-empty array when present', () => {
+    const withHA = CLOUD_SERVICES.filter((s) => s.haFeatures);
+    for (const svc of withHA) {
+      expect(svc.haFeatures!.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('securityCapabilities should be non-empty array when present', () => {
+    const withSec = CLOUD_SERVICES.filter((s) => s.securityCapabilities);
+    for (const svc of withSec) {
+      expect(svc.securityCapabilities!.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('operationalComplexity should be a valid enum when present', () => {
+    const valid = ['simple', 'moderate', 'complex'];
+    const withOC = CLOUD_SERVICES.filter((s) => s.operationalComplexity);
+    for (const svc of withOC) {
+      expect(valid).toContain(svc.operationalComplexity);
+    }
+  });
+
+  it('ecosystemMaturity should be a valid enum when present', () => {
+    const valid = ['emerging', 'stable', 'mature'];
+    const withEM = CLOUD_SERVICES.filter((s) => s.ecosystemMaturity);
+    for (const svc of withEM) {
+      expect(valid).toContain(svc.ecosystemMaturity);
+    }
+  });
+
+  it('disasterRecovery should have valid structure when present', () => {
+    const withDR = CLOUD_SERVICES.filter((s) => s.disasterRecovery);
+    for (const svc of withDR) {
+      const dr = svc.disasterRecovery!;
+      expect(typeof dr.multiRegionSupported).toBe('boolean');
+      if (dr.maxRTOMinutes != null) expect(dr.maxRTOMinutes).toBeGreaterThanOrEqual(0);
+      if (dr.maxRPOMinutes != null) expect(dr.maxRPOMinutes).toBeGreaterThanOrEqual(0);
+      if (dr.backupFrequency) {
+        expect(['continuous', 'hourly', 'daily', 'weekly']).toContain(dr.backupFrequency);
+      }
     }
   });
 });

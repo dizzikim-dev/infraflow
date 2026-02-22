@@ -503,7 +503,7 @@ describe('Cisco vendor catalog', () => {
       const node = findNodeById(ciscoCatalog.products, 'cisco-ise');
       expect(node).toBeDefined();
       expect(node!.name).toBe('Identity Services Engine (ISE)');
-      expect(node!.descriptionKo).toBe('NAC');
+      expect(node!.descriptionKo).toContain('네트워크 접근 제어');
     });
 
     it('should have Intersight with correct data', () => {

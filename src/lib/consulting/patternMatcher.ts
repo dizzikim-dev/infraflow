@@ -19,7 +19,7 @@ import type {
   PatternMatchResult,
   PatternMatchOutput,
   OrganizationSize,
-  SecurityLevel,
+  ConsultingSecurityLevel,
   BudgetRange,
   CloudPreference,
   IndustryType,
@@ -149,7 +149,7 @@ function scoreSecurityFit(
   let score = 0;
 
   // Score based on security level vs number of security components
-  const securityLevelWeights: Record<SecurityLevel, { minExpected: number; weight: number }> = {
+  const securityLevelWeights: Record<ConsultingSecurityLevel, { minExpected: number; weight: number }> = {
     basic: { minExpected: 0, weight: 0.3 },
     standard: { minExpected: 1, weight: 0.5 },
     high: { minExpected: 2, weight: 0.8 },

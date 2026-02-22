@@ -10,7 +10,7 @@ export type {
   OrganizationSize,
   IndustryType,
   AvailabilityTarget,
-  SecurityLevel,
+  ConsultingSecurityLevel,
   BudgetRange,
   CloudPreference,
   DataVolume,
