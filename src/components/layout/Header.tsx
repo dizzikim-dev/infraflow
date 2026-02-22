@@ -20,6 +20,7 @@ import {
   Redo2,
   Search,
   ChevronDown,
+  GitCompareArrows,
 } from 'lucide-react';
 import type { ParseResultInfo } from '@/hooks';
 import { UserMenu } from '@/components/auth/UserMenu';
@@ -47,6 +48,7 @@ export interface HeaderProps {
   onCloudCatalogClick?: () => void;
   onComplianceClick?: () => void;
   onBenchmarkClick?: () => void;
+  onUnifiedComparisonClick?: () => void;
   // Undo/Redo
   onUndo?: () => void;
   onRedo?: () => void;
@@ -74,6 +76,7 @@ export const Header = memo(function Header({
   onCloudCatalogClick,
   onComplianceClick,
   onBenchmarkClick,
+  onUnifiedComparisonClick,
   onUndo,
   onRedo,
   canUndo,
@@ -134,9 +137,10 @@ export const Header = memo(function Header({
   }, [editTitle, title, onTitleChange]);
 
   return (
-    <header className="absolute top-0 left-0 right-0 z-50">
+    <header className="absolute top-0 left-0 right-0 z-50 pointer-events-none">
       <div className={`mt-4 mr-4 transition-[margin] duration-300 ${sidebarOpen ? 'ml-[296px]' : 'ml-16'}`}>
         <div className="
+          pointer-events-auto
           flex items-center justify-between
           px-4 py-2.5
           bg-zinc-900/70 backdrop-blur-xl
@@ -343,6 +347,7 @@ export const Header = memo(function Header({
                       { onClick: onCloudCatalogClick, icon: Cloud, label: 'Cloud', desc: '클라우드 서비스 카탈로그', color: 'sky' },
                       { onClick: onComplianceClick, icon: ClipboardCheck, label: 'Comply', desc: '산업별 컴플라이언스', color: 'emerald' },
                       { onClick: onBenchmarkClick, icon: BarChart3, label: 'Bench', desc: '컴포넌트 사이징 벤치마크', color: 'violet' },
+                      { onClick: onUnifiedComparisonClick, icon: GitCompareArrows, label: 'Compare', desc: '벤더 · 클라우드 통합 비교', color: 'teal' },
                     ]).filter(item => item.onClick).map(({ onClick, icon: Icon, label, desc, color }) => (
                       <button
                         key={label}

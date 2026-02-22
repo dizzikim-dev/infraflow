@@ -159,6 +159,7 @@ export function InfraEditor({
     showVendorComparison,
     showRequirementsWizard,
     showCostComparison,
+    showUnifiedComparison,
     openModal,
     closeModal,
     toggleModal,
@@ -445,6 +446,7 @@ export function InfraEditor({
         onCloudCatalogClick={() => toggleModal('cloudCatalog')}
         onComplianceClick={() => toggleModal('compliance')}
         onBenchmarkClick={() => toggleModal('benchmark')}
+        onUnifiedComparisonClick={() => toggleModal('unifiedComparison')}
         // Undo/Redo
         onUndo={undo}
         onRedo={redo}
@@ -495,6 +497,7 @@ export function InfraEditor({
         showVendorComparison={showVendorComparison}
         showRequirementsWizard={showRequirementsWizard}
         showCostComparison={showCostComparison}
+        showUnifiedComparison={showUnifiedComparison}
         showTemplateGallery={showTemplateGallery}
         showExportPanel={showExportPanel}
         showSaveDialog={showSaveDialog}

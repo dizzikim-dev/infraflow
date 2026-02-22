@@ -112,6 +112,11 @@ const CostComparisonPanel = dynamic(
   { ssr: false }
 );
 
+const UnifiedComparisonPanel = dynamic(
+  () => import('@/components/panels/unified-comparison/UnifiedComparisonPanel').then(mod => ({ default: mod.UnifiedComparisonPanel })),
+  { ssr: false }
+);
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -147,6 +152,7 @@ export interface EditorPanelsProps {
   showVendorComparison: boolean;
   showRequirementsWizard: boolean;
   showCostComparison: boolean;
+  showUnifiedComparison: boolean;
   showTemplateGallery: boolean;
   showExportPanel: boolean;
   showSaveDialog: boolean;
@@ -187,6 +193,7 @@ export function EditorPanels({
   showVendorComparison,
   showRequirementsWizard,
   showCostComparison,
+  showUnifiedComparison,
   showTemplateGallery,
   showExportPanel,
   showSaveDialog,
@@ -360,6 +367,15 @@ export function EditorPanels({
             show={showCostComparison}
             onClose={() => closeModal('costComparison')}
             spec={currentSpec || { nodes: [], connections: [] }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Unified Comparison Panel */}
+      <AnimatePresence>
+        {showUnifiedComparison && (
+          <UnifiedComparisonPanel
+            onClose={() => closeModal('unifiedComparison')}
           />
         )}
       </AnimatePresence>
