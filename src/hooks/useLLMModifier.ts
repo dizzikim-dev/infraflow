@@ -200,6 +200,7 @@ export function useLLMModifier(config: UseLLMModifierConfig): UseLLMModifierRetu
           trackActivity('llm_modify', {
             prompt: trimmedPrompt,
             detail: {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               operations: result.operations?.map((op: any) => op.type) ?? [],
               reasoning: result.reasoning?.slice(0, 200) ?? null,
               nodeCount: result.spec.nodes?.length ?? 0,

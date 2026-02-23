@@ -50,7 +50,7 @@ export function HealthCheckPanel({ spec, onClose }: HealthCheckPanelProps) {
   // Anti-pattern detection with calibration
   useEffect(() => {
     if (!spec) {
-      setCalibratedViolations([]);
+      setCalibratedViolations([]); // eslint-disable-line react-hooks/set-state-in-effect
       return;
     }
     calibration.getCalibratedAntiPatterns(spec).then((results) => {

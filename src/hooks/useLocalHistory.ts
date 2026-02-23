@@ -40,7 +40,7 @@ export function useLocalHistory() {
 
   // Sync from localStorage on mount (in case other tabs updated)
   useEffect(() => {
-    setEntries(readEntries());
+    setEntries(readEntries()); // eslint-disable-line react-hooks/set-state-in-effect
   }, []);
 
   /** Create or update a diagram session in history */

@@ -232,6 +232,7 @@ export async function generateShareableImage(element: HTMLElement): Promise<stri
  */
 function getExporterRegistry() {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { exporterRegistry } = require('./ExporterRegistry');
     return exporterRegistry;
   } catch (error) {

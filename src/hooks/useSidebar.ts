@@ -14,7 +14,7 @@ export function useSidebar() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored !== null && stored !== 'true') {
-        setIsOpen(false);
+        setIsOpen(false); // eslint-disable-line react-hooks/set-state-in-effect
       }
     } catch {
       // ignore

@@ -463,6 +463,7 @@ describe('responseValidator', () => {
 
     it('should carry error issues', () => {
       const issues = [{ message: 'field missing', path: ['reasoning'], code: 'invalid_type' as const, expected: 'string', received: 'undefined' }];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const err = new LLMValidationError('test', issues as any);
       expect(err.errors).toHaveLength(1);
     });

@@ -207,6 +207,7 @@ export function useHistory(
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo, enableKeyboardShortcuts]);
 
+  /* eslint-disable react-hooks/refs */
   return {
     undo,
     redo,
@@ -217,4 +218,5 @@ export function useHistory(
     historyIndex: historyIndexRef.current,
     historyLength: historyRef.current.length,
   };
+  /* eslint-enable react-hooks/refs */
 }

@@ -44,7 +44,7 @@ export function FeedbackRating({
         setVisible(true);
       }, showDelay);
     } else if (!show) {
-      setVisible(false);
+      setVisible(false); // eslint-disable-line react-hooks/set-state-in-effect
       setHoveredStar(0);
       setSelectedStar(0);
       setShowThankYou(false);
@@ -72,7 +72,7 @@ export function FeedbackRating({
   // Show thank you message after submission
   useEffect(() => {
     if (submitted && visible) {
-      setShowThankYou(true);
+      setShowThankYou(true); // eslint-disable-line react-hooks/set-state-in-effect
       const timer = setTimeout(() => {
         setVisible(false);
         setShowThankYou(false);

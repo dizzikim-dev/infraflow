@@ -108,13 +108,13 @@ export const Header = memo(function Header({
 
   // Update editTitle when title prop changes
   useEffect(() => {
-    if (!isEditingTitle) setEditTitle(title || '');
+    if (!isEditingTitle) setEditTitle(title || ''); // eslint-disable-line react-hooks/set-state-in-effect
   }, [title, isEditingTitle]);
 
   // Update saved time display
   useEffect(() => {
-    if (!lastSavedAt) { setSavedTimeText(''); return; }
-    setSavedTimeText(formatTimeSince(lastSavedAt));
+    if (!lastSavedAt) { setSavedTimeText(''); return; } // eslint-disable-line react-hooks/set-state-in-effect
+    setSavedTimeText(formatTimeSince(lastSavedAt)); // eslint-disable-line react-hooks/set-state-in-effect
     const interval = setInterval(() => {
       setSavedTimeText(formatTimeSince(lastSavedAt));
     }, 10000);

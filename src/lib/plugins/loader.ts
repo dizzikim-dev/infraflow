@@ -232,8 +232,8 @@ export class PluginLoader {
     // 동적 import 사용
     // 실제로는 빌드 시스템과 통합 필요
     try {
-      const module = await import(/* webpackIgnore: true */ path);
-      return module.default || module.plugin || module;
+      const loaded = await import(/* webpackIgnore: true */ path);
+      return loaded.default || loaded.plugin || loaded;
     } catch (error) {
       throw new Error(`Failed to load plugin from file: ${path}`);
     }

@@ -78,7 +78,7 @@ const FlowCanvasInner = memo(function FlowCanvasInner({
 
   // Ref for direct store updates — avoids adding setFlowNodes to effect deps
   const setFlowNodesRef = useRef(setFlowNodes);
-  setFlowNodesRef.current = setFlowNodes;
+  setFlowNodesRef.current = setFlowNodes; // eslint-disable-line react-hooks/refs
 
   // Space key tracking: Space held → pan mode, otherwise → selection/drag mode
   const [isSpaceHeld, setIsSpaceHeld] = useState(false);

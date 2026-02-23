@@ -275,6 +275,7 @@ describe('TerraformExport', () => {
       it('should add comment for unknown node types', () => {
         const spec: InfraSpec = {
           nodes: [
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             { id: 'unknown-1', type: 'zone' as any, label: 'Unknown Zone' },
           ],
           connections: [],

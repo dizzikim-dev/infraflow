@@ -102,6 +102,13 @@ export function useNodeEditingContext() {
 }
 
 /**
+ * Hook to optionally access node editing context (returns null if no provider)
+ */
+export function useOptionalNodeEditingContext() {
+  return useContext(NodeEditingContext);
+}
+
+/**
  * Helper to update node data in React Flow nodes array
  */
 export function updateNodeInArray(

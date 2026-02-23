@@ -21,6 +21,7 @@ const logger = createLogger('PluginIntegration');
  */
 export function getNodeTypePatternsFromRegistry(): NodeTypePattern[] {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { pluginRegistry } = require('@/lib/plugins/registry');
     const patterns = pluginRegistry.getAllPatterns();
     return patterns.length > 0 ? patterns : defaultNodeTypePatterns;
@@ -38,6 +39,7 @@ export function getNodeTypePatternsFromRegistry(): NodeTypePattern[] {
  */
 export function getTemplatesFromRegistry(): Record<string, InfraSpec> {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { pluginRegistry } = require('@/lib/plugins/registry');
     const templates = pluginRegistry.getAllTemplates();
     return { ...infraTemplates, ...templates };
@@ -54,6 +56,7 @@ export function getTemplatesFromRegistry(): Record<string, InfraSpec> {
  */
 export function getParserExtensionsFromRegistry(): ParserExtension[] {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { pluginRegistry } = require('@/lib/plugins/registry');
     return pluginRegistry.getParserExtensions();
   } catch (error) {

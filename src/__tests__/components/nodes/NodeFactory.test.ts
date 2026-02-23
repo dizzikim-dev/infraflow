@@ -84,6 +84,7 @@ describe('nodeConfig', () => {
     });
 
     it('should return empty array for non-existent category', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const nodes = getNodeConfigsByCategory('non-existent' as any);
       expect(nodes).toEqual([]);
     });

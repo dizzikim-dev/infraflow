@@ -102,6 +102,7 @@ export function getPluginSystemStatus(): {
   corePluginActive: boolean;
   summary: ReturnType<PluginRegistry['getSummary']>;
 } {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { pluginRegistry } = require('./registry');
   const coreState = pluginRegistry.getPluginState('core');
 

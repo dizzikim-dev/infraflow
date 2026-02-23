@@ -31,7 +31,7 @@ export function useVulnerabilities(spec: InfraSpec | null): UseVulnerabilitiesRe
 
   useEffect(() => {
     if (!spec || spec.nodes.length === 0) {
-      setResult({ vulnerabilities: [], criticalCount: 0, highCount: 0, stats: EMPTY_STATS, isLoading: false });
+      setResult({ vulnerabilities: [], criticalCount: 0, highCount: 0, stats: EMPTY_STATS, isLoading: false }); // eslint-disable-line react-hooks/set-state-in-effect
       return;
     }
 

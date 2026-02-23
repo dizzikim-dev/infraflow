@@ -430,6 +430,7 @@ describe('ThemeManager', () => {
         colors: {
           ...createValidTheme('dark').colors,
           backgroundColor: '#000000', // camelCase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any,
       });
       manager.register(theme);

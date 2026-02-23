@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated code (Prisma client) — not our code, not our rules
+    "src/generated/**",
+    // Coverage reports
+    "coverage/**",
   ]),
   // Prevent direct process.env usage — use getEnv() from @/lib/config/env
   {

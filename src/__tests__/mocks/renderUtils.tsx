@@ -5,6 +5,7 @@ import { renderHook, RenderHookOptions } from '@testing-library/react';
 /**
  * Custom render function with providers
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   // Add custom options here if needed
 }

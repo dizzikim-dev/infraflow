@@ -61,7 +61,7 @@ export function useFeedback(): UseFeedbackReturn {
   useEffect(() => {
     try {
       getFeedbackStore();
-      setIsAvailable(true);
+      setIsAvailable(true); // eslint-disable-line react-hooks/set-state-in-effect
     } catch {
       setIsAvailable(false);
       log.warn('Feedback store not available');

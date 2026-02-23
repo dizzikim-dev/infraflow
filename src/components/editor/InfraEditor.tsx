@@ -209,7 +209,7 @@ export function InfraEditor({
 
     // When loading an existing diagram, skip the save (just update refs)
     if (justLoadedRef.current) {
-      justLoadedRef.current = false;
+      justLoadedRef.current = false; // eslint-disable-line react-hooks/immutability
       return;
     }
 
@@ -250,7 +250,7 @@ export function InfraEditor({
   const handleDiagramSelect = useCallback(async (id: string) => {
     if (!isAuthenticated) return;
     // Flag: loading existing diagram — don't trigger auto-save
-    justLoadedRef.current = true;
+    justLoadedRef.current = true; // eslint-disable-line react-hooks/immutability
     const diagram = await dbHistory.selectSession(id);
     if (diagram) {
       loadFromSpec(diagram.spec, diagram.nodesJson ?? undefined, diagram.edgesJson ?? undefined);

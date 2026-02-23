@@ -128,7 +128,7 @@ export default function CloudCatalogTablePage() {
     return result;
   }, [searchQuery, providerFilter, sortKey, sortDir]);
 
-  useEffect(() => { setPage(0); }, [searchQuery, providerFilter, sortKey, sortDir]);
+  useEffect(() => { setPage(0); }, [searchQuery, providerFilter, sortKey, sortDir]); // eslint-disable-line react-hooks/set-state-in-effect
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);

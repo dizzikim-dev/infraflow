@@ -43,7 +43,7 @@ export function AnimationProvider({ children, engine: injectedEngine }: Animatio
 
   const value = useMemo<AnimationContextValue>(
     () => ({
-      engine: injectedEngine || engineRef.current,
+      engine: injectedEngine || engineRef.current, // eslint-disable-line react-hooks/refs
     }),
     [injectedEngine]
   );

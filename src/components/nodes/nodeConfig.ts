@@ -151,6 +151,7 @@ export const nodeConfigs: NodeConfig[] = defaultNodeConfigs;
 export function getNodeConfigsFromRegistry(): NodeConfig[] {
   try {
     // 동적 import로 순환 의존성 방지
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { pluginRegistry } = require('@/lib/plugins/registry');
     const configs = pluginRegistry.getAllNodeConfigs();
     return configs.length > 0 ? configs : defaultNodeConfigs;
@@ -169,6 +170,7 @@ export function getNodeConfigsFromRegistry(): NodeConfig[] {
  */
 export function getNodeConfig(id: string): NodeConfig | undefined {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { pluginRegistry } = require('@/lib/plugins/registry');
     const config = pluginRegistry.getNodeConfig(id);
     if (config) return config;
@@ -187,6 +189,7 @@ export function getNodeConfig(id: string): NodeConfig | undefined {
  */
 export function getNodeConfigsByCategory(category: NodeConfig['category']): NodeConfig[] {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { pluginRegistry } = require('@/lib/plugins/registry');
     const configs = pluginRegistry.getNodeConfigsByCategory(category);
     if (configs.length > 0) return configs;

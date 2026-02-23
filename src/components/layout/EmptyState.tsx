@@ -73,7 +73,7 @@ export const EmptyState = memo(function EmptyState({
         <p className="text-zinc-400 mb-6 leading-relaxed">
           자연어로 인프라 구조를 설명하면 자동으로 다이어그램이 생성됩니다.
           <br />
-          <span className="text-zinc-500">예: "3티어 웹 아키텍처", "VDI + OpenClaw 비서AI"</span>
+          <span className="text-zinc-500">예: &quot;3티어 웹 아키텍처&quot;, &quot;VDI + OpenClaw 비서AI&quot;</span>
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center pointer-events-auto">
