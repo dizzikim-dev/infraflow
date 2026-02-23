@@ -216,11 +216,11 @@ describe('getVendorSummary', () => {
 // ---------------------------------------------------------------------------
 
 describe('compareVendorCosts', () => {
-  it('returns estimates for all 4 vendors with a firewall spec', () => {
+  it('returns estimates for all vendors with a firewall spec', () => {
     const spec = makeSpec([{ type: 'firewall' }]);
     const result = compareVendorCosts(spec);
-    // 4 vendors in the catalog
-    expect(result.vendorEstimates).toHaveLength(4);
+    // All vendors in the catalog — count should match allVendorCatalogs.length
+    expect(result.vendorEstimates).toHaveLength(22);
   });
 
   it('returns empty estimates for empty spec', () => {

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Veeam logo - simplified V checkmark -->
+  <path d="M12 20L32 48L52 20" stroke="#00B336" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M12 20L32 48L52 20" stroke="#00B336" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="#00B336" opacity="0.15"/>
+</svg>

@@ -189,6 +189,21 @@ When adding or updating products, verify these fields are populated:
 - `formFactor` — appliance, chassis, virtual, cloud, container, or rugged
 - `replacedBy` — for EOL/EOS products, reference the successor nodeId
 
+### VC-014: Logo & Display Name Registration
+
+Every new vendor MUST be registered in the UI logo system for the vendor badge to appear on infrastructure nodes.
+
+**Required files to update:**
+
+| File | Action |
+|------|--------|
+| `public/logos/{vendorId}.svg` | Create simplified SVG logo (64×64 viewBox, <1KB, brand color) |
+| `src/lib/design/vendorLogos.ts` | Add `vendorId` → logo path in `VENDOR_LOGOS`, display name in `VENDOR_NAMES` |
+| `src/lib/design/__tests__/vendorLogos.test.ts` | Increment count assertions, add new vendor assertions |
+| `src/lib/consulting/__tests__/costComparator.test.ts` | Update `toHaveLength(N)` for new vendor count |
+
+**Key rule**: The `vendorId` key in `VENDOR_LOGOS` / `VENDOR_NAMES` must **exactly match** the `vendorId` field in the vendor catalog data file. Mismatch = badge won't render.
+
 ---
 
 ## 4. Checklist
@@ -210,4 +225,10 @@ When adding or updating products, verify these fields are populated:
 - [ ] `lifecycle` set
 - [ ] `infraNodeTypes` mapped
 - [ ] `stats` updated
+- [ ] SVG logo created in `public/logos/`
+- [ ] `VENDOR_LOGOS` entry added in `vendorLogos.ts`
+- [ ] `VENDOR_NAMES` entry added in `vendorLogos.ts`
+- [ ] Logo test count + assertions updated
+- [ ] `costComparator` vendor count updated
 - [ ] Tests pass (`npx vitest run src/lib/knowledge/vendorCatalog`)
+- [ ] Logo tests pass (`npx vitest run src/lib/design/__tests__/vendorLogos.test.ts`)

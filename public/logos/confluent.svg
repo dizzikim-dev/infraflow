@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Confluent logo - simplified stream/flow -->
+  <path d="M12 16c20 0 20 16 40 16" stroke="#173361" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M12 32c20 0 20 16 40 16" stroke="#173361" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <path d="M12 24c20 0 20-8 40-8" stroke="#173361" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.4"/>
+</svg>

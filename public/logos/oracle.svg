@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Oracle logo - simplified rounded rectangle -->
+  <rect x="6" y="18" width="52" height="28" rx="14" stroke="#C74634" stroke-width="4" fill="#C74634" opacity="0.1"/>
+  <text x="32" y="39" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="14" fill="#C74634">Oracle</text>
+</svg>

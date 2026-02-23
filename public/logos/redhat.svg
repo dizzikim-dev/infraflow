@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Red Hat logo - simplified fedora hat -->
+  <ellipse cx="32" cy="40" rx="24" ry="6" fill="#EE0000" opacity="0.3"/>
+  <path d="M14 40c0-4 8-24 18-24s18 20 18 24" fill="#EE0000" opacity="0.8"/>
+  <rect x="10" y="38" width="44" height="6" rx="3" fill="#CC0000"/>
+</svg>

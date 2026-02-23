@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Proofpoint logo - simplified shield with P -->
+  <path d="M32 6L8 18v16c0 14 10.7 27.1 24 30 13.3-2.9 24-16 24-30V18L32 6z" fill="#0A4B8C" opacity="0.15"/>
+  <path d="M32 6L8 18v16c0 14 10.7 27.1 24 30 13.3-2.9 24-16 24-30V18L32 6z" stroke="#0A4B8C" stroke-width="2.5" fill="none"/>
+  <text x="32" y="42" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="24" fill="#0A4B8C">P</text>
+</svg>

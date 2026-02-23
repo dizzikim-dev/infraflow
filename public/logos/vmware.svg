@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- VMware logo - simplified VM -->
+  <text x="32" y="42" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="20" fill="#696566">VM</text>
+  <path d="M8 48h48" stroke="#696566" stroke-width="3" stroke-linecap="round"/>
+  <path d="M16 24l16 20 16-20" stroke="#696566" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

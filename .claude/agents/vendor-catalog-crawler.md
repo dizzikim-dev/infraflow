@@ -133,7 +133,79 @@ npx tsc --noEmit
 # 2. Vendor catalog tests
 npx vitest run src/lib/knowledge/vendorCatalog
 
-# 3. Stats validation — must match computeStats()
+# 3. Logo system tests
+npx vitest run src/lib/design/__tests__/vendorLogos.test.ts
+
+# 4. Cost comparator tests (vendor count)
+npx vitest run src/lib/consulting/__tests__/costComparator.test.ts
+
+# 5. Stats validation — must match computeStats()
+```
+
+### Step 10: Logo & Display Name Registration (REQUIRED)
+
+Every new vendor MUST be registered in the UI logo system. Without this, the vendor badge (logo + name) will NOT appear on infrastructure nodes.
+
+#### 10-1. Create SVG logo file
+
+Create `public/logos/{vendorId}.svg` (use the filename portion from vendorId, e.g. `hpe-aruba` → `hpe-aruba.svg`).
+
+SVG requirements:
+- ViewBox: `0 0 64 64`
+- Simplified/iconic representation of the vendor's brand
+- Use the vendor's official brand color
+- Keep file size under 1KB
+- No external dependencies (fonts embedded as text elements)
+
+Reference the existing logos for style:
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- {Vendor} logo - simplified -->
+  <!-- Use shapes + brand color, optionally with text initial -->
+  <circle cx="32" cy="32" r="26" fill="#BRAND_COLOR" opacity="0.15"/>
+  <circle cx="32" cy="32" r="26" stroke="#BRAND_COLOR" stroke-width="2.5" fill="none"/>
+  <text x="32" y="40" text-anchor="middle" font-family="Arial,sans-serif"
+        font-weight="bold" font-size="18" fill="#BRAND_COLOR">XX</text>
+</svg>
+```
+
+#### 10-2. Register in VENDOR_LOGOS and VENDOR_NAMES
+
+Edit `src/lib/design/vendorLogos.ts`:
+
+```typescript
+// In VENDOR_LOGOS — add entry matching the catalog's vendorId
+'{vendorId}': '/logos/{filename}.svg',
+
+// In VENDOR_NAMES — add entry matching the catalog's vendorId
+'{vendorId}': '{Display Name}',
+```
+
+**Critical**: The key MUST exactly match the `vendorId` in the vendor catalog file. If the catalog uses `'red-hat'`, the logo key must also be `'red-hat'`.
+
+#### 10-3. Update logo tests
+
+Edit `src/lib/design/__tests__/vendorLogos.test.ts`:
+
+1. Update the count assertion in `VENDOR_LOGOS` → `toHaveLength(N)` (increment by 1)
+2. Update the count assertion in `VENDOR_NAMES` → `toHaveLength(N)` (increment by 1)
+3. Add new vendor assertions to the appropriate test block
+
+#### 10-4. Update costComparator test
+
+Edit `src/lib/consulting/__tests__/costComparator.test.ts`:
+
+Update `expect(result.vendorEstimates).toHaveLength(N)` to match the new total vendor count.
+
+#### 10-5. Verify logo rendering
+
+After registration, verify both functions return correct values for the new vendor:
+
+```typescript
+// These must NOT return null:
+getLogoForNode({ ...baseData, vendorId: '{vendorId}' })  // → '/logos/{filename}.svg'
+getVendorNameForNode({ ...baseData, vendorId: '{vendorId}' })  // → '{Display Name}'
 ```
 
 ## File Locations
@@ -144,6 +216,10 @@ npx vitest run src/lib/knowledge/vendorCatalog
 | `src/lib/knowledge/vendorCatalog/vendors/{vendor}.ts` | Per-vendor catalog data |
 | `src/lib/knowledge/vendorCatalog/queryHelpers.ts` | Search/stats helpers |
 | `src/lib/knowledge/vendorCatalog/__tests__/` | Tests |
+| `src/lib/design/vendorLogos.ts` | Logo path + display name mappings (VENDOR_LOGOS, VENDOR_NAMES) |
+| `src/lib/design/__tests__/vendorLogos.test.ts` | Logo system tests |
+| `public/logos/{vendorId}.svg` | SVG logo files (64×64 viewBox) |
+| `src/lib/consulting/__tests__/costComparator.test.ts` | Cost comparator tests (vendor count) |
 
 ## Output Format
 
@@ -166,6 +242,13 @@ Report crawling results as:
 
 ### Field Suggestions (if any)
 - {new field}: {why it's needed}
+
+### Logo Registration
+- SVG created: `public/logos/{vendorId}.svg`
+- VENDOR_LOGOS entry: {vendorId} → {path}
+- VENDOR_NAMES entry: {vendorId} → {displayName}
+- Logo test count updated: {old} → {new}
+- costComparator vendor count updated: {old} → {new}
 
 ### Test Results
 - tsc: {PASS/FAIL}

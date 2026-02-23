@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- F5 Networks logo - simplified -->
+  <rect x="8" y="8" width="48" height="48" rx="8" fill="#E4002B" opacity="0.15"/>
+  <text x="32" y="44" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="28" fill="#E4002B">F5</text>
+</svg>

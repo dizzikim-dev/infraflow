@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Kong logo - simplified gorilla/gateway -->
+  <circle cx="32" cy="32" r="26" fill="#003459" opacity="0.15"/>
+  <circle cx="32" cy="32" r="26" stroke="#003459" stroke-width="2.5" fill="none"/>
+  <text x="32" y="40" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="18" fill="#003459">Kong</text>
+</svg>

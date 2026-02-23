@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- NetApp logo - simplified -->
+  <path d="M12 16h8l16 32h-8L12 16z" fill="#0067C5"/>
+  <path d="M28 16h8l16 32h-8L28 16z" fill="#0067C5" opacity="0.6"/>
+  <path d="M44 16h8l-8 16h-8l8-16z" fill="#0067C5" opacity="0.4"/>
+</svg>

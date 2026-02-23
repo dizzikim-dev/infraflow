@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Datadog logo - simplified dog face -->
+  <circle cx="32" cy="32" r="26" fill="#632CA6" opacity="0.15"/>
+  <circle cx="32" cy="32" r="26" stroke="#632CA6" stroke-width="2.5" fill="none"/>
+  <text x="32" y="40" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="16" fill="#632CA6">DD</text>
+</svg>
