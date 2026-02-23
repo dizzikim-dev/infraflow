@@ -32,7 +32,9 @@ export default async function middleware(request: NextRequest) {
   requestHeaders.set('x-nonce', nonce);
 
   // For auth-protected paths, delegate to NextAuth then attach CSP to its response
-  if (requiresAuth(request.nextUrl.pathname)) {
+  // In demo mode, skip auth checks entirely (DB-free test deployment)
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+  if (!isDemoMode && requiresAuth(request.nextUrl.pathname)) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const authResponse = await (authHandler as any)(request);
 

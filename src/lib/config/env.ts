@@ -68,6 +68,9 @@ const envSchema = z.object({
   UPSTASH_REDIS_REST_URL: z.string().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 
+  // ---- Demo Mode ----
+  NEXT_PUBLIC_DEMO_MODE: z.string().optional(),
+
   // ---- Environment ----
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
@@ -121,7 +124,7 @@ export function resetEnvCache(): void {
  */
 export function validateProductionEnv(): void {
   const env = getEnv();
-  if (env.NODE_ENV === 'production') {
+  if (env.NODE_ENV === 'production' && env.NEXT_PUBLIC_DEMO_MODE !== 'true') {
     if (!env.NEXTAUTH_SECRET) {
       throw new Error('FATAL: NEXTAUTH_SECRET is required in production');
     }

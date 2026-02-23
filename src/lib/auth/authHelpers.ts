@@ -6,6 +6,12 @@
 
 import { auth } from './auth';
 
+/** Fake admin session returned when NEXT_PUBLIC_DEMO_MODE=true (DB-free deployment) */
+const DEMO_SESSION = {
+  user: { id: 'demo-admin', name: 'Demo Admin', email: 'admin@infraflow.dev', role: 'ADMIN' as const },
+  expires: '2099-12-31T23:59:59.999Z',
+};
+
 export class AuthError extends Error {
   constructor(
     message: string,
@@ -21,6 +27,8 @@ export class AuthError extends Error {
  * Use in API routes that require authentication.
  */
 export async function requireAuth() {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return DEMO_SESSION;
+
   const session = await auth();
 
   if (!session?.user) {
