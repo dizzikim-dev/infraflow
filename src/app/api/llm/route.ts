@@ -486,10 +486,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
     const enrichedPrompt = buildEnrichedSystemPrompt(prompt);
 
     // Get API key from server-side environment variables (not NEXT_PUBLIC_)
+    // NOTE: Reading process.env directly (not via getEnv()) because tests
+    // dynamically manipulate API keys between calls and getEnv() caches.
     let apiKey: string | undefined;
     let result: LLMResponse;
 
     if (provider === 'claude') {
+      // eslint-disable-next-line no-restricted-syntax
       apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) {
         if (useFallback) {
@@ -507,6 +510,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
       }
       result = await callClaude(prompt, apiKey, model, enrichedPrompt);
     } else if (provider === 'openai') {
+      // eslint-disable-next-line no-restricted-syntax
       apiKey = process.env.OPENAI_API_KEY;
       if (!apiKey) {
         if (useFallback) {

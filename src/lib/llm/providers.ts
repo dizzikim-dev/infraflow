@@ -4,6 +4,11 @@
  * Provides utility functions to detect available LLM providers
  * and their configuration status.
  *
+ * NOTE: This module reads process.env directly (not via getEnv()) because:
+ * 1. Tests dynamically manipulate process.env between calls
+ * 2. getEnv() caches on first call, which breaks dynamic env changes in tests
+ * 3. API keys must reflect the current runtime state
+ *
  * @module lib/llm/providers
  */
 
@@ -22,7 +27,9 @@ export interface LLMProviderInfo {
  * @returns Provider info or null if no provider is configured
  */
 export function detectLLMProvider(): LLMProviderInfo | null {
+  // eslint-disable-next-line no-restricted-syntax
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  // eslint-disable-next-line no-restricted-syntax
   const openaiKey = process.env.OPENAI_API_KEY;
 
   if (openaiKey) {
@@ -41,7 +48,9 @@ export function detectLLMProvider(): LLMProviderInfo | null {
  */
 export function getProviderStatus(): { claude: boolean; openai: boolean } {
   return {
+    // eslint-disable-next-line no-restricted-syntax
     claude: !!process.env.ANTHROPIC_API_KEY,
+    // eslint-disable-next-line no-restricted-syntax
     openai: !!process.env.OPENAI_API_KEY,
   };
 }

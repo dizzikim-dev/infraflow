@@ -6,24 +6,27 @@
  */
 
 import { PrismaClient } from '@/generated/prisma';
+import { getEnv } from '@/lib/config/env';
 
 // 글로벌 타입 확장
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+const env = getEnv();
+
 // 개발 환경에서는 기존 인스턴스 재사용, 프로덕션에서는 새로 생성
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     log:
-      process.env.NODE_ENV === 'development'
+      env.NODE_ENV === 'development'
         ? ['query', 'error', 'warn']
         : ['error'],
   });
 
 // 개발 환경에서 글로벌에 저장
-if (process.env.NODE_ENV !== 'production') {
+if (env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
 }
 

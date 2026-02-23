@@ -63,6 +63,11 @@ const envSchema = z.object({
   LOG_LEVEL: z.string().optional(),
   NEXT_PUBLIC_LOG_LEVEL: z.string().optional(),
 
+  // ---- Deployment ----
+  VERCEL: z.string().optional(),
+  UPSTASH_REDIS_REST_URL: z.string().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+
   // ---- Environment ----
   NODE_ENV: z
     .enum(['development', 'production', 'test'])

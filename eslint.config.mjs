@@ -13,6 +13,30 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Prevent direct process.env usage — use getEnv() from @/lib/config/env
+  {
+    files: ["src/**/*.ts", "src/**/*.tsx"],
+    ignores: [
+      "src/lib/config/env.ts",
+      "src/middleware.ts",
+      "src/instrumentation.ts",
+      "src/lib/auth/auth.config.ts",
+      "src/**/__tests__/**",
+      "src/**/*.test.ts",
+      "src/**/*.test.tsx",
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector:
+            "MemberExpression[object.object.name='process'][object.property.name='env']",
+          message:
+            "Use getEnv() from @/lib/config/env instead of process.env directly.",
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getEnv } from '@/lib/config/env';
 
 const VALID_TYPES = [
   'prompt_submit', 'llm_modify', 'template_select',
@@ -7,7 +8,7 @@ const VALID_TYPES = [
   'diagram_create', 'diagram_update', 'export',
 ] as const;
 
-const hasDb = !!process.env.DATABASE_URL;
+const hasDb = !!getEnv().DATABASE_URL;
 
 export async function POST(req: Request) {
   // No DB configured — silently accept (activity tracking is non-critical)

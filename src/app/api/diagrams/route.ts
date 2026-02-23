@@ -3,10 +3,11 @@ import { requireAuth, AuthError } from '@/lib/auth/authHelpers';
 import { CreateDiagramSchema } from '@/lib/validations/diagram';
 import { createLogger } from '@/lib/utils/logger';
 import type { InputJsonValue } from '@/generated/prisma/runtime/library';
+import { getEnv } from '@/lib/config/env';
 
 const log = createLogger('DiagramsAPI');
 
-const hasDb = !!process.env.DATABASE_URL;
+const hasDb = !!getEnv().DATABASE_URL;
 
 export async function GET() {
   if (!hasDb) {

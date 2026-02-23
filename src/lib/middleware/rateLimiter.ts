@@ -15,6 +15,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createLogger } from '@/lib/utils/logger';
+import { getEnv } from '@/lib/config/env';
 
 const log = createLogger('RateLimiter');
 
@@ -271,14 +272,15 @@ export class RejectAllStore implements RateLimitStoreInterface {
  * - Otherwise (dev): In-memory store
  */
 function createStore(): RateLimitStoreInterface {
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  const env = getEnv();
+  if (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
     try {
       // Dynamic require for @upstash/redis — only loaded when Redis is configured
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { Redis } = require('@upstash/redis') as typeof import('@upstash/redis');
       const redis = new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL!,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+        url: env.UPSTASH_REDIS_REST_URL!,
+        token: env.UPSTASH_REDIS_REST_TOKEN!,
       });
       const redisStore = new RedisRateLimitStore(redis);
       log.info('Using Redis-backed rate limit store (Upstash)');
@@ -288,7 +290,7 @@ function createStore(): RateLimitStoreInterface {
         'Failed to create Redis rate limit store',
         error instanceof Error ? error : new Error(String(error))
       );
-      if (process.env.VERCEL) {
+      if (env.VERCEL) {
         log.error(
           'CRITICAL: Redis initialization failed on VERCEL. ' +
           'All requests will be rejected (fail-closed).'
@@ -299,7 +301,7 @@ function createStore(): RateLimitStoreInterface {
     }
   }
 
-  if (process.env.VERCEL) {
+  if (env.VERCEL) {
     log.error(
       'CRITICAL: No Redis env vars on VERCEL (UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN). ' +
       'All requests will be rejected (fail-closed). ' +
@@ -406,20 +408,26 @@ function createStoreUnavailableResponse(): NextResponse {
 /**
  * Default configuration
  */
-export const DEFAULT_RATE_LIMIT: RateLimitConfig = {
-  maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '10', 10),
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10),
-  dailyLimit: parseInt(process.env.RATE_LIMIT_DAILY || '100', 10),
-};
+export const DEFAULT_RATE_LIMIT: RateLimitConfig = (() => {
+  const env = getEnv();
+  return {
+    maxRequests: env.RATE_LIMIT_MAX_REQUESTS,
+    windowMs: env.RATE_LIMIT_WINDOW_MS,
+    dailyLimit: env.RATE_LIMIT_DAILY,
+  };
+})();
 
 /**
  * LLM-specific configuration (more restrictive)
  */
-export const LLM_RATE_LIMIT: RateLimitConfig = {
-  maxRequests: parseInt(process.env.LLM_RATE_LIMIT_MAX || '10', 10),
-  windowMs: parseInt(process.env.LLM_RATE_LIMIT_WINDOW_MS || '60000', 10),
-  dailyLimit: parseInt(process.env.LLM_RATE_LIMIT_DAILY || '100', 10),
-};
+export const LLM_RATE_LIMIT: RateLimitConfig = (() => {
+  const env = getEnv();
+  return {
+    maxRequests: env.LLM_RATE_LIMIT_MAX,
+    windowMs: env.LLM_RATE_LIMIT_WINDOW_MS,
+    dailyLimit: env.LLM_RATE_LIMIT_DAILY,
+  };
+})();
 
 /**
  * Check rate limit for a request (async — supports Redis store)
@@ -515,6 +523,9 @@ export async function checkRateLimit(
     return { allowed: true, info };
   } catch (error) {
     // Fail-closed in production: reject request when store is unavailable
+    // NOTE: Reading process.env directly here because tests dynamically
+    // toggle VERCEL between calls, and getEnv() caches.
+    // eslint-disable-next-line no-restricted-syntax
     if (process.env.VERCEL) {
       log.error(
         'Rate limit store error in production — fail-closed',

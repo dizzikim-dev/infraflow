@@ -3,6 +3,11 @@
  *
  * Centralized logging system with environment-aware log levels.
  * Provides structured logging with context for better debugging.
+ *
+ * NOTE: This module reads process.env directly (not via getEnv()) because:
+ * 1. Logger is a foundational utility used by every module including env.ts itself
+ * 2. Tests dynamically modify process.env.LOG_LEVEL between createLogger() calls
+ * 3. getEnv() caches on first call, which breaks dynamic log level changes
  */
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -41,12 +46,14 @@ const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
  */
 function getMinLogLevel(): LogLevel {
   // Allow explicit override via environment variable
+  // eslint-disable-next-line no-restricted-syntax
   const explicitLevel = process.env.NEXT_PUBLIC_LOG_LEVEL || process.env.LOG_LEVEL;
   if (explicitLevel && isValidLogLevel(explicitLevel)) {
     return explicitLevel;
   }
 
   // Environment-based defaults
+  // eslint-disable-next-line no-restricted-syntax
   const nodeEnv = process.env.NODE_ENV;
 
   switch (nodeEnv) {

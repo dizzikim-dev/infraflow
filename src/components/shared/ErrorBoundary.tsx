@@ -81,6 +81,7 @@ export class ErrorBoundary extends Component<Props, State> {
               페이지 새로고침
             </button>
           </div>
+          {/* eslint-disable-next-line no-restricted-syntax -- client component: NODE_ENV is inlined at build time */}
           {process.env.NODE_ENV === 'development' && this.state.error && (
             <details className="mt-4 w-full max-w-md">
               <summary className="text-zinc-500 text-xs cursor-pointer hover:text-zinc-400">

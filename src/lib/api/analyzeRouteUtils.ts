@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/middleware/rateLimiter';
 import type { RateLimitConfig } from '@/lib/middleware/rateLimiter';
+import { getEnv } from '@/lib/config/env';
 
 /**
  * Check request body size via Content-Length header.
@@ -37,11 +38,14 @@ export function checkRequestSize(request: Request, maxBytes: number = 51200): Re
  * Rate limit configuration for analyze endpoints.
  * More permissive than LLM routes since these are local computations.
  */
-export const ANALYZE_RATE_LIMIT: RateLimitConfig = {
-  maxRequests: parseInt(process.env.ANALYZE_RATE_LIMIT_MAX || '30', 10),
-  windowMs: parseInt(process.env.ANALYZE_RATE_LIMIT_WINDOW_MS || '60000', 10),
-  dailyLimit: parseInt(process.env.ANALYZE_RATE_LIMIT_DAILY || '500', 10),
-};
+export const ANALYZE_RATE_LIMIT: RateLimitConfig = (() => {
+  const env = getEnv();
+  return {
+    maxRequests: env.ANALYZE_RATE_LIMIT_MAX,
+    windowMs: env.ANALYZE_RATE_LIMIT_WINDOW_MS,
+    dailyLimit: env.ANALYZE_RATE_LIMIT_DAILY,
+  };
+})();
 
 export interface AnalyzeRouteCheckResult {
   /** Whether the request passed all checks */
