@@ -31,14 +31,113 @@ import { ciscoCatalog } from './vendors/cisco';
 import { paloaltoCatalog } from './vendors/paloalto';
 import { aristaCatalog } from './vendors/arista';
 import { fortinetCatalog } from './vendors/fortinet';
+import { schneiderCatalog } from './vendors/schneider';
+import { veeamCatalog } from './vendors/veeam';
+import { dellCatalog } from './vendors/dell';
+import { zscalerCatalog } from './vendors/zscaler';
+import { f5Catalog } from './vendors/f5';
+import { cloudflareCatalog } from './vendors/cloudflare';
+import { crowdstrikeCatalog } from './vendors/crowdstrike';
+import { infobloxCatalog } from './vendors/infoblox';
+import { oktaCatalog } from './vendors/okta';
+import { proofpointCatalog } from './vendors/proofpoint';
+import { vmwareCatalog } from './vendors/vmware';
+import { redhatCatalog } from './vendors/redhat';
+import { oracleCatalog } from './vendors/oracle';
+import { datadogCatalog } from './vendors/datadog';
+import { netappCatalog } from './vendors/netapp';
+import { kongCatalog } from './vendors/kong';
+import { confluentCatalog } from './vendors/confluent';
+import { hpeArubaCatalog } from './vendors/hpe-aruba';
 
-/** Merged array of all vendor catalogs. */
+/** Merged array of all vendor catalogs (eagerly loaded). */
 export const allVendorCatalogs: VendorCatalog[] = [
   ciscoCatalog,
   paloaltoCatalog,
   aristaCatalog,
   fortinetCatalog,
+  schneiderCatalog,
+  veeamCatalog,
+  dellCatalog,
+  zscalerCatalog,
+  f5Catalog,
+  cloudflareCatalog,
+  crowdstrikeCatalog,
+  infobloxCatalog,
+  oktaCatalog,
+  proofpointCatalog,
+  vmwareCatalog,
+  redhatCatalog,
+  oracleCatalog,
+  datadogCatalog,
+  netappCatalog,
+  confluentCatalog,
+  kongCatalog,
+  hpeArubaCatalog,
 ];
+
+// ---------------------------------------------------------------------------
+// Async loader — lazy alternative for future migration
+// ---------------------------------------------------------------------------
+
+let _cachedVendorCatalogs: VendorCatalog[] | null = null;
+let _vendorLoadingPromise: Promise<VendorCatalog[]> | null = null;
+
+/**
+ * Load all vendor catalogs asynchronously via dynamic import().
+ *
+ * Returns a cached result on subsequent calls. This is the lazy-loading
+ * alternative to the synchronous `allVendorCatalogs` export. Callers that
+ * can await should prefer this function to reduce initial bundle size
+ * once the migration from sync to async is complete.
+ *
+ * @deprecated Prefer this over `allVendorCatalogs` for new code paths.
+ */
+export async function getAllVendorCatalogsAsync(): Promise<VendorCatalog[]> {
+  if (_cachedVendorCatalogs) return _cachedVendorCatalogs;
+  if (_vendorLoadingPromise) return _vendorLoadingPromise;
+
+  _vendorLoadingPromise = Promise.all([
+    import('./vendors/cisco').then(m => m.ciscoCatalog),
+    import('./vendors/paloalto').then(m => m.paloaltoCatalog),
+    import('./vendors/arista').then(m => m.aristaCatalog),
+    import('./vendors/fortinet').then(m => m.fortinetCatalog),
+    import('./vendors/schneider').then(m => m.schneiderCatalog),
+    import('./vendors/veeam').then(m => m.veeamCatalog),
+    import('./vendors/dell').then(m => m.dellCatalog),
+    import('./vendors/zscaler').then(m => m.zscalerCatalog),
+    import('./vendors/f5').then(m => m.f5Catalog),
+    import('./vendors/cloudflare').then(m => m.cloudflareCatalog),
+    import('./vendors/crowdstrike').then(m => m.crowdstrikeCatalog),
+    import('./vendors/infoblox').then(m => m.infobloxCatalog),
+    import('./vendors/okta').then(m => m.oktaCatalog),
+    import('./vendors/proofpoint').then(m => m.proofpointCatalog),
+    import('./vendors/vmware').then(m => m.vmwareCatalog),
+    import('./vendors/redhat').then(m => m.redhatCatalog),
+    import('./vendors/oracle').then(m => m.oracleCatalog),
+    import('./vendors/datadog').then(m => m.datadogCatalog),
+    import('./vendors/netapp').then(m => m.netappCatalog),
+    import('./vendors/kong').then(m => m.kongCatalog),
+    import('./vendors/confluent').then(m => m.confluentCatalog),
+    import('./vendors/hpe-aruba').then(m => m.hpeArubaCatalog),
+  ]).then(catalogs => {
+    _cachedVendorCatalogs = catalogs;
+    _vendorLoadingPromise = null;
+    return catalogs;
+  });
+
+  return _vendorLoadingPromise;
+}
+
+/**
+ * Reset the async vendor catalog cache.
+ * Intended for testing only.
+ * @internal
+ */
+export function _resetVendorCatalogCache(): void {
+  _cachedVendorCatalogs = null;
+  _vendorLoadingPromise = null;
+}
 
 // ---------------------------------------------------------------------------
 // Internal: O(1) vendor lookup by ID
