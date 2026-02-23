@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Providers } from '@/components/providers/Providers';
 import './globals.css';
@@ -18,13 +19,19 @@ export const metadata: Metadata = {
   description: 'Visualize infrastructure architecture with a single prompt',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  const nonce = headersList.get('x-nonce') ?? '';
+
   return (
     <html lang="ko">
+      <head>
+        <meta property="csp-nonce" content={nonce} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

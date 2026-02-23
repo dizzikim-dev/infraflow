@@ -2,7 +2,8 @@
  * Tests for security headers in next.config.mjs
  *
  * Verifies that required security headers (HSTS, X-Content-Type-Options,
- * Referrer-Policy, X-Frame-Options, CSP) are present in the Next.js config.
+ * Referrer-Policy, X-Frame-Options) are present in the Next.js config.
+ * Note: CSP is now set dynamically in middleware with per-request nonce.
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -60,11 +61,9 @@ describe('next.config.mjs security headers', () => {
     expect(xfo!.value).toBe('DENY');
   });
 
-  it('should have Content-Security-Policy header', () => {
+  it('should NOT have static Content-Security-Policy (now in middleware)', () => {
     const csp = headers.find((h) => h.key === 'Content-Security-Policy');
-    expect(csp).toBeDefined();
-    expect(csp!.value).toContain("default-src 'self'");
-    expect(csp!.value).toContain("frame-ancestors 'none'");
+    expect(csp).toBeUndefined();
   });
 
   it('should have poweredByHeader disabled', () => {
