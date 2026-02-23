@@ -168,7 +168,8 @@ export function InfraEditor({
 
   // Auth state for hybrid history (localStorage vs DB)
   const { status: sessionStatus } = useSession();
-  const isAuthenticated = sessionStatus === 'authenticated';
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+  const isAuthenticated = isDemoMode || sessionStatus === 'authenticated';
   const router = useRouter();
 
   // Sidebar + History (DB only — login required for save)
