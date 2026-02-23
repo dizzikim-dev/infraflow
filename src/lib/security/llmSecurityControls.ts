@@ -626,6 +626,36 @@ export function sanitizeUserInput(input: string): string {
 }
 
 /**
+ * Credential patterns for redaction.
+ * These are the subset of DANGEROUS_OUTPUT_PATTERNS that represent
+ * API keys, tokens, and credentials that should be replaced with [REDACTED].
+ */
+const CREDENTIAL_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
+  { pattern: /AKIA[0-9A-Z]{16}/g, label: 'aws-access-key' },
+  { pattern: /AIza[0-9A-Za-z_-]{35}/g, label: 'gcp-api-key' },
+  { pattern: /sk-[a-zA-Z0-9]{20,}/g, label: 'openai-api-key' },
+  { pattern: /ghp_[a-zA-Z0-9]{36}/g, label: 'github-pat' },
+  { pattern: /xox[bpors]-[a-zA-Z0-9-]+/g, label: 'slack-token' },
+];
+
+/**
+ * Redact sensitive data patterns from LLM output.
+ * Replaces API keys, tokens, and credentials with [REDACTED].
+ *
+ * @param output - Raw LLM output string
+ * @returns String with sensitive patterns replaced by [REDACTED]
+ */
+export function redactSensitiveData(output: string): string {
+  if (!output || typeof output !== 'string') return output;
+  let redacted = output;
+  for (const { pattern } of CREDENTIAL_PATTERNS) {
+    pattern.lastIndex = 0;
+    redacted = redacted.replace(pattern, '[REDACTED]');
+  }
+  return redacted;
+}
+
+/**
  * Validate the safety of LLM output.
  *
  * Checks for suspicious patterns in the output that could indicate

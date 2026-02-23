@@ -46,6 +46,7 @@ import {
 } from '@/lib/knowledge';
 import { AVAILABLE_COMPONENTS } from '@/lib/parser/prompts';
 import type { DiagramContext } from '@/lib/parser/prompts';
+import { redactSensitiveData } from '@/lib/security/llmSecurityControls';
 
 const log = createLogger('LLM');
 
@@ -547,10 +548,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
       return addRateLimitHeaders(response, info);
     }
 
-    const response = NextResponse.json({
+    // Redact any sensitive data (API keys, tokens) from raw LLM output
+    const sanitizedResult = {
       ...result,
+      rawResponse: result.rawResponse ? redactSensitiveData(result.rawResponse) : result.rawResponse,
       rateLimit: rateLimitInfo,
-    });
+    };
+
+    const response = NextResponse.json(sanitizedResult);
     return addRateLimitHeaders(response, info);
   } catch (error) {
     const response = NextResponse.json(

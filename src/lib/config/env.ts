@@ -105,6 +105,25 @@ export function resetEnvCache(): void {
 }
 
 // ---------------------------------------------------------------------------
+// Production validation
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate that required environment variables are present in production.
+ * Throws an error if critical variables (e.g. NEXTAUTH_SECRET) are missing.
+ *
+ * Should be called at application startup.
+ */
+export function validateProductionEnv(): void {
+  const env = getEnv();
+  if (env.NODE_ENV === 'production') {
+    if (!env.NEXTAUTH_SECRET) {
+      throw new Error('FATAL: NEXTAUTH_SECRET is required in production');
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Convenience helpers
 // ---------------------------------------------------------------------------
 

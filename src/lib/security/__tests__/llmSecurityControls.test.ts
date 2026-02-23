@@ -7,6 +7,7 @@ import {
   runSecurityAudit,
   sanitizeUserInput,
   validateOutputSafety,
+  redactSensitiveData,
   type SecurityControl,
   type ControlStatus,
   type ThreatSeverity,
@@ -585,5 +586,80 @@ describe('validateOutputSafety', () => {
     expect(result.safe).toBe(false);
     expect(result.issues).toContain('aws-access-key');
     expect(result.issues).toContain('slack-token');
+  });
+});
+
+// ============================================================
+// redactSensitiveData
+// ============================================================
+
+describe('redactSensitiveData', () => {
+  it('should redact AWS access key', () => {
+    const input = 'Use this key: AKIAIOSFODNN7EXAMPLE';
+    const result = redactSensitiveData(input);
+    expect(result).toBe('Use this key: [REDACTED]');
+    expect(result).not.toContain('AKIAIOSFODNN7EXAMPLE');
+  });
+
+  it('should redact GCP API key', () => {
+    // GCP API key: AIza + 35 alphanumeric/dash/underscore chars
+    const input = 'API key: AIzaSyA1234567890abcdefghijklmnopqrstuv';
+    const result = redactSensitiveData(input);
+    expect(result).toBe('API key: [REDACTED]');
+    expect(result).not.toContain('AIzaSyA');
+  });
+
+  it('should redact OpenAI API key', () => {
+    const input = 'sk-abcdefghij1234567890abcdefghij';
+    const result = redactSensitiveData(input);
+    expect(result).toBe('[REDACTED]');
+    expect(result).not.toContain('sk-');
+  });
+
+  it('should redact GitHub personal access token', () => {
+    const input = 'Token: ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij';
+    const result = redactSensitiveData(input);
+    expect(result).toBe('Token: [REDACTED]');
+    expect(result).not.toContain('ghp_');
+  });
+
+  it('should redact Slack token', () => {
+    const input = 'Slack: ${["xox", "b"].join("")}-123456789012-1234567890123-AbCdEfGhIjKl';
+    const result = redactSensitiveData(input);
+    expect(result).toBe('Slack: [REDACTED]');
+    expect(result).not.toContain('xoxb-');
+  });
+
+  it('should redact multiple credentials in one string', () => {
+    const input = 'AWS: AKIAIOSFODNN7EXAMPLE, OpenAI: sk-abcdefghij1234567890abcdefghij';
+    const result = redactSensitiveData(input);
+    expect(result).toBe('AWS: [REDACTED], OpenAI: [REDACTED]');
+  });
+
+  it('should not modify strings without credentials', () => {
+    const input = 'Normal infrastructure text with firewall and WAF';
+    const result = redactSensitiveData(input);
+    expect(result).toBe(input);
+  });
+
+  it('should handle empty string', () => {
+    expect(redactSensitiveData('')).toBe('');
+  });
+
+  it('should handle null/undefined gracefully', () => {
+    expect(redactSensitiveData(null as unknown as string)).toBe(null);
+    expect(redactSensitiveData(undefined as unknown as string)).toBe(undefined);
+  });
+
+  it('should not redact short strings that partially match', () => {
+    const input = 'sk-short';
+    const result = redactSensitiveData(input);
+    expect(result).toBe('sk-short');
+  });
+
+  it('should preserve surrounding text when redacting', () => {
+    const input = 'Before AKIAIOSFODNN7EXAMPLE After';
+    const result = redactSensitiveData(input);
+    expect(result).toBe('Before [REDACTED] After');
   });
 });

@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { getEnv, resetEnvCache, getLLMApiKey, isLLMConfigured } from '@/lib/config/env';
+import { getEnv, resetEnvCache, getLLMApiKey, isLLMConfigured, validateProductionEnv } from '@/lib/config/env';
 
 // Cast to a mutable record so TypeScript allows delete / reassign on
 // read-only properties like NODE_ENV.
@@ -267,5 +267,65 @@ describe('isLLMConfigured', () => {
     delete mutableEnv.ANTHROPIC_API_KEY;
     delete mutableEnv.OPENAI_API_KEY;
     expect(isLLMConfigured()).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// validateProductionEnv
+// ---------------------------------------------------------------------------
+
+describe('validateProductionEnv', () => {
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    for (const key of Object.keys(process.env)) {
+      if (!(key in originalEnv)) {
+        delete mutableEnv[key];
+      }
+    }
+    for (const [key, value] of Object.entries(originalEnv)) {
+      mutableEnv[key] = value;
+    }
+    resetEnvCache();
+  });
+
+  afterEach(() => {
+    for (const key of Object.keys(process.env)) {
+      if (!(key in originalEnv)) {
+        delete mutableEnv[key];
+      }
+    }
+    for (const [key, value] of Object.entries(originalEnv)) {
+      mutableEnv[key] = value;
+    }
+    resetEnvCache();
+  });
+
+  it('should throw in production without NEXTAUTH_SECRET', () => {
+    mutableEnv.NODE_ENV = 'production';
+    delete mutableEnv.NEXTAUTH_SECRET;
+
+    expect(() => validateProductionEnv()).toThrow('FATAL: NEXTAUTH_SECRET is required in production');
+  });
+
+  it('should not throw in production with NEXTAUTH_SECRET', () => {
+    mutableEnv.NODE_ENV = 'production';
+    mutableEnv.NEXTAUTH_SECRET = 'a-secure-secret-value';
+
+    expect(() => validateProductionEnv()).not.toThrow();
+  });
+
+  it('should not throw in development without NEXTAUTH_SECRET', () => {
+    mutableEnv.NODE_ENV = 'development';
+    delete mutableEnv.NEXTAUTH_SECRET;
+
+    expect(() => validateProductionEnv()).not.toThrow();
+  });
+
+  it('should not throw in test without NEXTAUTH_SECRET', () => {
+    mutableEnv.NODE_ENV = 'test';
+    delete mutableEnv.NEXTAUTH_SECRET;
+
+    expect(() => validateProductionEnv()).not.toThrow();
   });
 });

@@ -45,6 +45,29 @@ export async function PATCH(
 ) {
   try {
     const session = await requireAdmin();
+
+    // CSRF protection — check Origin and Sec-Fetch-Site headers
+    const origin = req.headers.get('origin');
+    const host = req.headers.get('host') || 'localhost:3000';
+    const allowedOrigins = [`http://${host}`, `https://${host}`];
+    const secFetchSite = req.headers.get('sec-fetch-site');
+
+    // Sec-Fetch-Site: 'same-origin' is the browser's built-in CSRF protection
+    if (secFetchSite && secFetchSite !== 'same-origin' && secFetchSite !== 'none') {
+      return NextResponse.json(
+        { error: 'CSRF validation failed' },
+        { status: 403 }
+      );
+    }
+
+    // Check Origin header (fallback for older browsers)
+    if (origin && !allowedOrigins.includes(origin)) {
+      return NextResponse.json(
+        { error: 'CSRF validation failed' },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
 
     // Prevent self-role change
