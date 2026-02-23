@@ -1,0 +1,256 @@
+/**
+ * Compute Failures (FAIL-CMP-001 ~ FAIL-CMP-008)
+ */
+
+import type { FailureScenario } from '../types';
+import {
+  withSection,
+  NIST_800_44,
+  NIST_800_123,
+  NIST_800_125,
+  AWS_WAF_REL,
+  CNCF_SECURITY,
+} from '../sourceRegistry';
+
+export const COMPUTE_FAILURES: FailureScenario[] = [
+  {
+    id: 'FAIL-CMP-001',
+    type: 'failure',
+    component: 'web-server',
+    titleKo: '웹 서버 메모리 부족(OOM)',
+    scenarioKo:
+      '급격한 트래픽 증가, 메모리 누수, 또는 대용량 파일 처리로 웹 서버의 가용 메모리가 고갈됩니다. OOM Killer에 의해 프로세스가 강제 종료되거나 극심한 스와핑으로 응답 시간이 수십 초로 증가합니다.',
+    impact: 'service-down',
+    likelihood: 'high',
+    affectedComponents: ['load-balancer', 'app-server'],
+    preventionKo: [
+      '메모리 사용량을 모니터링하고 80% 임계치에서 경보를 발생시킵니다',
+      '요청당 메모리 사용량을 제한하고 대용량 처리는 비동기로 전환합니다',
+      'Auto-scaling을 구성하여 트래픽 증가 시 자동으로 인스턴스를 추가합니다',
+    ],
+    mitigationKo: [
+      'OOM 발생 서버를 로드밸런서에서 제외하고 재시작합니다',
+      '메모리 누수 프로세스를 식별하여 종료합니다',
+      '긴급으로 서버 메모리를 확장하거나 인스턴스를 추가합니다',
+    ],
+    estimatedMTTR: '5분~30분',
+    tags: ['compute', 'web-server', 'oom', 'memory', 'performance'],
+    trust: {
+      confidence: 0.9,
+      sources: [withSection(NIST_800_123, 'Section 6 - Server Availability')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-CMP-002',
+    type: 'failure',
+    component: 'app-server',
+    titleKo: '애플리케이션 서버 스레드 풀 고갈',
+    scenarioKo:
+      '느린 외부 API 호출, 데이터베이스 응답 지연, 또는 잘못된 동기 처리로 인해 애플리케이션 서버의 스레드 풀이 모두 사용됩니다. 새로운 요청을 처리할 수 없어 요청 큐가 증가하고 타임아웃이 발생합니다.',
+    impact: 'service-down',
+    likelihood: 'high',
+    affectedComponents: ['web-server', 'db-server', 'cache', 'load-balancer'],
+    preventionKo: [
+      '외부 호출에 타임아웃과 서킷 브레이커 패턴을 적용합니다',
+      '스레드 풀 크기를 적절히 설정하고 사용률을 모니터링합니다',
+      '비동기 처리를 활용하여 스레드 점유 시간을 최소화합니다',
+    ],
+    mitigationKo: [
+      '느린 외부 연동을 임시 차단하여 스레드를 해제합니다',
+      '애플리케이션 서버를 순차적으로 재시작합니다(rolling restart)',
+      '스레드 풀 크기를 동적으로 확장합니다',
+    ],
+    estimatedMTTR: '10분~1시간',
+    tags: ['compute', 'app-server', 'thread-pool', 'exhaustion', 'timeout'],
+    trust: {
+      confidence: 0.9,
+      sources: [withSection(AWS_WAF_REL, 'Fault Isolation - Throttling')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-CMP-003',
+    type: 'failure',
+    component: 'db-server',
+    titleKo: '데이터베이스 데드락',
+    scenarioKo:
+      '복수의 트랜잭션이 서로가 보유한 잠금(lock)을 대기하는 교착 상태에 빠집니다. 관련 쿼리들이 무한 대기 상태에 들어가고 커넥션 풀이 고갈되어 전체 애플리케이션 응답이 중단됩니다.',
+    impact: 'degraded',
+    likelihood: 'high',
+    affectedComponents: ['app-server', 'web-server'],
+    preventionKo: [
+      '트랜잭션에서 테이블/행 접근 순서를 일관되게 통일합니다',
+      '트랜잭션 범위를 최소화하고 장시간 잠금을 피합니다',
+      '데드락 탐지 및 자동 롤백 기능을 활성화합니다',
+    ],
+    mitigationKo: [
+      '데드락에 관련된 트랜잭션 중 하나를 강제 종료합니다',
+      '데드락 로그를 분석하여 원인 쿼리를 식별합니다',
+      '문제가 되는 인덱스를 추가하거나 쿼리를 최적화합니다',
+    ],
+    estimatedMTTR: '5분~30분',
+    tags: ['compute', 'database', 'deadlock', 'transaction', 'locking'],
+    trust: {
+      confidence: 0.9,
+      sources: [withSection(NIST_800_123, 'Section 5 - Server Configuration')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-CMP-004',
+    type: 'failure',
+    component: 'db-server',
+    titleKo: '데이터베이스 복제 지연(Replication Lag)',
+    scenarioKo:
+      '대량의 쓰기 작업, 네트워크 지연, 또는 슬레이브 서버의 성능 부족으로 마스터-슬레이브 간 데이터 복제가 지연됩니다. 읽기 전용 쿼리가 오래된 데이터를 반환하여 데이터 불일치가 발생합니다.',
+    impact: 'degraded',
+    likelihood: 'high',
+    affectedComponents: ['app-server', 'web-server', 'cache'],
+    preventionKo: [
+      '복제 지연을 실시간 모니터링하고 임계값(예: 5초) 초과 시 경보를 발생시킵니다',
+      '슬레이브 서버의 하드웨어 사양을 마스터와 동일하게 유지합니다',
+      '대량 쓰기 작업은 배치로 분할하여 처리합니다',
+    ],
+    mitigationKo: [
+      '읽기 트래픽을 마스터로 임시 전환합니다',
+      '복제 지연이 큰 슬레이브를 읽기 풀에서 제외합니다',
+      '슬레이브를 재빌드하여 동기화를 복구합니다',
+    ],
+    estimatedMTTR: '15분~2시간',
+    tags: ['compute', 'database', 'replication', 'lag', 'consistency'],
+    trust: {
+      confidence: 0.9,
+      sources: [withSection(AWS_WAF_REL, 'Data Durability - Replication')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-CMP-005',
+    type: 'failure',
+    component: 'container',
+    titleKo: '컨테이너 OOM Kill',
+    scenarioKo:
+      '컨테이너의 메모리 리밋(limit)을 초과하여 커널의 OOM Killer가 컨테이너 프로세스를 강제 종료합니다. 메모리 리밋이 너무 낮게 설정되었거나 애플리케이션의 메모리 누수로 발생합니다.',
+    impact: 'degraded',
+    likelihood: 'high',
+    affectedComponents: ['kubernetes', 'load-balancer'],
+    preventionKo: [
+      '컨테이너의 메모리 request/limit을 실제 사용량 기반으로 적절히 설정합니다',
+      '메모리 사용량을 모니터링하고 트렌드 분석을 수행합니다',
+      '애플리케이션 프로파일링을 통해 메모리 누수를 사전 탐지합니다',
+    ],
+    mitigationKo: [
+      '컨테이너 메모리 리밋을 상향 조정합니다',
+      '재시작 정책(restart policy)이 올바르게 설정되었는지 확인합니다',
+      '메모리 누수가 있는 경우 수정된 이미지로 재배포합니다',
+    ],
+    estimatedMTTR: '5분~30분',
+    tags: ['compute', 'container', 'oom-kill', 'memory', 'resource-limit'],
+    trust: {
+      confidence: 0.9,
+      sources: [withSection(CNCF_SECURITY, 'Container Runtime Security')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-CMP-006',
+    type: 'failure',
+    component: 'kubernetes',
+    titleKo: 'Kubernetes Pod CrashLoopBackOff',
+    scenarioKo:
+      'Pod가 시작 직후 반복적으로 크래시하여 CrashLoopBackOff 상태에 빠집니다. 설정 오류, 의존 서비스 미가용, 이미지 호환성 문제, 또는 리소스 부족이 원인이며, 백오프 간격이 점점 늘어나 복구가 지연됩니다.',
+    impact: 'service-down',
+    likelihood: 'high',
+    affectedComponents: ['container', 'load-balancer', 'app-server'],
+    preventionKo: [
+      '배포 전 스테이징 환경에서 충분한 테스트를 수행합니다',
+      'Readiness/Liveness Probe를 적절히 설정합니다',
+      'Init Container로 의존 서비스 가용성을 사전 확인합니다',
+    ],
+    mitigationKo: [
+      'kubectl logs로 크래시 원인을 분석합니다',
+      '이전 정상 버전으로 롤백합니다(kubectl rollout undo)',
+      '리소스 제한을 완화하거나 환경 변수/설정을 수정합니다',
+    ],
+    estimatedMTTR: '10분~1시간',
+    tags: ['compute', 'kubernetes', 'crashloop', 'pod', 'deployment'],
+    trust: {
+      confidence: 0.9,
+      sources: [withSection(CNCF_SECURITY, 'Workload Security - Pod Security')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-CMP-007',
+    type: 'failure',
+    component: 'vm',
+    titleKo: '가상머신 리소스 경합(Resource Contention)',
+    scenarioKo:
+      '동일 하이퍼바이저 위의 복수 VM이 CPU, 메모리, 디스크 I/O를 과도하게 사용하여 리소스 경합이 발생합니다. "Noisy Neighbor" 현상으로 다른 VM의 성능이 예측 불가능하게 저하됩니다.',
+    impact: 'degraded',
+    likelihood: 'medium',
+    affectedComponents: ['app-server', 'db-server', 'web-server'],
+    preventionKo: [
+      'VM별 리소스 예약(reservation)을 설정하여 최소 보장 리소스를 확보합니다',
+      '핵심 워크로드를 전용 호스트(dedicated host)에 배치합니다',
+      'CPU/메모리/디스크 사용률을 호스트 레벨에서 모니터링합니다',
+    ],
+    mitigationKo: [
+      '리소스를 과도하게 사용하는 VM을 다른 호스트로 마이그레이션합니다',
+      '문제가 되는 VM의 리소스 할당을 조정합니다',
+      '핵심 VM에 리소스 우선순위(priority)를 설정합니다',
+    ],
+    estimatedMTTR: '15분~1시간',
+    tags: ['compute', 'vm', 'resource-contention', 'noisy-neighbor', 'hypervisor'],
+    trust: {
+      confidence: 0.9,
+      sources: [withSection(NIST_800_125, 'Section 4 - VM Security Recommendations')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-CMP-008',
+    type: 'failure',
+    component: 'web-server',
+    titleKo: '웹 서버 Slowloris/Slow HTTP 공격',
+    scenarioKo:
+      '공격자가 HTTP 요청을 매우 느리게 전송하여 웹 서버의 연결 슬롯을 장시간 점유합니다. 최대 동시 연결 수에 도달하면 정상 사용자의 접속이 거부됩니다. 적은 대역폭으로도 서비스 거부가 가능합니다.',
+    impact: 'service-down',
+    likelihood: 'medium',
+    affectedComponents: ['load-balancer', 'waf'],
+    preventionKo: [
+      '요청 헤더/바디 수신 타임아웃을 짧게 설정합니다(10~30초)',
+      '단일 IP의 동시 연결 수를 제한합니다',
+      'WAF에 Slow HTTP 공격 탐지 규칙을 추가합니다',
+    ],
+    mitigationKo: [
+      '공격 IP를 식별하여 차단합니다',
+      '웹 서버의 연결 타임아웃을 긴급 단축합니다',
+      '리버스 프록시 또는 CDN을 통해 공격 트래픽을 흡수합니다',
+    ],
+    estimatedMTTR: '15분~1시간',
+    tags: ['compute', 'web-server', 'slowloris', 'dos', 'connection-exhaustion'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(NIST_800_44, 'Section 8 - Web Server Security')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+];

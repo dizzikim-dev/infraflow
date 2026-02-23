@@ -1,0 +1,256 @@
+/**
+ * Security Failures (FAIL-SEC-001 ~ FAIL-SEC-008)
+ */
+
+import type { FailureScenario } from '../types';
+import {
+  withSection,
+  NIST_800_53,
+  NIST_800_77,
+  NIST_800_94,
+  OWASP_TOP10,
+  SANS_CIS_TOP20,
+} from '../sourceRegistry';
+
+export const SECURITY_FAILURES: FailureScenario[] = [
+  {
+    id: 'FAIL-SEC-001',
+    type: 'failure',
+    component: 'waf',
+    titleKo: 'WAF 우회 공격',
+    scenarioKo:
+      '공격자가 인코딩 변환(이중 URL 인코딩, 유니코드 등), 페이로드 분할, 또는 정규표현식 우회 기법으로 WAF 탐지 규칙을 회피합니다. SQL Injection, XSS 등의 공격이 웹 서버까지 도달합니다.',
+    impact: 'security-breach',
+    likelihood: 'high',
+    affectedComponents: ['web-server', 'app-server', 'db-server'],
+    preventionKo: [
+      'WAF 규칙을 정기적으로 업데이트하고 신규 공격 패턴에 대응합니다',
+      '포지티브 보안 모델(화이트리스트)과 네거티브 모델(블랙리스트)을 병행합니다',
+      'WAF 뒤에 추가적인 입력 검증 로직을 애플리케이션 레벨에서 구현합니다',
+    ],
+    mitigationKo: [
+      '탐지된 공격 패턴에 대한 긴급 WAF 규칙을 추가합니다',
+      '공격 소스 IP를 차단합니다',
+      '웹 애플리케이션의 취약점을 긴급 패치합니다',
+    ],
+    estimatedMTTR: '1~4시간',
+    tags: ['security', 'waf', 'bypass', 'injection', 'web-attack'],
+    trust: {
+      confidence: 0.9,
+      sources: [withSection(OWASP_TOP10, 'A03:2021 - Injection')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-SEC-002',
+    type: 'failure',
+    component: 'vpn-gateway',
+    titleKo: 'VPN 터널 연결 끊김',
+    scenarioKo:
+      'IKE 재협상 실패, 인증서 만료, 또는 네트워크 불안정으로 VPN 터널이 예기치 않게 해제됩니다. 원격 사용자와 본사 간 암호화 통신이 중단되며, 폴백 없이 평문 통신이 노출될 위험이 있습니다.',
+    impact: 'service-down',
+    likelihood: 'medium',
+    affectedComponents: ['firewall', 'app-server', 'ldap-ad'],
+    preventionKo: [
+      'IKE 키 재협상 주기와 인증서 만료일을 사전에 관리합니다',
+      '이중화된 VPN 게이트웨이를 Active-Standby로 구성합니다',
+      'VPN 터널 상태를 실시간 모니터링하고 자동 재연결을 설정합니다',
+    ],
+    mitigationKo: [
+      'VPN 터널을 수동으로 재수립합니다',
+      '백업 VPN 게이트웨이로 트래픽을 전환합니다',
+      '긴급 시 SSL VPN 또는 ZTNA로 대체 접속 경로를 제공합니다',
+    ],
+    estimatedMTTR: '10분~1시간',
+    tags: ['security', 'vpn', 'tunnel', 'disconnect', 'encryption'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_77, 'Section 5 - IPsec VPN Management')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-SEC-003',
+    type: 'failure',
+    component: 'firewall',
+    titleKo: 'TLS/SSL 인증서 만료',
+    scenarioKo:
+      '방화벽 또는 서비스의 SSL/TLS 인증서가 만료되어 HTTPS 연결이 실패합니다. 브라우저에서 보안 경고가 표시되고, API 통신이 거부되며, 자동화된 시스템 간 연동이 중단됩니다.',
+    impact: 'service-down',
+    likelihood: 'high',
+    affectedComponents: ['web-server', 'load-balancer', 'waf', 'cdn'],
+    preventionKo: [
+      '인증서 만료 30/14/7일 전 자동 알림을 설정합니다',
+      'Let\'s Encrypt 등을 활용한 인증서 자동 갱신을 구성합니다',
+      '모든 인증서를 중앙 관리 시스템에서 추적합니다',
+    ],
+    mitigationKo: [
+      '만료된 인증서를 즉시 갱신하거나 교체합니다',
+      '임시 자체 서명 인증서로 긴급 복구합니다',
+      '인증서 검증을 일시적으로 완화하여 서비스를 유지합니다(최후 수단)',
+    ],
+    estimatedMTTR: '15분~2시간',
+    tags: ['security', 'certificate', 'tls', 'ssl', 'expiry'],
+    trust: {
+      confidence: 0.9,
+      sources: [withSection(NIST_800_53, 'SC-17 - Public Key Infrastructure Certificates')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-SEC-004',
+    type: 'failure',
+    component: 'ids-ips',
+    titleKo: 'IDS/IPS 오탐(False Negative) 및 미탐지',
+    scenarioKo:
+      'IDS/IPS 시그니처가 최신 공격 패턴을 포함하지 않거나 암호화된 트래픽을 검사하지 못하여 실제 공격을 탐지하지 못합니다. 공격자가 내부 네트워크에 침투한 후에도 경보가 발생하지 않습니다.',
+    impact: 'security-breach',
+    likelihood: 'medium',
+    affectedComponents: ['firewall', 'web-server', 'app-server', 'db-server'],
+    preventionKo: [
+      'IDS/IPS 시그니처를 최소 주 1회 이상 업데이트합니다',
+      'SSL/TLS 복호화 검사를 활성화하여 암호화 트래픽도 분석합니다',
+      '행위 기반 탐지(anomaly-based detection)를 시그니처 기반과 병행합니다',
+    ],
+    mitigationKo: [
+      '수동 트래픽 분석으로 침입 여부를 조사합니다',
+      '침해 의심 시스템을 네트워크에서 격리합니다',
+      '긴급 시그니처를 추가하고 탐지 민감도를 높입니다',
+    ],
+    estimatedMTTR: '2~8시간',
+    tags: ['security', 'ids-ips', 'false-negative', 'detection', 'evasion'],
+    trust: {
+      confidence: 0.95,
+      sources: [withSection(NIST_800_94, 'Section 4 - Types of IDPS Technologies')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-SEC-005',
+    type: 'failure',
+    component: 'nac',
+    titleKo: 'NAC 우회를 통한 비인가 접속',
+    scenarioKo:
+      '공격자가 MAC 스푸핑, 802.1X 우회, 또는 인가 장비의 네트워크 포트를 물리적으로 점유하여 NAC 통제를 우회합니다. 비인가 장비가 내부 네트워크에 접속하여 횡적 이동(lateral movement)이 가능해집니다.',
+    impact: 'security-breach',
+    likelihood: 'low',
+    affectedComponents: ['switch-l2', 'switch-l3', 'firewall', 'ldap-ad'],
+    preventionKo: [
+      '802.1X 인증과 MAB(MAC Authentication Bypass)를 조합하여 사용합니다',
+      '지속적 단말 상태 평가(Continuous Endpoint Assessment)를 적용합니다',
+      '네트워크 세그먼테이션을 통해 비인가 접속의 영향 범위를 제한합니다',
+    ],
+    mitigationKo: [
+      '비인가 장비의 네트워크 포트를 즉시 차단합니다',
+      '해당 세그먼트의 모든 장비를 재인증합니다',
+      '비인가 장비의 활동 로그를 분석하여 피해 범위를 파악합니다',
+    ],
+    estimatedMTTR: '30분~2시간',
+    tags: ['security', 'nac', 'bypass', 'unauthorized-access', '802.1x'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(NIST_800_53, 'AC-17 - Remote Access')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-SEC-006',
+    type: 'failure',
+    component: 'dlp',
+    titleKo: 'DLP 우회를 통한 데이터 유출',
+    scenarioKo:
+      '내부자 또는 공격자가 DLP 정책을 우회하여 민감 데이터를 외부로 유출합니다. 스테가노그래피, 암호화된 채널, 또는 승인된 클라우드 서비스를 통한 우회 방법이 사용됩니다.',
+    impact: 'data-loss',
+    likelihood: 'medium',
+    affectedComponents: ['firewall', 'web-server', 'db-server'],
+    preventionKo: [
+      'DLP 정책을 엔드포인트, 네트워크, 클라우드 레벨에서 다층 적용합니다',
+      '암호화된 트래픽에 대한 SSL 검사를 수행합니다',
+      '데이터 분류 체계를 수립하고 민감 데이터를 태깅합니다',
+    ],
+    mitigationKo: [
+      '유출 경로를 파악하고 즉시 차단합니다',
+      '유출된 데이터의 범위와 민감도를 평가합니다',
+      '관련 규정에 따라 유출 사고를 보고하고 대응 절차를 시작합니다',
+    ],
+    estimatedMTTR: '4~24시간',
+    tags: ['security', 'dlp', 'data-leak', 'insider-threat', 'exfiltration'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(NIST_800_53, 'SC-7 - Boundary Protection')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-SEC-007',
+    type: 'failure',
+    component: 'waf',
+    titleKo: 'WAF 규칙 업데이트 실패로 인한 제로데이 노출',
+    scenarioKo:
+      'WAF 가상 패치 또는 규칙 업데이트가 제때 적용되지 않아 공개된 취약점(CVE)에 대한 방어가 없는 상태가 지속됩니다. 공격자가 알려진 취약점을 악용하여 웹 서비스를 침해합니다.',
+    impact: 'security-breach',
+    likelihood: 'medium',
+    affectedComponents: ['web-server', 'app-server'],
+    preventionKo: [
+      'WAF 규칙 자동 업데이트를 활성화하고 업데이트 실패 알림을 설정합니다',
+      '보안 공지(Security Advisory)를 모니터링하여 긴급 패치를 조기 적용합니다',
+      'WAF 규칙 적용 현황을 주간 보고로 관리합니다',
+    ],
+    mitigationKo: [
+      '해당 취약점에 대한 커스텀 WAF 규칙을 수동으로 추가합니다',
+      '취약한 엔드포인트를 임시로 비활성화합니다',
+      '웹 서버에 직접 보안 패치를 적용합니다',
+    ],
+    estimatedMTTR: '1~4시간',
+    tags: ['security', 'waf', 'zero-day', 'patching', 'vulnerability'],
+    trust: {
+      confidence: 0.85,
+      sources: [withSection(SANS_CIS_TOP20, 'Control 7 - Continuous Vulnerability Management')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+  {
+    id: 'FAIL-SEC-008',
+    type: 'failure',
+    component: 'vpn-gateway',
+    titleKo: 'VPN 스플릿 터널링 보안 위반',
+    scenarioKo:
+      '스플릿 터널링이 설정된 VPN 환경에서 원격 사용자의 로컬 네트워크가 감염되어 VPN을 통해 본사 네트워크로 악성코드가 전파됩니다. 원격 접속 환경이 공격의 진입점이 됩니다.',
+    impact: 'security-breach',
+    likelihood: 'medium',
+    affectedComponents: ['firewall', 'app-server', 'db-server', 'ldap-ad'],
+    preventionKo: [
+      '풀 터널링(Full Tunneling) 정책을 적용하거나 스플릿 터널링 시 엔드포인트 보안 상태를 검증합니다',
+      'VPN 접속 단말의 최소 보안 요건(백신, 패치 수준)을 강제합니다',
+      '원격 접속 시 마이크로 세그먼테이션을 적용하여 접근 범위를 제한합니다',
+    ],
+    mitigationKo: [
+      '감염 의심 VPN 세션을 즉시 종료합니다',
+      '해당 사용자의 계정을 임시 비활성화하고 단말을 격리합니다',
+      '내부 네트워크의 감염 확산 여부를 점검합니다',
+    ],
+    estimatedMTTR: '1~4시간',
+    tags: ['security', 'vpn', 'split-tunneling', 'malware', 'remote-access'],
+    trust: {
+      confidence: 0.9,
+      sources: [withSection(NIST_800_77, 'Section 3.2 - VPN Architecture')],
+      lastReviewedAt: '2026-02-09',
+      upvotes: 0,
+      downvotes: 0,
+    },
+  },
+];
