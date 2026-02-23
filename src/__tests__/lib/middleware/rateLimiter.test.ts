@@ -11,6 +11,8 @@ import {
   LLM_RATE_LIMIT,
   InMemoryRateLimitStore,
   RedisRateLimitStore,
+  RejectAllStore,
+  _setStoreForTesting,
   type RateLimitConfig,
   type RateLimitStoreInterface,
   type RedisClient,
@@ -387,29 +389,37 @@ describe('RedisRateLimitStore', () => {
 // ============================================================
 
 describe('fail-closed behavior', () => {
-  it('should reject requests when store fails in production (VERCEL=true)', async () => {
-    // Save original env
+  afterEach(() => {
+    // Always restore to a working in-memory store
+    _setStoreForTesting(new InMemoryRateLimitStore());
+  });
+
+  it('should reject with 503 when store fails in production (VERCEL=true)', async () => {
+    const failingStore: RateLimitStoreInterface = {
+      get: vi.fn().mockRejectedValue(new Error('Redis down')),
+      set: vi.fn().mockRejectedValue(new Error('Redis down')),
+      delete: vi.fn().mockResolvedValue(false),
+      clear: vi.fn().mockResolvedValue(undefined),
+      getStats: vi.fn().mockResolvedValue({ entries: 0, keys: [] }),
+    };
+
     const originalVercel = process.env.VERCEL;
-    process.env.VERCEL = 'true';
+    process.env.VERCEL = '1';
+    _setStoreForTesting(failingStore);
 
     try {
-      // The global store is in-memory (no Redis env in test),
-      // so it won't actually fail. Instead, verify the rate limiter
-      // correctly handles the production env flag by testing
-      // that rate limiting works in VERCEL mode.
       const req = createMockRequest();
-      const config: RateLimitConfig = {
-        maxRequests: 1,
+      const { allowed, response } = await checkRateLimit(req, {
+        maxRequests: 10,
         windowMs: 60000,
-      };
+      });
 
-      await clearAllRateLimits();
-      const { allowed: first } = await checkRateLimit(req, config);
-      expect(first).toBe(true);
-
-      const { allowed: second, response } = await checkRateLimit(req, config);
-      expect(second).toBe(false);
+      expect(allowed).toBe(false);
       expect(response).toBeDefined();
+      expect(response!.status).toBe(503);
+
+      const body = await response!.json();
+      expect(body.error).toContain('temporarily unavailable');
     } finally {
       if (originalVercel === undefined) {
         delete process.env.VERCEL;
@@ -419,28 +429,95 @@ describe('fail-closed behavior', () => {
     }
   });
 
-  it('should allow requests in dev mode even when store operation conceptually fails', async () => {
-    // In dev mode (no VERCEL), the in-memory store never fails,
-    // so we verify the store always works correctly in dev.
+  it('should allow through with fallback info when store fails in dev mode', async () => {
+    const failingStore: RateLimitStoreInterface = {
+      get: vi.fn().mockRejectedValue(new Error('Redis down')),
+      set: vi.fn().mockRejectedValue(new Error('Redis down')),
+      delete: vi.fn().mockResolvedValue(false),
+      clear: vi.fn().mockResolvedValue(undefined),
+      getStats: vi.fn().mockResolvedValue({ entries: 0, keys: [] }),
+    };
+
     const originalVercel = process.env.VERCEL;
     delete process.env.VERCEL;
+    _setStoreForTesting(failingStore);
 
     try {
       const req = createMockRequest();
-      const config: RateLimitConfig = {
-        maxRequests: 5,
+      const { allowed, info, response } = await checkRateLimit(req, {
+        maxRequests: 10,
         windowMs: 60000,
-      };
+      });
 
-      await clearAllRateLimits();
-      const { allowed, info } = await checkRateLimit(req, config);
       expect(allowed).toBe(true);
-      expect(info.remaining).toBe(4);
+      expect(response).toBeUndefined();
+      expect(info.remaining).toBe(10); // Full remaining since fallback
     } finally {
-      if (originalVercel !== undefined) {
+      if (originalVercel === undefined) {
+        delete process.env.VERCEL;
+      } else {
         process.env.VERCEL = originalVercel;
       }
     }
+  });
+
+  it('should reject every request with RejectAllStore in production', async () => {
+    const originalVercel = process.env.VERCEL;
+    process.env.VERCEL = '1';
+    _setStoreForTesting(new RejectAllStore());
+
+    try {
+      const req = createMockRequest();
+      const config: RateLimitConfig = { maxRequests: 100, windowMs: 60000 };
+
+      // Every request should be rejected, not just after a limit
+      for (let i = 0; i < 3; i++) {
+        const { allowed, response } = await checkRateLimit(req, config);
+        expect(allowed).toBe(false);
+        expect(response!.status).toBe(503);
+      }
+    } finally {
+      if (originalVercel === undefined) {
+        delete process.env.VERCEL;
+      } else {
+        process.env.VERCEL = originalVercel;
+      }
+    }
+  });
+});
+
+// ============================================================
+// RejectAllStore unit tests
+// ============================================================
+
+describe('RejectAllStore', () => {
+  let store: RejectAllStore;
+
+  beforeEach(() => {
+    store = new RejectAllStore();
+  });
+
+  it('should throw on get()', async () => {
+    await expect(store.get('any-key')).rejects.toThrow('Rate limit store unavailable');
+  });
+
+  it('should throw on set()', async () => {
+    const entry = { count: 1, windowStart: Date.now(), dailyCount: 1, dayStart: Date.now() };
+    await expect(store.set('any-key', entry)).rejects.toThrow('Rate limit store unavailable');
+  });
+
+  it('should throw on delete()', async () => {
+    await expect(store.delete('any-key')).rejects.toThrow('Rate limit store unavailable');
+  });
+
+  it('should not throw on clear()', async () => {
+    await expect(store.clear()).resolves.toBeUndefined();
+  });
+
+  it('should return empty stats', async () => {
+    const stats = await store.getStats();
+    expect(stats.entries).toBe(0);
+    expect(stats.keys).toHaveLength(0);
   });
 });
 
@@ -449,11 +526,12 @@ describe('fail-closed behavior', () => {
 // ============================================================
 
 describe('RateLimitStoreInterface conformance', () => {
-  const stores: { name: string; create: () => RateLimitStoreInterface }[] = [
+  const stores: { name: string; create: () => RateLimitStoreInterface; rejectsOps?: boolean }[] = [
     { name: 'InMemoryRateLimitStore', create: () => new InMemoryRateLimitStore() },
+    { name: 'RejectAllStore', create: () => new RejectAllStore(), rejectsOps: true },
   ];
 
-  for (const { name, create } of stores) {
+  for (const { name, create, rejectsOps } of stores) {
     describe(name, () => {
       let store: RateLimitStoreInterface;
 
@@ -469,16 +547,20 @@ describe('RateLimitStoreInterface conformance', () => {
         expect(typeof store.getStats).toBe('function');
       });
 
-      it('should round-trip an entry', async () => {
-        const entry = { count: 5, windowStart: 1000, dailyCount: 10, dayStart: 2000 };
-        await store.set('roundtrip', entry);
-        const result = await store.get('roundtrip');
-        expect(result).toEqual(entry);
-      });
+      if (!rejectsOps) {
+        it('should round-trip an entry', async () => {
+          const entry = { count: 5, windowStart: 1000, dailyCount: 10, dayStart: 2000 };
+          await store.set('roundtrip', entry);
+          const result = await store.get('roundtrip');
+          expect(result).toEqual(entry);
+        });
+      }
 
       it('should return empty stats after clear', async () => {
-        const entry = { count: 1, windowStart: 1000, dailyCount: 1, dayStart: 2000 };
-        await store.set('x', entry);
+        if (!rejectsOps) {
+          const entry = { count: 1, windowStart: 1000, dailyCount: 1, dayStart: 2000 };
+          await store.set('x', entry);
+        }
         await store.clear();
         const stats = await store.getStats();
         expect(stats.entries).toBe(0);

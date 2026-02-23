@@ -228,6 +228,38 @@ export class RedisRateLimitStore implements RateLimitStoreInterface {
 }
 
 // ============================================================
+// Reject-All Store (fail-closed for production without Redis)
+// ============================================================
+
+/**
+ * A store that always throws on every operation.
+ * Used in production (VERCEL=true) when Redis cannot be initialized,
+ * ensuring fail-closed behavior: every request hits the catch block
+ * in checkRateLimit() and gets rejected with 503.
+ */
+export class RejectAllStore implements RateLimitStoreInterface {
+  async get(_key: string): Promise<RateLimitEntry | undefined> {
+    throw new Error('Rate limit store unavailable (Redis not initialized in production)');
+  }
+
+  async set(_key: string, _entry: RateLimitEntry, _ttlMs?: number): Promise<void> {
+    throw new Error('Rate limit store unavailable (Redis not initialized in production)');
+  }
+
+  async delete(_key: string): Promise<boolean> {
+    throw new Error('Rate limit store unavailable (Redis not initialized in production)');
+  }
+
+  async clear(): Promise<void> {
+    // No-op: nothing to clear
+  }
+
+  async getStats(): Promise<{ entries: number; keys: string[] }> {
+    return { entries: 0, keys: [] };
+  }
+}
+
+// ============================================================
 // Store Factory
 // ============================================================
 
@@ -235,7 +267,8 @@ export class RedisRateLimitStore implements RateLimitStoreInterface {
  * Create the appropriate rate limit store based on environment.
  *
  * - UPSTASH_REDIS_REST_URL set: Redis store
- * - Otherwise: In-memory store
+ * - VERCEL set but Redis unavailable: RejectAllStore (fail-closed)
+ * - Otherwise (dev): In-memory store
  */
 function createStore(): RateLimitStoreInterface {
   if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
@@ -252,36 +285,38 @@ function createStore(): RateLimitStoreInterface {
       return redisStore;
     } catch (error) {
       log.error(
-        'Failed to create Redis rate limit store, falling back to in-memory',
+        'Failed to create Redis rate limit store',
         error instanceof Error ? error : new Error(String(error))
       );
       if (process.env.VERCEL) {
-        // In production, warn loudly — in-memory is not reliable on serverless
-        log.warn(
-          'WARNING: Falling back to in-memory rate limiter on serverless. ' +
-          'Rate limiting will reset on cold starts.'
+        log.error(
+          'CRITICAL: Redis initialization failed on VERCEL. ' +
+          'All requests will be rejected (fail-closed).'
         );
+        return new RejectAllStore();
       }
       return new InMemoryRateLimitStore();
     }
   }
 
   if (process.env.VERCEL) {
-    log.warn(
-      '[RateLimiter] WARNING: In-memory rate limiter on serverless. ' +
-      'Configure UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN for production.'
+    log.error(
+      'CRITICAL: No Redis env vars on VERCEL (UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN). ' +
+      'All requests will be rejected (fail-closed). ' +
+      'Configure Redis for production.'
     );
+    return new RejectAllStore();
   }
 
   return new InMemoryRateLimitStore();
 }
 
 // Global store instance
-const store: RateLimitStoreInterface = createStore();
+let store: RateLimitStoreInterface = createStore();
 
-/** Whether the current store is Redis-backed */
-export function isRedisStore(): boolean {
-  return store instanceof RedisRateLimitStore;
+/** @internal Test-only: replace the global store */
+export function _setStoreForTesting(newStore: RateLimitStoreInterface): void {
+  store = newStore;
 }
 
 // ============================================================
