@@ -75,7 +75,7 @@ export function createAnalyzeRoute<TResult>(config: AnalyzeRouteConfig<TResult>)
     if (sizeError) return sizeError;
 
     // CSRF + rate-limit check
-    const check = validateAnalyzeRequest(request);
+    const check = await validateAnalyzeRequest(request);
     if (!check.passed) return check.errorResponse!;
 
     let body: unknown;
@@ -134,7 +134,7 @@ export function createAnalyzeRawRoute<TResult>(config: AnalyzeRawRouteConfig<TRe
     if (sizeError) return sizeError;
 
     // CSRF + rate-limit check
-    const check = validateAnalyzeRequest(request);
+    const check = await validateAnalyzeRequest(request);
     if (!check.passed) return check.errorResponse!;
 
     let body: unknown;

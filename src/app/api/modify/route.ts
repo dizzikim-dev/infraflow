@@ -223,7 +223,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ModifyRes
   if (sizeError) return sizeError as NextResponse<ModifyResponse>;
 
   // Check rate limit
-  const { allowed, info, response: rateLimitResponse } = checkRateLimit(
+  const { allowed, info, response: rateLimitResponse } = await checkRateLimit(
     request,
     LLM_RATE_LIMIT
   );

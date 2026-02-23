@@ -292,7 +292,7 @@ export async function POST(
   if (sizeError) return sizeError as NextResponse<SmartParseResponse>;
 
   // Check rate limit
-  const { allowed, info, response: rateLimitResponse } = checkRateLimit(request, LLM_RATE_LIMIT);
+  const { allowed, info, response: rateLimitResponse } = await checkRateLimit(request, LLM_RATE_LIMIT);
   if (!allowed && rateLimitResponse) {
     return rateLimitResponse as NextResponse<SmartParseResponse>;
   }

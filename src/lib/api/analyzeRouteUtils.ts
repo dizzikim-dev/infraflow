@@ -60,10 +60,10 @@ export interface AnalyzeRouteCheckResult {
  * // ... proceed with route logic
  * ```
  */
-export function validateAnalyzeRequest(
+export async function validateAnalyzeRequest(
   request: NextRequest,
   rateLimitConfig: RateLimitConfig = ANALYZE_RATE_LIMIT
-): AnalyzeRouteCheckResult {
+): Promise<AnalyzeRouteCheckResult> {
   // CSRF protection — check Origin header (matches /api/parse pattern)
   const origin = request.headers.get('origin');
   const host = request.headers.get('host');
@@ -79,7 +79,7 @@ export function validateAnalyzeRequest(
   }
 
   // Rate limiting
-  const { allowed, response: rateLimitResponse } = checkRateLimit(
+  const { allowed, response: rateLimitResponse } = await checkRateLimit(
     request,
     rateLimitConfig
   );

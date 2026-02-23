@@ -8,7 +8,7 @@ import { checkRateLimit, DEFAULT_RATE_LIMIT } from '@/lib/middleware/rateLimiter
 const log = createLogger('RegisterAPI');
 
 export async function POST(req: NextRequest) {
-  const { allowed, response } = checkRateLimit(req, DEFAULT_RATE_LIMIT);
+  const { allowed, response } = await checkRateLimit(req, DEFAULT_RATE_LIMIT);
   if (!allowed) return response!;
 
   try {

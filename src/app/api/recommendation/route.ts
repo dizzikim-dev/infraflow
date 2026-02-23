@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   if (sizeError) return sizeError;
 
   // CSRF + rate-limit check (use ANALYZE_RATE_LIMIT — moderate, same as other analysis endpoints)
-  const check = validateAnalyzeRequest(request, ANALYZE_RATE_LIMIT);
+  const check = await validateAnalyzeRequest(request, ANALYZE_RATE_LIMIT);
   if (!check.passed) return check.errorResponse!;
 
   // Parse JSON body

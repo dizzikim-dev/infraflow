@@ -1,11 +1,22 @@
 /**
  * Rate Limiter
  *
- * In-memory rate limiting for API protection.
+ * Redis-backed rate limiting for API protection with in-memory fallback.
  * Provides IP-based and daily usage limits.
+ *
+ * Store strategy:
+ *   - If UPSTASH_REDIS_REST_URL is set: use Redis (persists across cold starts)
+ *   - Otherwise: use in-memory Map (resets on restart)
+ *
+ * Fail-closed: In production (VERCEL=true), if Redis is configured but an
+ * operation fails, requests are REJECTED. In development, falls back to
+ * in-memory silently.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('RateLimiter');
 
 // ============================================================
 // Types
@@ -39,7 +50,7 @@ export interface RateLimitInfo {
   dailyLimit?: number;
 }
 
-interface RateLimitEntry {
+export interface RateLimitEntry {
   count: number;
   windowStart: number;
   dailyCount: number;
@@ -47,29 +58,40 @@ interface RateLimitEntry {
 }
 
 // ============================================================
-// Rate Limit Store
+// Store Interface
+// ============================================================
+
+export interface RateLimitStoreInterface {
+  get(key: string): Promise<RateLimitEntry | undefined>;
+  set(key: string, entry: RateLimitEntry, ttlMs?: number): Promise<void>;
+  delete(key: string): Promise<boolean>;
+  clear(): Promise<void>;
+  getStats(): Promise<{ entries: number; keys: string[] }>;
+}
+
+// ============================================================
+// In-Memory Store
 // ============================================================
 
 /**
  * In-memory store for rate limit data.
- * Note: This resets on server restart. For production,
- * consider using Redis or similar.
+ * Used in development or as fallback when Redis is unavailable.
  */
-class RateLimitStore {
+export class InMemoryRateLimitStore implements RateLimitStoreInterface {
   private store: Map<string, RateLimitEntry> = new Map();
   private lastCleanup: number = Date.now();
   private readonly cleanupIntervalMs = 60000;
 
-  get(key: string): RateLimitEntry | undefined {
+  async get(key: string): Promise<RateLimitEntry | undefined> {
     this.lazyCleanup();
     return this.store.get(key);
   }
 
-  set(key: string, entry: RateLimitEntry): void {
+  async set(key: string, entry: RateLimitEntry): Promise<void> {
     this.store.set(key, entry);
   }
 
-  delete(key: string): boolean {
+  async delete(key: string): Promise<boolean> {
     return this.store.delete(key);
   }
 
@@ -100,20 +122,14 @@ class RateLimitStore {
     }
   }
 
-  /**
-   * Get store stats for monitoring
-   */
-  getStats(): { entries: number; keys: string[] } {
+  async getStats(): Promise<{ entries: number; keys: string[] }> {
     return {
       entries: this.store.size,
       keys: Array.from(this.store.keys()),
     };
   }
 
-  /**
-   * Clear all entries (for testing)
-   */
-  clear(): void {
+  async clear(): Promise<void> {
     this.store.clear();
   }
 
@@ -125,14 +141,147 @@ class RateLimitStore {
   }
 }
 
-// Global store instance
-const store = new RateLimitStore();
+// ============================================================
+// Redis Store
+// ============================================================
 
-// Warn if running in-memory rate limiter on serverless without Redis
-if (process.env.VERCEL && !process.env.REDIS_URL) {
-  console.warn(
-    '[RateLimiter] WARNING: In-memory rate limiter on serverless. Configure REDIS_URL for production.'
-  );
+/** Key prefix to namespace rate limit entries in Redis */
+const REDIS_KEY_PREFIX = 'rl:';
+
+/**
+ * Minimal interface for the Redis client methods used by RedisRateLimitStore.
+ * Compatible with @upstash/redis Redis class.
+ */
+export interface RedisClient {
+  get<T = unknown>(key: string): Promise<T | null>;
+  set<T = unknown>(key: string, value: T, options?: { px?: number }): Promise<string>;
+  del(...keys: string[]): Promise<number>;
+  scan(cursor: number, options?: { match?: string; count?: number }): Promise<[number, string[]]>;
+}
+
+/**
+ * Redis-backed store for rate limit data using Upstash REST client.
+ * Persists across serverless cold starts.
+ *
+ * Accepts a RedisClient via constructor for testability.
+ */
+export class RedisRateLimitStore implements RateLimitStoreInterface {
+  private redis: RedisClient;
+
+  constructor(redis: RedisClient) {
+    this.redis = redis;
+  }
+
+  async get(key: string): Promise<RateLimitEntry | undefined> {
+    const data = await this.redis.get<RateLimitEntry>(REDIS_KEY_PREFIX + key);
+    return data ?? undefined;
+  }
+
+  async set(key: string, entry: RateLimitEntry, ttlMs?: number): Promise<void> {
+    const redisKey = REDIS_KEY_PREFIX + key;
+    if (ttlMs && ttlMs > 0) {
+      // psetex: set with TTL in milliseconds
+      await this.redis.set(redisKey, entry, { px: ttlMs });
+    } else {
+      // Default TTL: 24 hours (covers daily limit window)
+      await this.redis.set(redisKey, entry, { px: 86400000 });
+    }
+  }
+
+  async delete(key: string): Promise<boolean> {
+    const result = await this.redis.del(REDIS_KEY_PREFIX + key);
+    return result > 0;
+  }
+
+  async clear(): Promise<void> {
+    // Scan for all rate limit keys and delete them
+    let cursor = 0;
+    do {
+      const [nextCursor, keys] = await this.redis.scan(cursor, {
+        match: `${REDIS_KEY_PREFIX}*`,
+        count: 100,
+      });
+      cursor = nextCursor;
+      if (keys.length > 0) {
+        await this.redis.del(...keys);
+      }
+    } while (cursor !== 0);
+  }
+
+  async getStats(): Promise<{ entries: number; keys: string[] }> {
+    const allKeys: string[] = [];
+    let cursor = 0;
+    do {
+      const [nextCursor, keys] = await this.redis.scan(cursor, {
+        match: `${REDIS_KEY_PREFIX}*`,
+        count: 100,
+      });
+      cursor = nextCursor;
+      allKeys.push(...keys.map((k: string) => k.replace(REDIS_KEY_PREFIX, '')));
+    } while (cursor !== 0);
+
+    return {
+      entries: allKeys.length,
+      keys: allKeys,
+    };
+  }
+}
+
+// ============================================================
+// Store Factory
+// ============================================================
+
+/**
+ * Create the appropriate rate limit store based on environment.
+ *
+ * - UPSTASH_REDIS_REST_URL set: Redis store
+ * - Otherwise: In-memory store
+ */
+function createStore(): RateLimitStoreInterface {
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    try {
+      // Dynamic require for @upstash/redis — only loaded when Redis is configured
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { Redis } = require('@upstash/redis') as typeof import('@upstash/redis');
+      const redis = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL!,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+      });
+      const redisStore = new RedisRateLimitStore(redis);
+      log.info('Using Redis-backed rate limit store (Upstash)');
+      return redisStore;
+    } catch (error) {
+      log.error(
+        'Failed to create Redis rate limit store, falling back to in-memory',
+        error instanceof Error ? error : new Error(String(error))
+      );
+      if (process.env.VERCEL) {
+        // In production, warn loudly — in-memory is not reliable on serverless
+        log.warn(
+          'WARNING: Falling back to in-memory rate limiter on serverless. ' +
+          'Rate limiting will reset on cold starts.'
+        );
+      }
+      return new InMemoryRateLimitStore();
+    }
+  }
+
+  if (process.env.VERCEL) {
+    log.warn(
+      '[RateLimiter] WARNING: In-memory rate limiter on serverless. ' +
+      'Configure UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN for production.'
+    );
+  }
+
+  return new InMemoryRateLimitStore();
+}
+
+// Global store instance
+const store: RateLimitStoreInterface = createStore();
+
+/** Whether the current store is Redis-backed */
+export function isRedisStore(): boolean {
+  return store instanceof RedisRateLimitStore;
 }
 
 // ============================================================
@@ -196,6 +345,25 @@ function createRateLimitResponse(info: RateLimitInfo): NextResponse {
   );
 }
 
+/**
+ * Create a fail-closed response for when the rate limit store is unavailable.
+ * Used in production when Redis operations fail.
+ */
+function createStoreUnavailableResponse(): NextResponse {
+  return NextResponse.json(
+    {
+      success: false,
+      error: 'Service temporarily unavailable. Please try again later.',
+    },
+    {
+      status: 503,
+      headers: {
+        'Retry-After': '30',
+      },
+    }
+  );
+}
+
 // ============================================================
 // Rate Limiter
 // ============================================================
@@ -219,13 +387,17 @@ export const LLM_RATE_LIMIT: RateLimitConfig = {
 };
 
 /**
- * Check rate limit for a request
+ * Check rate limit for a request (async — supports Redis store)
  * @returns RateLimitInfo if within limits, or NextResponse if rate limited
+ *
+ * Fail-closed: If the store operation throws in production (VERCEL=true),
+ * the request is rejected with 503. In development, store errors are logged
+ * and the request is allowed through.
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   req: NextRequest,
   config: RateLimitConfig = DEFAULT_RATE_LIMIT
-): { allowed: boolean; info: RateLimitInfo; response?: NextResponse } {
+): Promise<{ allowed: boolean; info: RateLimitInfo; response?: NextResponse }> {
   const now = Date.now();
   const dayStart = getDayStart();
 
@@ -234,74 +406,114 @@ export function checkRateLimit(
     ? config.keyGenerator(req)
     : `ip:${getClientIP(req)}`;
 
-  // Get or create entry
-  let entry = store.get(key);
+  try {
+    // Get or create entry
+    let entry = await store.get(key);
 
-  if (!entry) {
-    entry = {
-      count: 0,
-      windowStart: now,
-      dailyCount: 0,
-      dayStart,
+    if (!entry) {
+      entry = {
+        count: 0,
+        windowStart: now,
+        dailyCount: 0,
+        dayStart,
+      };
+    }
+
+    // Reset window if expired
+    if (now - entry.windowStart >= config.windowMs) {
+      entry.count = 0;
+      entry.windowStart = now;
+    }
+
+    // Reset daily count if new day
+    if (entry.dayStart !== dayStart) {
+      entry.dailyCount = 0;
+      entry.dayStart = dayStart;
+    }
+
+    // Calculate rate limit info
+    const info: RateLimitInfo = {
+      current: entry.count,
+      limit: config.maxRequests,
+      remaining: Math.max(0, config.maxRequests - entry.count - 1),
+      resetIn: config.windowMs - (now - entry.windowStart),
+      dailyUsage: entry.dailyCount,
+      dailyLimit: config.dailyLimit,
     };
+
+    // Check window limit
+    if (entry.count >= config.maxRequests) {
+      const response = config.onRateLimited
+        ? config.onRateLimited(req, info)
+        : createRateLimitResponse(info);
+
+      return { allowed: false, info, response };
+    }
+
+    // Check daily limit
+    if (config.dailyLimit && entry.dailyCount >= config.dailyLimit) {
+      info.resetIn = dayStart + 86400000 - now; // Time until midnight
+
+      const response = config.onRateLimited
+        ? config.onRateLimited(req, info)
+        : createRateLimitResponse({
+            ...info,
+            remaining: 0,
+          });
+
+      return { allowed: false, info, response };
+    }
+
+    // Increment counters
+    entry.count++;
+    entry.dailyCount++;
+
+    // Set with TTL matching the longer of window or remaining daily time
+    const ttlMs = Math.max(config.windowMs, dayStart + 86400000 - now);
+    await store.set(key, entry, ttlMs);
+
+    // Update info with new values
+    info.current = entry.count;
+    info.remaining = Math.max(0, config.maxRequests - entry.count);
+    info.dailyUsage = entry.dailyCount;
+
+    return { allowed: true, info };
+  } catch (error) {
+    // Fail-closed in production: reject request when store is unavailable
+    if (process.env.VERCEL) {
+      log.error(
+        'Rate limit store error in production — fail-closed',
+        error instanceof Error ? error : new Error(String(error))
+      );
+      const failInfo: RateLimitInfo = {
+        current: 0,
+        limit: config.maxRequests,
+        remaining: 0,
+        resetIn: 30000,
+        dailyUsage: 0,
+        dailyLimit: config.dailyLimit,
+      };
+      return {
+        allowed: false,
+        info: failInfo,
+        response: createStoreUnavailableResponse(),
+      };
+    }
+
+    // In development: log and allow through
+    log.warn('Rate limit store error — allowing request (dev mode)', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    const fallbackInfo: RateLimitInfo = {
+      current: 0,
+      limit: config.maxRequests,
+      remaining: config.maxRequests,
+      resetIn: config.windowMs,
+      dailyUsage: 0,
+      dailyLimit: config.dailyLimit,
+    };
+    return { allowed: true, info: fallbackInfo };
   }
-
-  // Reset window if expired
-  if (now - entry.windowStart >= config.windowMs) {
-    entry.count = 0;
-    entry.windowStart = now;
-  }
-
-  // Reset daily count if new day
-  if (entry.dayStart !== dayStart) {
-    entry.dailyCount = 0;
-    entry.dayStart = dayStart;
-  }
-
-  // Calculate rate limit info
-  const info: RateLimitInfo = {
-    current: entry.count,
-    limit: config.maxRequests,
-    remaining: Math.max(0, config.maxRequests - entry.count - 1),
-    resetIn: config.windowMs - (now - entry.windowStart),
-    dailyUsage: entry.dailyCount,
-    dailyLimit: config.dailyLimit,
-  };
-
-  // Check window limit
-  if (entry.count >= config.maxRequests) {
-    const response = config.onRateLimited
-      ? config.onRateLimited(req, info)
-      : createRateLimitResponse(info);
-
-    return { allowed: false, info, response };
-  }
-
-  // Check daily limit
-  if (config.dailyLimit && entry.dailyCount >= config.dailyLimit) {
-    info.resetIn = dayStart + 86400000 - now; // Time until midnight
-
-    const response = config.onRateLimited
-      ? config.onRateLimited(req, info)
-      : createRateLimitResponse({
-          ...info,
-          remaining: 0,
-        });
-
-    return { allowed: false, info, response };
-  }
-
-  // Increment counters
-  entry.count++;
-  entry.dailyCount++;
-  store.set(key, entry);
-
-  // Update info with new values
-  info.current = entry.count;
-  info.remaining = Math.max(0, config.maxRequests - entry.count);
-  info.dailyUsage = entry.dailyCount;
-
-  return { allowed: true, info };
 }
 
 /**
@@ -312,7 +524,7 @@ export function withRateLimit<T>(
   config: RateLimitConfig = DEFAULT_RATE_LIMIT
 ): (req: NextRequest) => Promise<NextResponse<T>> {
   return async (req: NextRequest) => {
-    const { allowed, info, response } = checkRateLimit(req, config);
+    const { allowed, info, response } = await checkRateLimit(req, config);
 
     if (!allowed && response) {
       return response as NextResponse<T>;
@@ -355,27 +567,27 @@ export function createUserAwareKeyGenerator(
 /**
  * Get rate limit info for a key (for monitoring)
  */
-export function getRateLimitInfo(key: string): RateLimitEntry | undefined {
+export async function getRateLimitInfo(key: string): Promise<RateLimitEntry | undefined> {
   return store.get(key);
 }
 
 /**
  * Clear rate limit for a key (for testing/admin)
  */
-export function clearRateLimit(key: string): boolean {
+export async function clearRateLimit(key: string): Promise<boolean> {
   return store.delete(key);
 }
 
 /**
  * Clear all rate limits (for testing)
  */
-export function clearAllRateLimits(): void {
-  store.clear();
+export async function clearAllRateLimits(): Promise<void> {
+  await store.clear();
 }
 
 /**
  * Get store stats (for monitoring)
  */
-export function getRateLimitStats(): { entries: number; keys: string[] } {
+export async function getRateLimitStats(): Promise<{ entries: number; keys: string[] }> {
   return store.getStats();
 }

@@ -31,8 +31,8 @@ function makePostRequest(body: unknown): NextRequest {
 // ---------------------------------------------------------------------------
 
 describe('POST /api/recommendation', () => {
-  beforeEach(() => {
-    clearAllRateLimits();
+  beforeEach(async () => {
+    await clearAllRateLimits();
   });
 
   // ── Valid requests ──
