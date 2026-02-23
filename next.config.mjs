@@ -33,23 +33,4 @@ const nextConfig = {
   },
 };
 
-// Wrap with @next/bundle-analyzer when ANALYZE=true.
-// Usage: ANALYZE=true npm run build
-// The dynamic import uses a variable to prevent Vite's static analysis from
-// resolving the optional devDependency during test runs.
-let finalConfig = nextConfig;
-
-if (process.env.ANALYZE === 'true') {
-  try {
-    const pkg = '@next/bundle-analyzer';
-    const { default: bundleAnalyzer } = await import(/* @vite-ignore */ pkg);
-    const withBundleAnalyzer = bundleAnalyzer({ enabled: true });
-    finalConfig = withBundleAnalyzer(nextConfig);
-  } catch {
-    console.warn(
-      'ANALYZE=true but @next/bundle-analyzer is not installed. Run: npm install -D @next/bundle-analyzer',
-    );
-  }
-}
-
-export default finalConfig;
+export default nextConfig;

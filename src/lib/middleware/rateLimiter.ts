@@ -275,9 +275,11 @@ function createStore(): RateLimitStoreInterface {
   const env = getEnv();
   if (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
     try {
-      // Dynamic require for @upstash/redis — only loaded when Redis is configured
+      // Dynamic require for @upstash/redis — only loaded when Redis is configured.
+      // Variable indirection prevents Next.js bundler from resolving at compile time.
+      const pkgName = '@upstash/redis';
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { Redis } = require('@upstash/redis') as typeof import('@upstash/redis');
+      const { Redis } = require(pkgName) as { Redis: new (opts: { url: string; token: string }) => RedisClient };
       const redis = new Redis({
         url: env.UPSTASH_REDIS_REST_URL!,
         token: env.UPSTASH_REDIS_REST_TOKEN!,

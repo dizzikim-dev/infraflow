@@ -6,7 +6,6 @@
  * Used by middleware.ts for JWT session verification.
  */
 
-import { randomUUID } from 'crypto';
 import type { NextAuthConfig } from 'next-auth';
 import Google from 'next-auth/providers/google';
 import GitHub from 'next-auth/providers/github';
@@ -35,7 +34,7 @@ export const authConfig = {
       if (user) {
         token.id = user.id!;
         token.role = ((user as { role?: string }).role as 'USER' | 'ADMIN') ?? 'USER';
-        token.jti = randomUUID(); // New JWT ID on each login — prevents session fixation
+        token.jti = crypto.randomUUID(); // New JWT ID on each login — prevents session fixation
       }
       return token;
     },
