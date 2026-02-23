@@ -176,6 +176,11 @@ model User {
   passwordHash  String?
   role          UserRole  @default(USER)
 
+  // Login security — account lockout
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+
   accounts   Account[]
   sessions   Session[]
   diagrams   Diagram[]
