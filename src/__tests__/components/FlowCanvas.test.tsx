@@ -8,11 +8,13 @@ vi.mock('@xyflow/react', async () => {
   const actual = await vi.importActual('@xyflow/react');
   return {
     ...actual,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
     ReactFlow: ({ children, nodes, edges, ...props }: any) => (
       <div data-testid="react-flow" data-nodes={JSON.stringify(nodes)} data-edges={JSON.stringify(edges)}>
         {children}
       </div>
     ),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ReactFlowProvider: ({ children }: any) => <div data-testid="react-flow-provider">{children}</div>,
     Background: () => <div data-testid="background" />,
     MiniMap: () => <div data-testid="minimap" />,
@@ -35,6 +37,7 @@ vi.mock('@/hooks/useHistory', () => ({
 }));
 
 vi.mock('@/hooks/useNodeEditing', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   NodeEditingProvider: ({ children }: any) => <div data-testid="node-editing-provider">{children}</div>,
 }));
 

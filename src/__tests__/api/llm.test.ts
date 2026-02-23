@@ -192,7 +192,7 @@ describe('/api/llm', () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      await response.json();
 
       // Check rate limit headers
       expect(response.headers.get('X-RateLimit-Limit')).toBeDefined();

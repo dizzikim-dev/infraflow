@@ -6,6 +6,7 @@ import { getLogoForNode, getVendorNameForNode } from '@/lib/design';
 
 // Mock @xyflow/react
 vi.mock('@xyflow/react', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Handle: ({ position, type, id }: any) => (
     <div data-testid={`handle-${type}-${position}`} data-id={id} />
   ),
@@ -16,6 +17,7 @@ vi.mock('@xyflow/react', () => ({
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
   motion: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     div: ({ children, className, ...props }: any) => (
       <div className={className} {...props}>
         {children}
@@ -37,6 +39,7 @@ vi.mock('@/lib/design', () => ({
 
 // Mock EditableLabel
 vi.mock('@/components/nodes/EditableLabel', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   EditableLabel: ({ value, isEditing, onStartEdit, onCommit, onCancel, placeholder }: any) => (
     <div data-testid="editable-label" data-is-editing={isEditing}>
       {isEditing ? (

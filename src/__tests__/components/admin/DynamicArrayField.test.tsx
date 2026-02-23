@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DynamicArrayField from '@/components/admin/DynamicArrayField';
 
@@ -226,7 +226,7 @@ describe('DynamicArrayField', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText('값을 입력하세요');
+      screen.getByPlaceholderText('값을 입력하세요');
       await user.keyboard('{Enter}');
 
       expect(mockOnChange).not.toHaveBeenCalled();

@@ -56,12 +56,7 @@ function expectHasConnections(prompt: string) {
   expect(result.spec!.connections.length).toBeGreaterThan(0);
 }
 
-function expectTemplate(prompt: string, templateId: string) {
-  const result = parsePrompt(prompt);
-  expect(result.success).toBe(true);
-  expect(result.templateUsed).toBe(templateId);
-  expect(result.confidence).toBeGreaterThanOrEqual(0.8);
-}
+
 
 // ============================================================
 // Category 1: Basic Infrastructure (20 tests)

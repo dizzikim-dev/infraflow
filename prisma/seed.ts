@@ -13,7 +13,7 @@ import {
   VulnSeverity, CloudProvider, ServiceStatus, PricingTier,
   TrafficTier, IndustryType, SecurityLevel, SourceType,
 } from '../src/generated/prisma';
-import { infrastructureDB, InfraComponent, PolicyRecommendation } from '../src/lib/data/infrastructureDB';
+import { infrastructureDB, InfraComponent } from '../src/lib/data/infrastructureDB';
 import { RELATIONSHIPS } from '../src/lib/knowledge/relationships';
 import { PATTERNS } from '../src/lib/knowledge/patterns';
 import { ANTI_PATTERNS } from '../src/lib/knowledge/antipatterns';
@@ -186,16 +186,6 @@ function toPricingTier(t: string): PricingTier {
     'enterprise': PricingTier.enterprise,
   };
   return map[t] || PricingTier.medium;
-}
-
-function toTrafficTier(t: string): TrafficTier {
-  const map: Record<string, TrafficTier> = {
-    'small': TrafficTier.small,
-    'medium': TrafficTier.medium,
-    'large': TrafficTier.large,
-    'enterprise': TrafficTier.enterprise,
-  };
-  return map[t] || TrafficTier.medium;
 }
 
 function toIndustryType(t: string): IndustryType {

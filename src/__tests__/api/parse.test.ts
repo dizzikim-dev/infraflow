@@ -119,6 +119,7 @@ describe('/api/parse', () => {
         method: 'POST',
         body: JSON.stringify({
           prompt: '3티어 웹 아키텍처',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           provider: 'unknown' as any,
         }),
       });
