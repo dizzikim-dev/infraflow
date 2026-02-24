@@ -1,7 +1,7 @@
 # InfraFlow 인프라 장비/솔루션 현황
 
-> **문서 버전**: 1.1.0
-> **최종 수정일**: 2026-02-14
+> **문서 버전**: 1.2.0
+> **최종 수정일**: 2026-02-24
 > **관리 담당**: Infrastructure Data Agent
 
 ---
@@ -17,9 +17,13 @@
 7. [스토리지 (Storage)](#7-스토리지-storage)
 8. [인증/접근 관리 (Auth)](#8-인증접근-관리-auth)
 9. [외부 요소 (External)](#9-외부-요소-external)
-10. [티어 구조](#10-티어-구조)
-11. [데이터 관리 가이드](#11-데이터-관리-가이드)
-12. [변경 이력](#12-변경-이력)
+10. [통신 장비 (Telecom)](#10-통신-장비-telecom)
+11. [WAN 장비 (WAN)](#11-wan-장비-wan)
+12. [AI 컴퓨팅 (AI Compute)](#12-ai-컴퓨팅-ai-compute)
+13. [AI 서비스 (AI Service)](#13-ai-서비스-ai-service)
+14. [티어 구조](#14-티어-구조)
+15. [데이터 관리 가이드](#15-데이터-관리-가이드)
+16. [변경 이력](#16-변경-이력)
 
 ---
 
@@ -41,52 +45,78 @@
 
 | 카테고리 | 장비 수 | 비고 |
 |----------|---------|------|
-| Security | 6개 | 방화벽, WAF, IDS/IPS 등 |
+| Security | 11개 | 방화벽, WAF, IDS/IPS, SASE, ZTNA, CASB, SIEM, SOAR 등 |
 | Network | 9개 | 라우터, 스위치, LB, API GW, Wireless AP 등 |
 | Compute | 10개 | 서버, 컨테이너, K8s, Kafka, Prometheus 등 |
 | Cloud | 4개 | AWS, Azure, GCP, Private |
 | Storage | 6개 | SAN/NAS, 오브젝트, 캐시, Elasticsearch 등 |
 | Auth | 4개 | LDAP/AD, SSO, MFA, IAM |
 | External | 2개 | 사용자, 인터넷 |
-| **총합** | **41개** | Zone 타입 포함 시 42개 |
+| Telecom | 5개 | 중앙국, 기지국, OLT, CPE, IDC |
+| WAN | 11개 | PE/P 라우터, MPLS, 전용선, Private 5G 등 |
+| AI Compute | 6개 | GPU 서버, AI 가속기, 엣지 디바이스, AI 클러스터 등 |
+| AI Service | 8개 | 추론 엔진, 벡터 DB, AI 게이트웨이, 오케스트레이터 등 |
+| **총합** | **76개** | Zone 타입 포함 시 77개 |
 
 ---
 
 ## 2. 장비 카테고리
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        장비 카테고리 구조                                 │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  🔒 Security (6)        🌐 Network (8)          🖥️ Compute (10)         │
-│  ─────────────          ─────────────           ─────────────           │
-│  • firewall             • router                • web-server            │
-│  • waf                  • switch-l2             • app-server            │
-│  • ids-ips              • switch-l3             • db-server             │
-│  • vpn-gateway          • load-balancer         • container             │
-│  • nac                  • api-gateway ✨        • vm                    │
-│  • dlp                  • sd-wan                • kubernetes            │
-│                         • dns                   • kafka ✨              │
-│                         • cdn                   • rabbitmq ✨           │
-│                                                 • prometheus ✨         │
-│                                                 • grafana ✨            │
-│                                                                         │
-│  ☁️ Cloud (4)           📦 Storage (6)          🔐 Auth (4)             │
-│  ─────────────          ─────────────           ─────────────           │
-│  • aws-vpc              • storage               • ldap-ad               │
-│  • azure-vnet           • san-nas               • sso                   │
-│  • gcp-network          • object-storage        • mfa                   │
-│  • private-cloud        • cache                 • iam                   │
-│                         • elasticsearch ✨                              │
-│                         • backup                                        │
-│                                                                         │
-│  👤 External (2)                                                        │
-│  ─────────────                                                          │
-│  • user                                                                 │
-│  • internet                                                             │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                             장비 카테고리 구조                                  │
+├───────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  🔒 Security (11)       🌐 Network (9)          🖥️ Compute (10)              │
+│  ─────────────          ─────────────           ─────────────                │
+│  • firewall             • router                • web-server                 │
+│  • waf                  • switch-l2             • app-server                 │
+│  • ids-ips              • switch-l3             • db-server                  │
+│  • vpn-gateway          • load-balancer         • container                  │
+│  • nac                  • api-gateway           • vm                         │
+│  • dlp                  • sd-wan                • kubernetes                 │
+│  • sase-gateway         • dns                   • kafka                      │
+│  • ztna-broker          • cdn                   • rabbitmq                   │
+│  • casb                 • wireless-ap           • prometheus                 │
+│  • siem                                         • grafana                    │
+│  • soar                                                                      │
+│                                                                               │
+│  ☁️ Cloud (4)           📦 Storage (6)          🔐 Auth (4)                  │
+│  ─────────────          ─────────────           ─────────────                │
+│  • aws-vpc              • storage               • ldap-ad                    │
+│  • azure-vnet           • san-nas               • sso                        │
+│  • gcp-network          • object-storage        • mfa                        │
+│  • private-cloud        • cache                 • iam                        │
+│                         • elasticsearch                                      │
+│                         • backup                                             │
+│                                                                               │
+│  📡 Telecom (5)         🌍 WAN (11)             👤 External (2)              │
+│  ─────────────          ─────────────           ─────────────                │
+│  • central-office       • pe-router             • user                       │
+│  • base-station         • p-router              • internet                   │
+│  • olt                  • mpls-network                                       │
+│  • customer-premise     • dedicated-line                                     │
+│  • idc                  • metro-ethernet                                     │
+│                         • corporate-internet                                 │
+│                         • vpn-service                                        │
+│                         • sd-wan-service                                     │
+│                         • private-5g                                         │
+│                         • core-network                                       │
+│                         • upf                                                │
+│                         • ring-network                                       │
+│                                                                               │
+│  🔥 AI Compute (6)      🧠 AI Service (8)                                    │
+│  ─────────────          ─────────────                                        │
+│  • gpu-server           • inference-engine                                   │
+│  • ai-accelerator       • vector-db                                          │
+│  • edge-device          • ai-gateway                                         │
+│  • mobile-device        • ai-orchestrator                                    │
+│  • ai-cluster           • embedding-service                                  │
+│  • model-registry       • training-platform                                  │
+│                         • prompt-manager                                     │
+│                         • ai-monitor                                         │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -1642,9 +1672,505 @@
 
 ---
 
-## 10. 티어 구조
+## 10. 통신 장비 (Telecom)
 
-### 10.1 티어 정의
+> 통신 카테고리 상세는 별도 문서 참고. 여기서는 목록만 기재합니다.
+
+| ID | 영문명 | 한국어명 |
+|----|--------|----------|
+| `central-office` | Central Office | 중앙국 |
+| `base-station` | Base Station | 기지국 |
+| `olt` | OLT | 광회선단말 |
+| `customer-premise` | Customer Premise | 고객 구내 |
+| `idc` | IDC | 인터넷 데이터센터 |
+
+---
+
+## 11. WAN 장비 (WAN)
+
+> WAN 카테고리 상세는 별도 문서 참고. 여기서는 목록만 기재합니다.
+
+| ID | 영문명 | 한국어명 |
+|----|--------|----------|
+| `pe-router` | PE Router | PE 라우터 |
+| `p-router` | P Router | P 라우터 |
+| `mpls-network` | MPLS Network | MPLS 네트워크 |
+| `dedicated-line` | Dedicated Line | 전용선 |
+| `metro-ethernet` | Metro Ethernet | 메트로 이더넷 |
+| `corporate-internet` | Corporate Internet | 기업 인터넷 |
+| `vpn-service` | VPN Service | VPN 서비스 |
+| `sd-wan-service` | SD-WAN Service | SD-WAN 서비스 |
+| `private-5g` | Private 5G | 프라이빗 5G |
+| `core-network` | Core Network | 코어 네트워크 |
+| `upf` | UPF | UPF |
+| `ring-network` | Ring Network | 링 네트워크 |
+
+---
+
+## 12. AI 컴퓨팅 (AI Compute)
+
+### 12.1 GPU Server (GPU 서버)
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `gpu-server` |
+| **영문명** | GPU Server |
+| **한국어명** | GPU 서버 |
+| **카테고리** | AI Compute |
+| **티어** | Internal |
+| **프로토콜** | PCIe, NVLink, InfiniBand, RDMA |
+
+#### 주요 기능
+- AI 모델 학습
+- 대규모 추론
+- 병렬 컴퓨팅
+- 텐서 연산
+- 다중 GPU 워크로드 분산
+
+#### 특징
+- NVLink/NVSwitch 인터커넥트
+- 고대역폭 메모리 (HBM)
+- 액체 냉각 지원
+- RDMA 네트워킹
+
+#### 대표 벤더
+- NVIDIA DGX
+- Supermicro GPU Server
+- Dell PowerEdge
+- HPE ProLiant
+
+---
+
+### 12.2 AI Accelerator (AI 가속기)
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `ai-accelerator` |
+| **영문명** | AI Accelerator |
+| **한국어명** | AI 가속기 |
+| **카테고리** | AI Compute |
+| **티어** | Internal |
+| **프로토콜** | PCIe, USB, M.2 |
+
+#### 주요 기능
+- 신경망 추론 가속
+- 에지 AI 처리
+- 모델 최적화 실행
+- 저전력 AI 연산
+- 실시간 추론
+
+#### 특징
+- 전용 NPU/TPU 아키텍처
+- INT8/FP16 양자화 지원
+- 저전력 설계
+- 온디바이스 AI
+
+#### 대표 벤더
+- Google TPU
+- Intel Movidius
+- Apple Neural Engine
+- Qualcomm AI Engine
+
+---
+
+### 12.3 Edge AI Device (엣지 AI 디바이스)
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `edge-device` |
+| **영문명** | Edge AI Device |
+| **한국어명** | 엣지 AI 디바이스 |
+| **카테고리** | AI Compute |
+| **티어** | Internal |
+| **프로토콜** | Wi-Fi, Ethernet, Thunderbolt, USB |
+
+#### 주요 기능
+- 로컬 AI 모델 실행
+- 개인 AI 어시스턴트 호스팅
+- 오프라인 추론
+- 홈랩 AI 서버
+- 프라이버시 보호 AI 처리
+
+#### 특징
+- Mac Mini, Jetson, Raspberry Pi 등
+- 저소음/저전력 운영
+- 로컬 데이터 프라이버시
+- Ollama/llama.cpp 실행 가능
+
+#### 대표 벤더
+- Apple Mac Mini/Studio
+- NVIDIA Jetson
+- Raspberry Pi
+- Intel NUC
+
+---
+
+### 12.4 Mobile AI Device (모바일 AI 디바이스)
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `mobile-device` |
+| **영문명** | Mobile AI Device |
+| **한국어명** | 모바일 AI 디바이스 |
+| **카테고리** | AI Compute |
+| **티어** | External |
+| **프로토콜** | Wi-Fi, 5G, Bluetooth |
+
+#### 주요 기능
+- 온디바이스 AI 추론
+- 경량 모델 실행
+- 센서 데이터 AI 처리
+- 음성/이미지 AI
+- 모바일 AI 어시스턴트
+
+#### 특징
+- NPU 하드웨어 가속
+- 배터리 최적화 AI
+- 클라우드/엣지 폴백
+- 개인정보 보호 AI 처리
+
+#### 대표 벤더
+- Apple (Core ML)
+- Samsung (Exynos NPU)
+- Google (Tensor)
+- Qualcomm (Snapdragon)
+
+---
+
+### 12.5 AI Cluster (AI 클러스터)
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `ai-cluster` |
+| **영문명** | AI Cluster |
+| **한국어명** | AI 클러스터 |
+| **카테고리** | AI Compute |
+| **티어** | Internal |
+| **프로토콜** | InfiniBand, RoCE, NVLink |
+
+#### 주요 기능
+- 분산 AI 학습
+- 다중 노드 추론
+- 모델 병렬화
+- 데이터 병렬화
+- GPU 리소스 스케줄링
+
+#### 특징
+- 고속 인터커넥트 (InfiniBand/RoCE)
+- GPU 스케줄러 (SLURM, Kubernetes)
+- 분산 체크포인팅
+- 자동 장애 복구
+
+#### 대표 벤더
+- NVIDIA DGX SuperPOD
+- Google TPU Pod
+- AWS P5 Cluster
+- CoreWeave
+
+---
+
+### 12.6 Model Registry (모델 레지스트리)
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `model-registry` |
+| **영문명** | Model Registry |
+| **한국어명** | 모델 레지스트리 |
+| **카테고리** | AI Compute |
+| **티어** | Internal |
+| **프로토콜** | HTTP/HTTPS, S3, gRPC |
+
+#### 주요 기능
+- 모델 버전 관리
+- 아티팩트 저장
+- 모델 메타데이터 관리
+- 배포 파이프라인 연동
+- 모델 계보 추적
+
+#### 특징
+- Git-like 버전 관리
+- 모델 승인 워크플로우
+- A/B 테스트 지원
+- 자동 모델 배포
+
+#### 대표 벤더
+- Hugging Face Hub
+- MLflow Model Registry
+- Weights & Biases
+- AWS SageMaker Model Registry
+
+---
+
+## 13. AI 서비스 (AI Service)
+
+### 13.1 Inference Engine (추론 엔진)
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `inference-engine` |
+| **영문명** | Inference Engine |
+| **한국어명** | 추론 엔진 |
+| **카테고리** | AI Service |
+| **티어** | Internal |
+| **포트** | 8000, 11434, 5000 |
+| **프로토콜** | HTTP/REST, gRPC, WebSocket |
+
+#### 주요 기능
+- 모델 로딩 및 추론
+- 토큰 생성
+- 배치 처리
+- 모델 양자화
+- 컨텍스트 관리
+
+#### 특징
+- GPU/CPU 자동 선택
+- 동적 배치 처리
+- KV 캐시 최적화
+- OpenAI 호환 API
+
+#### 대표 소프트웨어
+- Ollama
+- vLLM
+- Text Generation Inference (TGI)
+- llama.cpp
+- LM Studio
+- TensorRT-LLM
+
+---
+
+### 13.2 Vector DB (벡터 DB)
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `vector-db` |
+| **영문명** | Vector Database |
+| **한국어명** | 벡터 DB |
+| **카테고리** | AI Service |
+| **티어** | Data |
+| **포트** | 6333, 8000, 19530 |
+| **프로토콜** | HTTP/REST, gRPC |
+
+#### 주요 기능
+- 벡터 임베딩 저장
+- 유사도 검색 (ANN)
+- 메타데이터 필터링
+- 하이브리드 검색
+- 인덱스 관리
+
+#### 특징
+- HNSW/IVF 인덱싱
+- 실시간 인덱싱
+- 수평 확장
+- 다중 모달 검색
+
+#### 대표 소프트웨어
+- ChromaDB
+- Pinecone
+- Milvus
+- Weaviate
+- Qdrant
+- pgvector
+- FAISS
+
+---
+
+### 13.3 AI Gateway (AI 게이트웨이)
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `ai-gateway` |
+| **영문명** | AI Gateway |
+| **한국어명** | AI 게이트웨이 |
+| **카테고리** | AI Service |
+| **티어** | DMZ |
+| **포트** | 8080, 443 |
+| **프로토콜** | HTTP/REST, WebSocket |
+
+#### 주요 기능
+- AI API 라우팅
+- 모델 로드밸런싱
+- API 키 관리
+- 사용량 추적
+- 폴백/재시도
+
+#### 특징
+- 다중 모델 라우팅
+- 비용 최적화 라우팅
+- 캐시 응답 지원
+- 유니파이드 API 인터페이스
+
+#### 대표 소프트웨어
+- LiteLLM
+- Kong AI Gateway
+- Portkey
+- OpenRouter
+
+---
+
+### 13.4 AI Orchestrator (AI 오케스트레이터)
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `ai-orchestrator` |
+| **영문명** | AI Orchestrator |
+| **한국어명** | AI 오케스트레이터 |
+| **카테고리** | AI Service |
+| **티어** | Internal |
+| **프로토콜** | HTTP/REST, WebSocket |
+
+#### 주요 기능
+- 에이전트 워크플로우 관리
+- 체인/파이프라인 구성
+- 도구 통합
+- 메모리 관리
+- 멀티 에이전트 조율
+
+#### 특징
+- DAG 기반 실행
+- 스트리밍 지원
+- 컨텍스트 윈도우 관리
+- 플러그인 시스템
+
+#### 대표 소프트웨어
+- LangChain
+- LlamaIndex
+- CrewAI
+- AutoGen
+- Haystack
+
+---
+
+### 13.5 Embedding Service (임베딩 서비스)
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `embedding-service` |
+| **영문명** | Embedding Service |
+| **한국어명** | 임베딩 서비스 |
+| **카테고리** | AI Service |
+| **티어** | Internal |
+| **프로토콜** | HTTP/REST, gRPC |
+
+#### 주요 기능
+- 텍스트 → 벡터 변환
+- 이미지 → 벡터 변환
+- 배치 임베딩
+- 다국어 임베딩
+- 시맨틱 유사도 계산
+
+#### 특징
+- 다중 모달 지원
+- 차원 축소 (Matryoshka)
+- 양자화 임베딩
+- 실시간 스트리밍
+
+#### 대표 소프트웨어
+- SentenceTransformers
+- CLIP
+- Nomic Embed
+- Jina Embeddings
+
+---
+
+### 13.6 Training Platform (학습 플랫폼)
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `training-platform` |
+| **영문명** | Training Platform |
+| **한국어명** | 학습 플랫폼 |
+| **카테고리** | AI Service |
+| **티어** | Internal |
+| **프로토콜** | HTTP/REST, S3, gRPC |
+
+#### 주요 기능
+- 모델 파인튜닝
+- 실험 추적
+- 하이퍼파라미터 최적화
+- 분산 학습 관리
+- 데이터셋 버전 관리
+
+#### 특징
+- LoRA/QLoRA 지원
+- 실험 비교
+- 자동 체크포인팅
+- 학습 모니터링 대시보드
+
+#### 대표 소프트웨어
+- Hugging Face Hub
+- Weights & Biases
+- Axolotl
+- Unsloth
+
+---
+
+### 13.7 Prompt Manager (프롬프트 관리)
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `prompt-manager` |
+| **영문명** | Prompt Manager |
+| **한국어명** | 프롬프트 관리 |
+| **카테고리** | AI Service |
+| **티어** | Internal |
+| **프로토콜** | HTTP/REST |
+
+#### 주요 기능
+- 프롬프트 버전 관리
+- A/B 테스트
+- 프롬프트 평가
+- 템플릿 관리
+- 성능 분석
+
+#### 특징
+- Git-like 버전 관리
+- 메트릭 기반 평가
+- 다중 모델 테스트
+- 팀 협업
+
+#### 대표 소프트웨어
+- LangSmith
+- PromptLayer
+- Humanloop
+
+---
+
+### 13.8 AI Monitor (AI 모니터링)
+
+| 항목 | 내용 |
+|------|------|
+| **ID** | `ai-monitor` |
+| **영문명** | AI Monitor |
+| **한국어명** | AI 모니터링 |
+| **카테고리** | AI Service |
+| **티어** | Internal |
+| **프로토콜** | HTTP/REST, OpenTelemetry |
+
+#### 주요 기능
+- 모델 성능 모니터링
+- 데이터 드리프트 탐지
+- 응답 품질 평가
+- 비용 추적
+- 지연 시간 분석
+
+#### 특징
+- 실시간 대시보드
+- 드리프트 알림
+- 토큰 사용량 분석
+- SLA 모니터링
+
+#### 대표 소프트웨어
+- LangSmith
+- MLflow
+- Evidently
+- WhyLabs
+- Helicone
+
+---
+
+## 14. 티어 구조
+
+### 14.1 티어 정의
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -1670,7 +2196,7 @@
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 10.2 티어별 장비 배치
+### 14.2 티어별 장비 배치
 
 | 티어 | 색상 | 장비 목록 |
 |------|------|----------|
@@ -1681,9 +2207,9 @@
 
 ---
 
-## 11. 데이터 관리 가이드
+## 15. 데이터 관리 가이드
 
-### 11.1 장비 추가 절차
+### 15.1 장비 추가 절차
 
 새로운 장비/솔루션을 추가할 때 다음 파일들을 수정해야 합니다:
 
@@ -1738,13 +2264,13 @@
 
 6. **이 문서 업데이트**
 
-### 11.2 장비 수정 절차
+### 15.2 장비 수정 절차
 
 1. `infrastructureDB.ts`에서 해당 장비 데이터 수정
 2. 이 문서의 해당 섹션 업데이트
 3. 변경 이력 추가
 
-### 11.3 장비 삭제 절차
+### 15.3 장비 삭제 절차
 
 1. 모든 관련 파일에서 참조 제거
 2. 타입 정의에서 삭제
@@ -1753,7 +2279,7 @@
 5. 이 문서에서 삭제
 6. 변경 이력 추가
 
-### 11.4 검증 체크리스트
+### 15.4 검증 체크리스트
 
 - [ ] TypeScript 빌드 오류 없음
 - [ ] 모든 테스트 통과
@@ -1764,12 +2290,13 @@
 
 ---
 
-## 12. 변경 이력
+## 16. 변경 이력
 
 | 날짜 | 버전 | 작성자 | 변경 내용 |
 |------|------|--------|----------|
 | 2026-02-06 | 1.0.0 | Claude | 초기 문서 작성 |
 | 2026-02-14 | 1.1.0 | Claude | Cloud-Native 6종 추가 (kafka, rabbitmq, api-gateway, prometheus, grafana, elasticsearch), 템플릿 2개 (netflix-streaming, kafka-pipeline), 관계 10개 추가 + 2건 수정 |
+| 2026-02-24 | 1.2.0 | Claude | AI 인프라 14종 추가 — AI Compute 6종 (gpu-server, ai-accelerator, edge-device, mobile-device, ai-cluster, model-registry) + AI Service 8종 (inference-engine, vector-db, ai-gateway, ai-orchestrator, embedding-service, training-platform, prompt-manager, ai-monitor). AI 관계 25개, AI 아키텍처 패턴 9개, AI 소프트웨어 카탈로그 ~39개 제품, 새 에지 플로우 3종 (inference, model-sync, embedding) 추가. Telecom/WAN 카테고리 목록 반영 |
 
 ---
 
