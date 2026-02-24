@@ -9,7 +9,9 @@ export type NodeCategory =
   | 'storage'
   | 'auth'
   | 'telecom'
-  | 'wan';
+  | 'wan'
+  | 'ai-compute'
+  | 'ai-service';
 
 // Security Devices
 export type SecurityNodeType =
@@ -100,6 +102,26 @@ export type WanNodeType =
   | 'upf'                  // 5G UPF
   | 'ring-network';        // 링 네트워크 (이중화)
 
+// AI Compute Infrastructure
+export type AIComputeNodeType =
+  | 'gpu-server'         // GPU 서버 (NVIDIA DGX 등)
+  | 'ai-accelerator'     // AI 가속기 (NPU, TPU)
+  | 'edge-device'        // 엣지 AI 디바이스 (맥미니, 노트북, Jetson)
+  | 'mobile-device'      // 모바일 AI 디바이스 (스마트폰 온디바이스 AI)
+  | 'ai-cluster'         // AI 클러스터 (다중 GPU 노드)
+  | 'model-registry';    // 모델 레지스트리
+
+// AI Service/Platform
+export type AIServiceNodeType =
+  | 'inference-engine'   // 추론 엔진 (Ollama, vLLM, TGI)
+  | 'vector-db'          // 벡터 DB (ChromaDB, Milvus)
+  | 'ai-gateway'         // AI 게이트웨이 (LiteLLM)
+  | 'ai-orchestrator'    // AI 오케스트레이터 (LangChain, CrewAI)
+  | 'embedding-service'  // 임베딩 서비스
+  | 'training-platform'  // 학습 플랫폼 (MLflow, W&B)
+  | 'prompt-manager'     // 프롬프트 관리 (LangSmith)
+  | 'ai-monitor';        // AI 모니터링 (Evidently)
+
 // Generic Node Types
 export type InfraNodeType =
   | SecurityNodeType
@@ -110,6 +132,8 @@ export type InfraNodeType =
   | AuthNodeType
   | TelecomNodeType
   | WanNodeType
+  | AIComputeNodeType
+  | AIServiceNodeType
   | 'user'
   | 'internet'
   | 'zone';
@@ -157,7 +181,10 @@ export type EdgeFlowType =
   | 'encrypted'    // 암호화 (굵은 실선)
   | 'wan-link'     // WAN 전용회선 (청록색, 굵은 선)
   | 'wireless'     // 무선 구간 (점선 + 안테나)
-  | 'tunnel';      // VPN/MPLS 터널 (이중선)
+  | 'tunnel'        // VPN/MPLS 터널 (이중선)
+  | 'inference'     // 추론 요청/응답 (오렌지, 점선 + ⚡)
+  | 'model-sync'    // 모델 동기화/배포 (보라, 양방향 점선)
+  | 'embedding';    // 임베딩 데이터 흐름 (시안, 얇은 선)
 
 export interface InfraEdgeData {
   flowType: EdgeFlowType;
