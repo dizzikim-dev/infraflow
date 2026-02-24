@@ -79,6 +79,29 @@ const flowTypeStyles: Record<EdgeFlowType, {
     particleSize: 4,
     speed: 1.5,
   },
+  inference: {
+    color: '#f97316',
+    glowColor: 'rgba(249, 115, 22, 0.4)',
+    strokeWidth: 2,
+    dashArray: '6,4',
+    particleSize: 4,
+    speed: 1.8,
+  },
+  'model-sync': {
+    color: '#8b5cf6',
+    glowColor: 'rgba(139, 92, 246, 0.4)',
+    strokeWidth: 2,
+    dashArray: '4,4',
+    particleSize: 3,
+    speed: 1,
+  },
+  embedding: {
+    color: '#06b6d4',
+    glowColor: 'rgba(6, 182, 212, 0.4)',
+    strokeWidth: 1.5,
+    particleSize: 3,
+    speed: 1.5,
+  },
 };
 
 // Custom comparison function for React.memo

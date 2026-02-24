@@ -2,7 +2,7 @@
  * Core Plugin
  *
  * 기본 인프라 컴포넌트를 제공하는 핵심 플러그인
- * - 42개 기본 노드
+ * - 56개 기본 노드 (42 + 14 AI)
  * - 노드 타입 패턴
  * - 기본 카테고리 스타일
  */
@@ -96,6 +96,20 @@ export const coreCategoryStyles: Record<NodeCategory | 'external' | 'zone', Cate
     border: 'border-indigo-500/30',
     shadow: 'shadow-indigo-500/20',
     glowColor: '#6366f1',
+  },
+  'ai-compute': {
+    gradient: 'from-orange-500/20 to-amber-600/20',
+    iconBg: 'bg-gradient-to-br from-orange-500 to-amber-600',
+    border: 'border-orange-500/30',
+    shadow: 'shadow-orange-500/20',
+    glowColor: '#f97316',
+  },
+  'ai-service': {
+    gradient: 'from-cyan-500/20 to-sky-600/20',
+    iconBg: 'bg-gradient-to-br from-cyan-500 to-sky-600',
+    border: 'border-cyan-500/30',
+    shadow: 'shadow-cyan-500/20',
+    glowColor: '#06b6d4',
   },
 };
 
@@ -242,6 +256,58 @@ export const coreNodeExtensions: NodeExtension[] = [
   },
   {
     config: { id: 'internet', name: 'Internet', category: 'external', color: 'gray', icon: '🌏' },
+  },
+
+  // ============================================================
+  // AI Compute Nodes
+  // ============================================================
+  {
+    config: { id: 'gpu-server', name: 'GPU Server', category: 'ai-compute', color: 'orange', icon: '🖥️' },
+    categoryStyle: coreCategoryStyles['ai-compute'],
+  },
+  {
+    config: { id: 'ai-accelerator', name: 'AI Accelerator', category: 'ai-compute', color: 'orange', icon: '⚡' },
+  },
+  {
+    config: { id: 'edge-device', name: 'Edge Device', category: 'ai-compute', color: 'orange', icon: '📱' },
+  },
+  {
+    config: { id: 'mobile-device', name: 'Mobile Device', category: 'ai-compute', color: 'orange', icon: '📲' },
+  },
+  {
+    config: { id: 'ai-cluster', name: 'AI Cluster', category: 'ai-compute', color: 'orange', icon: '🔧' },
+  },
+  {
+    config: { id: 'model-registry', name: 'Model Registry', category: 'ai-compute', color: 'orange', icon: '📋' },
+  },
+
+  // ============================================================
+  // AI Service Nodes
+  // ============================================================
+  {
+    config: { id: 'inference-engine', name: 'Inference Engine', category: 'ai-service', color: 'cyan', icon: '🧠' },
+    categoryStyle: coreCategoryStyles['ai-service'],
+  },
+  {
+    config: { id: 'vector-db', name: 'Vector DB', category: 'ai-service', color: 'cyan', icon: '🔢' },
+  },
+  {
+    config: { id: 'ai-gateway', name: 'AI Gateway', category: 'ai-service', color: 'cyan', icon: '🚪' },
+  },
+  {
+    config: { id: 'ai-orchestrator', name: 'AI Orchestrator', category: 'ai-service', color: 'cyan', icon: '🎯' },
+  },
+  {
+    config: { id: 'embedding-service', name: 'Embedding Service', category: 'ai-service', color: 'cyan', icon: '🔤' },
+  },
+  {
+    config: { id: 'training-platform', name: 'Training Platform', category: 'ai-service', color: 'cyan', icon: '🎓' },
+  },
+  {
+    config: { id: 'prompt-manager', name: 'Prompt Manager', category: 'ai-service', color: 'cyan', icon: '💬' },
+  },
+  {
+    config: { id: 'ai-monitor', name: 'AI Monitor', category: 'ai-service', color: 'cyan', icon: '📊' },
   },
 
   // ============================================================

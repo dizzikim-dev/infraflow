@@ -102,6 +102,8 @@ const categoryColors: Record<string, string> = {
   telecom: 'text-teal-600',
   wan: 'text-indigo-600',
   external: 'text-gray-600',
+  'ai-compute': 'text-orange-600',
+  'ai-service': 'text-cyan-600',
 };
 
 export default async function AdminDashboard() {

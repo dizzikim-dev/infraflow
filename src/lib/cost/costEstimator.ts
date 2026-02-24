@@ -56,6 +56,8 @@ function getCategory(nodeType: InfraNodeType): string {
     storage: ['san-nas', 'object-storage', 'backup', 'cache', 'storage'],
     auth: ['ldap-ad', 'sso', 'mfa', 'iam'],
     external: ['user', 'internet', 'zone'],
+    'ai-compute': ['gpu-server', 'ai-accelerator', 'edge-device', 'mobile-device', 'ai-cluster', 'model-registry'],
+    'ai-service': ['inference-engine', 'vector-db', 'ai-gateway', 'ai-orchestrator', 'embedding-service', 'training-platform', 'prompt-manager', 'ai-monitor'],
   };
 
   for (const [category, types] of Object.entries(categories)) {

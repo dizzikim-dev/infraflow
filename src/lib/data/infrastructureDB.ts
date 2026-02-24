@@ -10,6 +10,8 @@
  * - storage.ts: Storage, SAN/NAS, Object Storage, Cache, Backup
  * - auth.ts: LDAP/AD, SSO, MFA, IAM
  * - external.ts: User, Internet
+ * - aiCompute.ts: GPU Server, AI Accelerator, Edge Device, Mobile Device, AI Cluster, Model Registry
+ * - aiService.ts: Inference Engine, Vector DB, AI Gateway, AI Orchestrator, Embedding Service, Training Platform, Prompt Manager, AI Monitor
  */
 
 import {
@@ -23,6 +25,8 @@ import {
   externalComponents,
   telecomComponents,
   wanComponents,
+  aiComputeComponents,
+  aiServiceComponents,
   categoryLabels,
   tierLabels,
   getComponentsByCategory,
@@ -46,6 +50,8 @@ export {
   externalComponents,
   telecomComponents,
   wanComponents,
+  aiComputeComponents,
+  aiServiceComponents,
 };
 
 // Re-export utility functions and labels
@@ -67,6 +73,8 @@ export const categoryIcons: Record<string, string> = {
   external: 'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z',
   telecom: 'M2 12l5-5v3h6V7l5 5-5 5v-3H7v3z',
   wan: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12h16M12 4c2.5 3 4 6 4 8s-1.5 5-4 8c-2.5-3-4-6-4-8s1.5-5 4-8z',
+  'ai-compute': 'M9 3v2m6-2v2M9 19v2m6-2v2M3 9h2m-2 6h2m14-6h2m-2 6h2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z',
+  'ai-service': 'M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 01-2 2h-4a2 2 0 01-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z',
 };
 
 // Tier order for layout

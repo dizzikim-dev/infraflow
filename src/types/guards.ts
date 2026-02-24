@@ -22,12 +22,14 @@ const validNodeTypes = new Set<string>(Object.keys(infrastructureDB));
 // Valid categories including extended types used in InfraNodeData
 const validCategories = new Set<string>([
   'security', 'network', 'compute', 'cloud', 'storage', 'auth', 'telecom', 'wan',
+  'ai-compute', 'ai-service',
 ]);
 
 // Valid flow types matching EdgeFlowType union
 const validFlowTypes = new Set<string>([
   'request', 'response', 'sync', 'blocked', 'encrypted',
   'wan-link', 'wireless', 'tunnel',
+  'inference', 'model-sync', 'embedding',
 ]);
 
 /**

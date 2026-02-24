@@ -11,6 +11,8 @@ export const categoryColors: Record<string, CategoryColors> = {
   telecom: { bg: 'bg-teal-500/10', border: 'border-teal-500/30', text: 'text-teal-400' },
   wan: { bg: 'bg-indigo-500/10', border: 'border-indigo-500/30', text: 'text-indigo-400' },
   external: { bg: 'bg-zinc-500/10', border: 'border-zinc-500/30', text: 'text-zinc-400' },
+  'ai-compute': { bg: 'bg-orange-500/10', border: 'border-orange-500/30', text: 'text-orange-400' },
+  'ai-service': { bg: 'bg-cyan-500/10', border: 'border-cyan-500/30', text: 'text-cyan-400' },
 };
 
 /** Priority-based color classes for policy badges */

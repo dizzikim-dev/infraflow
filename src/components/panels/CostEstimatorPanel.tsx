@@ -74,6 +74,8 @@ export function CostEstimatorPanel({ spec, onClose }: CostEstimatorPanelProps) {
     telecom: 'bg-teal-500/20 text-teal-400',
     wan: 'bg-indigo-500/20 text-indigo-400',
     external: 'bg-gray-500/20 text-gray-400',
+    'ai-compute': 'bg-orange-500/20 text-orange-400',
+    'ai-service': 'bg-cyan-500/20 text-cyan-400',
   };
 
   return (

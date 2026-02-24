@@ -15,6 +15,8 @@ import { authComponents } from './auth';
 import { externalComponents } from './external';
 import { telecomComponents } from './telecom';
 import { wanComponents } from './wan';
+import { aiComputeComponents } from './aiCompute';
+import { aiServiceComponents } from './aiService';
 import type { InfraComponent } from './types';
 
 // Combined all components
@@ -28,6 +30,8 @@ export const allComponents: Record<string, InfraComponent> = {
   ...externalComponents,
   ...telecomComponents,
   ...wanComponents,
+  ...aiComputeComponents,
+  ...aiServiceComponents,
 };
 
 // Export individual category components
@@ -41,6 +45,8 @@ export {
   externalComponents,
   telecomComponents,
   wanComponents,
+  aiComputeComponents,
+  aiServiceComponents,
 };
 
 // Category labels for UI
@@ -54,6 +60,8 @@ export const categoryLabels: Record<string, { en: string; ko: string }> = {
   external: { en: 'External', ko: '외부' },
   telecom: { en: 'Telecom', ko: '통신' },
   wan: { en: 'WAN', ko: 'WAN' },
+  'ai-compute': { en: 'AI Compute', ko: 'AI 컴퓨팅' },
+  'ai-service': { en: 'AI Service', ko: 'AI 서비스' },
 };
 
 // Tier labels for UI
@@ -85,6 +93,10 @@ export function getComponentsByCategory(category: InfraComponent['category']): R
       return telecomComponents;
     case 'wan':
       return wanComponents;
+    case 'ai-compute':
+      return aiComputeComponents;
+    case 'ai-service':
+      return aiServiceComponents;
     default:
       return {};
   }

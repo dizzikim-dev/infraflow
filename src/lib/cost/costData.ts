@@ -438,4 +438,92 @@ export const BASE_COSTS: Record<InfraNodeType, {
     gcp: { service: 'N/A', cost: 0, tier: 'N/A' },
     onprem: { service: 'Ring Network', cost: 2000, tier: 'Monthly' },
   },
+
+  // AI Compute
+  'gpu-server': {
+    aws: { service: 'EC2 p4d.24xlarge', cost: 23500, tier: '8x A100' },
+    azure: { service: 'ND A100 v4', cost: 22000, tier: '8x A100' },
+    gcp: { service: 'a2-ultragpu-8g', cost: 21000, tier: '8x A100' },
+    onprem: { service: 'GPU Server (DGX)', cost: 3000, tier: 'Estimated Monthly' },
+  },
+  'ai-accelerator': {
+    aws: { service: 'AWS Inferentia2', cost: 1600, tier: 'inf2.xlarge' },
+    azure: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    gcp: { service: 'Cloud TPU v5e', cost: 1900, tier: 'Standard' },
+    onprem: { service: 'AI Accelerator Card', cost: 500, tier: 'Estimated Monthly' },
+  },
+  'edge-device': {
+    aws: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    onprem: { service: 'Edge AI Device', cost: 200, tier: 'Estimated Monthly' },
+  },
+  'mobile-device': {
+    aws: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    azure: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    gcp: { service: 'N/A (Physical Device)', cost: 0, tier: 'N/A' },
+    onprem: { service: 'Mobile Device', cost: 50, tier: 'Estimated Monthly' },
+  },
+  'ai-cluster': {
+    aws: { service: 'EC2 p4d Cluster (4 nodes)', cost: 94000, tier: '32x A100' },
+    azure: { service: 'ND A100 Cluster', cost: 88000, tier: '32x A100' },
+    gcp: { service: 'TPU Pod', cost: 85000, tier: 'v5e-256' },
+    onprem: { service: 'AI Cluster', cost: 12000, tier: 'Estimated Monthly' },
+  },
+  'model-registry': {
+    aws: { service: 'SageMaker Model Registry', cost: 50, tier: 'Standard' },
+    azure: { service: 'Azure ML Model Registry', cost: 50, tier: 'Standard' },
+    gcp: { service: 'Vertex AI Model Registry', cost: 50, tier: 'Standard' },
+    onprem: { service: 'MLflow Registry', cost: 25, tier: 'Estimated' },
+  },
+
+  // AI Service
+  'inference-engine': {
+    aws: { service: 'SageMaker Inference', cost: 500, tier: 'ml.g5.xlarge' },
+    azure: { service: 'Azure ML Inference', cost: 450, tier: 'Standard' },
+    gcp: { service: 'Vertex AI Prediction', cost: 400, tier: 'Standard' },
+    onprem: { service: 'Inference Server (Ollama/vLLM)', cost: 100, tier: 'Estimated' },
+  },
+  'vector-db': {
+    aws: { service: 'Amazon OpenSearch Serverless', cost: 350, tier: 'Vector Engine' },
+    azure: { service: 'Azure AI Search', cost: 250, tier: 'Standard S1' },
+    gcp: { service: 'AlloyDB + pgvector', cost: 300, tier: 'Standard' },
+    onprem: { service: 'ChromaDB/Milvus', cost: 100, tier: 'Estimated' },
+  },
+  'ai-gateway': {
+    aws: { service: 'Amazon Bedrock Gateway', cost: 100, tier: 'Standard' },
+    azure: { service: 'Azure API Management + AI', cost: 150, tier: 'Standard' },
+    gcp: { service: 'Apigee + Vertex AI', cost: 200, tier: 'Standard' },
+    onprem: { service: 'LiteLLM/Kong', cost: 50, tier: 'Estimated' },
+  },
+  'ai-orchestrator': {
+    aws: { service: 'Amazon Bedrock Agents', cost: 200, tier: 'Standard' },
+    azure: { service: 'Azure AI Agent Service', cost: 200, tier: 'Standard' },
+    gcp: { service: 'Vertex AI Agent Builder', cost: 200, tier: 'Standard' },
+    onprem: { service: 'LangChain/CrewAI', cost: 50, tier: 'Estimated' },
+  },
+  'embedding-service': {
+    aws: { service: 'Amazon Titan Embeddings', cost: 100, tier: 'Standard' },
+    azure: { service: 'Azure OpenAI Embeddings', cost: 100, tier: 'Standard' },
+    gcp: { service: 'Vertex AI Embeddings', cost: 80, tier: 'Standard' },
+    onprem: { service: 'SentenceTransformers', cost: 25, tier: 'Estimated' },
+  },
+  'training-platform': {
+    aws: { service: 'SageMaker Training', cost: 800, tier: 'ml.g5.2xlarge' },
+    azure: { service: 'Azure ML Compute', cost: 750, tier: 'Standard' },
+    gcp: { service: 'Vertex AI Training', cost: 700, tier: 'Standard' },
+    onprem: { service: 'MLflow + W&B', cost: 200, tier: 'Estimated' },
+  },
+  'prompt-manager': {
+    aws: { service: 'Amazon Bedrock Prompt Flows', cost: 50, tier: 'Standard' },
+    azure: { service: 'Azure Prompt Flow', cost: 50, tier: 'Standard' },
+    gcp: { service: 'Vertex AI Prompt Mgmt', cost: 50, tier: 'Standard' },
+    onprem: { service: 'LangSmith/Humanloop', cost: 40, tier: 'Estimated' },
+  },
+  'ai-monitor': {
+    aws: { service: 'SageMaker Model Monitor', cost: 150, tier: 'Standard' },
+    azure: { service: 'Azure ML Monitoring', cost: 120, tier: 'Standard' },
+    gcp: { service: 'Vertex AI Model Monitoring', cost: 100, tier: 'Standard' },
+    onprem: { service: 'Evidently/WhyLabs', cost: 50, tier: 'Estimated' },
+  },
 };

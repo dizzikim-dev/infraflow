@@ -88,6 +88,18 @@ const categoryStyles: Record<NodeCategory | 'external' | 'zone', {
     border: 'border-indigo-500/30',
     shadow: 'shadow-indigo-500/20',
   },
+  'ai-compute': {
+    gradient: 'from-orange-500/20 to-amber-600/20',
+    iconBg: 'bg-gradient-to-br from-orange-500 to-amber-600',
+    border: 'border-orange-500/30',
+    shadow: 'shadow-orange-500/20',
+  },
+  'ai-service': {
+    gradient: 'from-cyan-500/20 to-sky-600/20',
+    iconBg: 'bg-gradient-to-br from-cyan-500 to-sky-600',
+    border: 'border-cyan-500/30',
+    shadow: 'shadow-cyan-500/20',
+  },
 };
 
 // SVG 아이콘 컴포넌트

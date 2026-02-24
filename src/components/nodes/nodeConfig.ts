@@ -37,7 +37,7 @@ export interface NodeConfig {
 const categoryColorMap: Record<string, string> = {
   security: 'red', network: 'blue', compute: 'green', cloud: 'purple',
   storage: 'amber', auth: 'pink', external: 'gray', telecom: 'teal',
-  wan: 'indigo', zone: 'gray',
+  wan: 'indigo', 'ai-compute': 'orange', 'ai-service': 'cyan', zone: 'gray',
 };
 
 // Raw config data (category is derived from infrastructureDB SSoT)
@@ -119,6 +119,22 @@ const nodeConfigsRaw: Array<{ id: string; name: string; icon: string }> = [
   { id: 'core-network', name: 'Core Network', icon: '⚡' },
   { id: 'upf', name: 'UPF', icon: '🔄' },
   { id: 'ring-network', name: 'Ring Network', icon: '⭕' },
+  // AI Compute
+  { id: 'gpu-server', name: 'GPU Server', icon: '🖥️' },
+  { id: 'ai-accelerator', name: 'AI Accelerator', icon: '⚡' },
+  { id: 'edge-device', name: 'Edge Device', icon: '📱' },
+  { id: 'mobile-device', name: 'Mobile Device', icon: '📲' },
+  { id: 'ai-cluster', name: 'AI Cluster', icon: '🔧' },
+  { id: 'model-registry', name: 'Model Registry', icon: '📋' },
+  // AI Service
+  { id: 'inference-engine', name: 'Inference Engine', icon: '🧠' },
+  { id: 'vector-db', name: 'Vector DB', icon: '🔢' },
+  { id: 'ai-gateway', name: 'AI Gateway', icon: '🚪' },
+  { id: 'ai-orchestrator', name: 'AI Orchestrator', icon: '🎯' },
+  { id: 'embedding-service', name: 'Embedding Service', icon: '🔤' },
+  { id: 'training-platform', name: 'Training Platform', icon: '🎓' },
+  { id: 'prompt-manager', name: 'Prompt Manager', icon: '💬' },
+  { id: 'ai-monitor', name: 'AI Monitor', icon: '📊' },
   // Zone (special — not in infrastructureDB)
   { id: 'zone', name: 'Zone', icon: '📦' },
 ];

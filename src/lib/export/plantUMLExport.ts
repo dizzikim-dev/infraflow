@@ -101,6 +101,24 @@ const c4ElementMap: Record<InfraNodeType, { stereotype: string; shape: string }>
   'core-network': { stereotype: 'WAN', shape: 'Container' },
   'upf': { stereotype: 'WAN', shape: 'Container' },
   'ring-network': { stereotype: 'WAN', shape: 'System_Boundary' },
+
+  // AI Compute
+  'gpu-server': { stereotype: 'AI_Compute', shape: 'Container' },
+  'ai-accelerator': { stereotype: 'AI_Compute', shape: 'Container' },
+  'edge-device': { stereotype: 'AI_Compute', shape: 'Container' },
+  'mobile-device': { stereotype: 'AI_Compute', shape: 'Container' },
+  'ai-cluster': { stereotype: 'AI_Compute', shape: 'Container' },
+  'model-registry': { stereotype: 'AI_Compute', shape: 'ContainerDb' },
+
+  // AI Service
+  'inference-engine': { stereotype: 'AI_Service', shape: 'Container' },
+  'vector-db': { stereotype: 'AI_Service', shape: 'ContainerDb' },
+  'ai-gateway': { stereotype: 'AI_Service', shape: 'Container' },
+  'ai-orchestrator': { stereotype: 'AI_Service', shape: 'Container' },
+  'embedding-service': { stereotype: 'AI_Service', shape: 'Container' },
+  'training-platform': { stereotype: 'AI_Service', shape: 'Container' },
+  'prompt-manager': { stereotype: 'AI_Service', shape: 'Container' },
+  'ai-monitor': { stereotype: 'AI_Service', shape: 'Container' },
 };
 
 /**
