@@ -112,6 +112,24 @@ export const nodeTypePatterns: NodeTypePattern[] = [
   { pattern: /코어\s*망|core\s*network|5gc|5g\s*core/i, type: 'core-network', label: 'Core Network', labelKo: '코어망' },
   { pattern: /upf|user\s*plane\s*function/i, type: 'upf', label: 'UPF', labelKo: 'UPF' },
   { pattern: /링\s*네트워크|ring\s*network|이중화\s*링/i, type: 'ring-network', label: 'Ring Network', labelKo: '링 네트워크' },
+
+  // AI Compute
+  { pattern: /gpu\s*서버|gpu\s*server|nvidia\s*dgx|ai\s*서버/i, type: 'gpu-server', label: 'GPU Server', labelKo: 'GPU 서버' },
+  { pattern: /ai\s*가속기|ai\s*accelerat|npu|tpu(?!\w)|neural\s*process/i, type: 'ai-accelerator', label: 'AI Accelerator', labelKo: 'AI 가속기' },
+  { pattern: /엣지\s*디바이스|edge\s*device|맥미니|mac\s*mini|jetson|raspberry\s*pi|엣지\s*ai/i, type: 'edge-device', label: 'Edge Device', labelKo: '엣지 디바이스' },
+  { pattern: /모바일\s*ai|mobile\s*ai|온디바이스\s*ai|on[-\s]*device\s*ai/i, type: 'mobile-device', label: 'Mobile Device', labelKo: '모바일 디바이스' },
+  { pattern: /ai\s*클러스터|ai\s*cluster|gpu\s*클러스터|gpu\s*cluster/i, type: 'ai-cluster', label: 'AI Cluster', labelKo: 'AI 클러스터' },
+  { pattern: /모델\s*레지스트리|model\s*registry|모델\s*저장소/i, type: 'model-registry', label: 'Model Registry', labelKo: '모델 레지스트리' },
+
+  // AI Service
+  { pattern: /추론\s*엔진|inference\s*engine|ollama|vllm|llama\.cpp|tgi(?!\w)|lm\s*studio|mlx\s*서버|localai/i, type: 'inference-engine', label: 'Inference Engine', labelKo: '추론 엔진' },
+  { pattern: /벡터\s*db|vector\s*db|chromadb|pinecone|milvus|weaviate|qdrant|pgvector|faiss/i, type: 'vector-db', label: 'Vector DB', labelKo: '벡터 DB' },
+  { pattern: /ai\s*게이트웨이|ai\s*gateway|litellm|ai\s*api\s*라우팅/i, type: 'ai-gateway', label: 'AI Gateway', labelKo: 'AI 게이트웨이' },
+  { pattern: /ai\s*오케스트레이터|ai\s*orchestrat|langchain|crewai|autogen|llamaindex/i, type: 'ai-orchestrator', label: 'AI Orchestrator', labelKo: 'AI 오케스트레이터' },
+  { pattern: /임베딩\s*서비스|embedding\s*service|sentence\s*transform|임베딩\s*엔진/i, type: 'embedding-service', label: 'Embedding Service', labelKo: '임베딩 서비스' },
+  { pattern: /학습\s*플랫폼|training\s*platform|mlflow|weights?\s*(?:&|and)\s*biases|파인\s*튜닝\s*플랫폼/i, type: 'training-platform', label: 'Training Platform', labelKo: '학습 플랫폼' },
+  { pattern: /프롬프트\s*관리|prompt\s*manage|langsmith|promptlayer/i, type: 'prompt-manager', label: 'Prompt Manager', labelKo: '프롬프트 관리' },
+  { pattern: /ai\s*모니터|ai\s*monitor|모델\s*모니터링|evidently|whylabs|helicone/i, type: 'ai-monitor', label: 'AI Monitor', labelKo: 'AI 모니터링' },
 ];
 
 /**
@@ -330,6 +348,22 @@ const quickMatchKeywords: Set<string> = new Set([
   '국사', '기지국', '광선로', '고객', '구내', '전용회선', '전용선',
   '메트로', '이더넷', '기업', '코넷', '코어', '특화',
   '링', '이중화',
+  // AI English keywords
+  'gpu', 'dgx', 'npu', 'tpu', 'neural', 'accelerator',
+  'edge', 'device', 'jetson', 'raspberry', 'mobile',
+  'cluster', 'model', 'registry',
+  'inference', 'engine', 'ollama', 'vllm', 'tgi', 'localai',
+  'vector', 'chromadb', 'pinecone', 'milvus', 'weaviate', 'qdrant', 'pgvector', 'faiss',
+  'litellm', 'orchestrator', 'langchain', 'crewai', 'autogen', 'llamaindex',
+  'embedding', 'sentence', 'transform',
+  'training', 'platform', 'mlflow', 'weights', 'biases',
+  'prompt', 'manage', 'langsmith', 'promptlayer',
+  'monitor', 'evidently', 'whylabs', 'helicone',
+  // AI Korean keywords
+  '가속기', '엣지', '디바이스', '맥미니', '모바일',
+  '클러스터', '모델', '레지스트리', '저장소',
+  '추론', '엔진', '벡터', '임베딩', '오케스트레이터',
+  '학습', '플랫폼', '파인', '튜닝', '프롬프트', '관리', '모니터링',
 ]);
 
 /**

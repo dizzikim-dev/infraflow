@@ -759,6 +759,75 @@ export const infraTemplates: Record<string, InfraSpec> = {
       { id: 'server', label: '관제실', type: 'internal' },
     ],
   },
+
+  // ── AI 템플릿 ──────────────────────────────────────────────
+
+  // Personal AI Assistant (edge device + Ollama)
+  'personal-ai': {
+    nodes: [
+      { id: 'user', type: 'user', label: 'User' },
+      { id: 'edge', type: 'edge-device', label: 'Edge Device (Mac Mini)', zone: 'internal' },
+      { id: 'inference', type: 'inference-engine', label: 'Inference Engine (Ollama)', zone: 'internal' },
+      { id: 'orchestrator', type: 'ai-orchestrator', label: 'AI Orchestrator', zone: 'internal' },
+      { id: 'vectordb', type: 'vector-db', label: 'Vector DB', zone: 'data' },
+    ],
+    connections: [
+      { source: 'user', target: 'orchestrator', flowType: 'request' },
+      { source: 'orchestrator', target: 'inference', flowType: 'inference' },
+      { source: 'orchestrator', target: 'vectordb', flowType: 'embedding' },
+      { source: 'inference', target: 'edge', flowType: 'inference' },
+    ],
+  },
+
+  // RAG Pipeline
+  'rag-pipeline': {
+    nodes: [
+      { id: 'user', type: 'user', label: 'User' },
+      { id: 'apigw', type: 'api-gateway', label: 'API Gateway', zone: 'dmz' },
+      { id: 'orchestrator', type: 'ai-orchestrator', label: 'AI Orchestrator', zone: 'internal' },
+      { id: 'embedding', type: 'embedding-service', label: 'Embedding Service', zone: 'internal' },
+      { id: 'vectordb', type: 'vector-db', label: 'Vector DB', zone: 'data' },
+      { id: 'inference', type: 'inference-engine', label: 'Inference Engine', zone: 'internal' },
+      { id: 'gpu', type: 'gpu-server', label: 'GPU Server', zone: 'data' },
+    ],
+    connections: [
+      { source: 'user', target: 'apigw', flowType: 'request' },
+      { source: 'apigw', target: 'orchestrator', flowType: 'request' },
+      { source: 'orchestrator', target: 'embedding', flowType: 'embedding' },
+      { source: 'embedding', target: 'vectordb', flowType: 'embedding' },
+      { source: 'orchestrator', target: 'inference', flowType: 'inference' },
+      { source: 'inference', target: 'gpu', flowType: 'inference' },
+    ],
+  },
+
+  // Enterprise AI Platform
+  'enterprise-ai': {
+    nodes: [
+      { id: 'user', type: 'user', label: 'User' },
+      { id: 'lb', type: 'load-balancer', label: 'Load Balancer', zone: 'dmz' },
+      { id: 'aigw', type: 'ai-gateway', label: 'AI Gateway', zone: 'dmz' },
+      { id: 'inf1', type: 'inference-engine', label: 'Inference Engine 1', zone: 'internal' },
+      { id: 'inf2', type: 'inference-engine', label: 'Inference Engine 2', zone: 'internal' },
+      { id: 'cluster', type: 'ai-cluster', label: 'AI Cluster', zone: 'data' },
+      { id: 'training', type: 'training-platform', label: 'Training Platform', zone: 'data' },
+      { id: 'registry', type: 'model-registry', label: 'Model Registry', zone: 'data' },
+      { id: 'monitor', type: 'ai-monitor', label: 'AI Monitor', zone: 'internal' },
+      { id: 'prometheus', type: 'prometheus', label: 'Prometheus', zone: 'internal' },
+    ],
+    connections: [
+      { source: 'user', target: 'lb', flowType: 'request' },
+      { source: 'lb', target: 'aigw', flowType: 'request' },
+      { source: 'aigw', target: 'inf1', flowType: 'inference' },
+      { source: 'aigw', target: 'inf2', flowType: 'inference' },
+      { source: 'cluster', target: 'training', flowType: 'inference' },
+      { source: 'training', target: 'registry', flowType: 'model-sync' },
+      { source: 'registry', target: 'inf1', flowType: 'model-sync' },
+      { source: 'registry', target: 'inf2', flowType: 'model-sync' },
+      { source: 'inf1', target: 'monitor', flowType: 'sync' },
+      { source: 'inf2', target: 'monitor', flowType: 'sync' },
+      { source: 'monitor', target: 'prometheus', flowType: 'sync' },
+    ],
+  },
 };
 
 // Template keywords for matching
@@ -787,4 +856,7 @@ export const templateKeywords: Record<string, string[]> = {
   'netflix-streaming': ['netflix', '넷플릭스', 'streaming', '스트리밍', 'streaming architecture', '스트리밍 아키텍처', 'event driven'],
   'kafka-pipeline': ['kafka pipeline', '카프카 파이프라인', 'event pipeline', '이벤트 파이프라인', 'pub sub', 'pubsub', 'kafka cluster', '카프카 클러스터'],
   'cctv-surveillance': ['cctv', '씨씨티비', '영상감시', '영상관제', '폐쇄회로', 'cctv 회선', '감시 카메라', '방범'],
+  'personal-ai': ['개인 ai', 'personal ai', 'ollama', '홈랩', 'home lab', '로컬 ai', 'local ai', '맥미니 ai', 'ai 비서', 'ai assistant'],
+  'rag-pipeline': ['rag 파이프라인', 'rag pipeline', 'rag 시스템', 'rag system', 'rag 아키텍처', 'rag architecture', '벡터 검색', 'vector search', '지식 검색', 'knowledge retrieval', 'embedding pipeline', '임베딩 파이프라인'],
+  'enterprise-ai': ['엔터프라이즈 ai', 'enterprise ai', 'enterprise ai platform', '엔터프라이즈 ai 플랫폼', 'llm 서빙', 'llm serving', 'gpu 클러스터', 'gpu cluster', 'ai 인프라', 'ai infrastructure'],
 };
