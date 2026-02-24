@@ -1,11 +1,16 @@
 /**
  * Architecture Patterns - Infrastructure design patterns with detection logic
  *
- * 18 verified architecture patterns organized by category:
+ * 39 verified architecture patterns organized by category:
  * - PAT-001 ~ PAT-005: Basic Patterns (foundational architectures)
  * - PAT-006 ~ PAT-010: Extended Patterns (advanced architectures)
  * - PAT-011 ~ PAT-015: Security Patterns (defense-focused)
  * - PAT-016 ~ PAT-018: Cloud Patterns (cloud & hybrid)
+ * - PAT-TEL-001 ~ PAT-TEL-006: Telecom Patterns
+ * - PAT-K8S-001 ~ PAT-K8S-003: Kubernetes Patterns
+ * - PAT-SEC-016 ~ PAT-SEC-018: Security Extended Patterns
+ * - PAT-HYB-001 ~ PAT-HYB-002: Hybrid Patterns
+ * - PAT-033 ~ PAT-041: AI Patterns (personal/startup/enterprise)
  *
  * Each pattern carries trust metadata with real source citations
  * and includes detection logic for matching against InfraSpec.
@@ -13,6 +18,7 @@
 
 import type { InfraSpec } from '@/types/infra';
 import type { ArchitecturePattern } from './types';
+import { aiPatterns } from './aiPatterns';
 import {
   NIST_800_41,
   NIST_800_44,
@@ -1853,7 +1859,7 @@ const hybridPatterns: ArchitecturePattern[] = [
 
 /**
  * All architecture patterns — frozen readonly array.
- * 30 patterns across 8 categories: Basic, Extended, Security, Cloud, Telecom, K8s, SecurityExt, Hybrid.
+ * 39 patterns across 9 categories: Basic, Extended, Security, Cloud, Telecom, K8s, SecurityExt, Hybrid, AI.
  */
 export const ARCHITECTURE_PATTERNS: readonly ArchitecturePattern[] = Object.freeze([
   ...basicPatterns,
@@ -1864,6 +1870,7 @@ export const ARCHITECTURE_PATTERNS: readonly ArchitecturePattern[] = Object.free
   ...k8sPatterns,
   ...securityExtPatterns,
   ...hybridPatterns,
+  ...aiPatterns,
 ]);
 
 /** Alias for index.ts compatibility */
