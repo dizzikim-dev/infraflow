@@ -335,6 +335,32 @@ export const GCP_SERVICE_CATALOG = vendor(
 );
 
 // ---------------------------------------------------------------------------
+// AI/ML Infrastructure Sources
+// ---------------------------------------------------------------------------
+
+export const NVIDIA_AI_ENTERPRISE = vendor(
+  'NVIDIA AI Enterprise Architecture Guide',
+  'https://docs.nvidia.com/ai-enterprise/',
+);
+
+export const HUGGINGFACE_DOCS = vendor(
+  'Hugging Face Model Serving Documentation',
+  'https://huggingface.co/docs',
+);
+
+export const MLOPS_COMMUNITY = industry(
+  'MLOps Community Best Practices',
+  'https://ml-ops.org/',
+);
+
+export const NIST_AI_RMF = nist(
+  'AI 100-1',
+  'AI Risk Management Framework',
+  'https://csrc.nist.gov/pubs/ai/100/1/final',
+  '2023-01',
+);
+
+// ---------------------------------------------------------------------------
 // Utility: get source with section override
 // ---------------------------------------------------------------------------
 
@@ -361,6 +387,7 @@ export const ALL_SOURCES: KnowledgeSource[] = [
   MEF_4, ETSI_NFV_MAN, KT_5G_ARCH,
   NIST_NVD, MITRE_CVE, GITHUB_ADVISORY,
   AWS_SERVICE_CATALOG, AZURE_SERVICE_CATALOG, GCP_SERVICE_CATALOG,
+  NVIDIA_AI_ENTERPRISE, HUGGINGFACE_DOCS, MLOPS_COMMUNITY, NIST_AI_RMF,
 ];
 
 /** Validate that a source type maps to a known confidence level */

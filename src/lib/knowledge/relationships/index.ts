@@ -15,6 +15,7 @@ import { cloudRelationships, cloudNativeRelationships } from './cloudRelationshi
 import { k8sRelationships } from './k8sRelationships';
 import { authExtRelationships } from './authRelationships';
 import { hybridRelationships, saseRelationships } from './hybridRelationships';
+import { aiComputeRelationships, aiServiceRelationships, aiCrossRelationships } from './aiRelationships';
 
 // ---------------------------------------------------------------------------
 // Combined registry
@@ -33,6 +34,9 @@ export const RELATIONSHIPS: readonly ComponentRelationship[] = Object.freeze([
   ...hybridRelationships,
   ...saseRelationships,
   ...cloudNativeRelationships,
+  ...aiComputeRelationships,
+  ...aiServiceRelationships,
+  ...aiCrossRelationships,
 ]);
 
 // ---------------------------------------------------------------------------
