@@ -1,7 +1,7 @@
 # InfraFlow 인프라 장비/솔루션 현황
 
-> **문서 버전**: 1.2.0
-> **최종 수정일**: 2026-02-24
+> **문서 버전**: 1.3.0
+> **최종 수정일**: 2026-02-25
 > **관리 담당**: Infrastructure Data Agent
 
 ---
@@ -22,8 +22,10 @@
 12. [AI 컴퓨팅 (AI Compute)](#12-ai-컴퓨팅-ai-compute)
 13. [AI 서비스 (AI Service)](#13-ai-서비스-ai-service)
 14. [티어 구조](#14-티어-구조)
-15. [데이터 관리 가이드](#15-데이터-관리-가이드)
-16. [변경 이력](#16-변경-이력)
+15. [Product Intelligence (제품 인텔리전스)](#15-product-intelligence-제품-인텔리전스)
+16. [RAG Module (검색 증강 생성)](#16-rag-module-검색-증강-생성)
+17. [데이터 관리 가이드](#17-데이터-관리-가이드)
+18. [변경 이력](#18-변경-이력)
 
 ---
 
@@ -2207,9 +2209,88 @@
 
 ---
 
-## 15. 데이터 관리 가이드
+## 15. Product Intelligence (제품 인텔리전스)
 
-### 15.1 장비 추가 절차
+Product Intelligence 모듈은 AI/ML 제품의 배포 정보, 인프라 요구사항, 통합 관계를 체계적으로 관리합니다.
+
+### 15.1 개요
+
+| 항목 | 내용 |
+|------|------|
+| **위치** | `src/lib/knowledge/productIntelligence/` |
+| **총 제품 수** | 36개 (6개 카테고리) |
+| **주요 기능** | 배포 프로필, 인프라 컴포넌트 매핑, 통합 정보, 스케일업 경로 |
+| **품질 규칙** | `.claude/rules/product-intelligence-rules.md` (PI-001~006) |
+
+### 15.2 카테고리
+
+| 카테고리 | 영문 ID | 제품 수 | 주요 제품 |
+|----------|---------|---------|----------|
+| AI 어시스턴트 | `ai-assistants` | 6 | Claude Code, GitHub Copilot, Cursor, Windsurf 등 |
+| AI 추론 | `ai-inference` | 7 | Ollama, vLLM, TGI, llama.cpp, TensorRT-LLM 등 |
+| AI 프레임워크 | `ai-frameworks` | 5 | LangChain, LlamaIndex, CrewAI, Haystack, AutoGen |
+| 벡터 DB | `vector-dbs` | 5 | ChromaDB, Pinecone, Milvus, Weaviate, Qdrant |
+| 클라우드 컴퓨팅 | `cloud-compute` | 7 | AWS SageMaker, Azure ML, GCP Vertex AI, Lambda 등 |
+| 통합/커넥터 | `integrations` | 6 | LiteLLM, Kong AI Gateway, Portkey, OpenRouter 등 |
+
+### 15.3 데이터 구조
+
+각 `ProductIntelligence` 엔트리에 포함되는 정보:
+
+- **기본 정보**: id, productId, name/nameKo, category, sourceUrl
+- **배포 프로필**: 플랫폼별 설치 방법, OS 호환성, 인프라 컴포넌트(InfraNodeType), 리소스 요구사항
+- **통합 정보**: 연동 대상, 연동 방식(API, SDK, Plugin, Protocol 등)
+- **스케일업 경로**: 단일→클러스터→클라우드 등 확장 단계
+- **임베딩 텍스트**: RAG 검색을 위한 bilingual 텍스트 (embeddingText / embeddingTextKo)
+
+### 15.4 Query Helpers
+
+| 함수명 | 설명 |
+|--------|------|
+| `getPIByCategory(category)` | 카테고리별 제품 필터링 |
+| `searchPI(query)` | 이름/설명 기반 bilingual 검색 |
+| `getPIForProduct(productId)` | productId로 제품 조회 |
+| `getDeploymentProfiles(platform)` | 특정 플랫폼의 배포 프로필 조회 |
+| `getIntegrationsFor(target)` | 특정 대상과 통합 가능한 제품 조회 |
+| `getScaleUpPaths()` | 모든 스케일업 경로 조회 |
+
+---
+
+## 16. RAG Module (검색 증강 생성)
+
+RAG 모듈은 ChromaDB 벡터 데이터베이스와 OpenAI 임베딩을 사용하여 인프라 지식 기반의 시맨틱 검색을 제공합니다.
+
+### 16.1 개요
+
+| 항목 | 내용 |
+|------|------|
+| **위치** | `src/lib/rag/` |
+| **벡터 DB** | ChromaDB |
+| **임베딩** | OpenAI `text-embedding-3-small` (1536차원) |
+| **컬렉션** | AI Software, Cloud Services, Product Intelligence |
+
+### 16.2 모듈 구성
+
+| 파일 | 설명 |
+|------|------|
+| `types.ts` | RAGConfig, RAGDocument, RAGSearchResult 등 타입 정의 |
+| `chromaClient.ts` | ChromaDB 클라이언트 래퍼 (연결 관리, 가용성 확인) |
+| `embeddings.ts` | OpenAI 임베딩 생성 (단일/배치), 텍스트 빌드 유틸 |
+| `indexer.ts` | 지식 데이터 → ChromaDB 인덱싱 (AI SW, Cloud, PI) |
+| `retriever.ts` | 시맨틱 검색 (Product Intelligence 질의) |
+| `index.ts` | Public API 통합 re-export |
+
+### 16.3 LLM 파이프라인 통합
+
+- `enrichContext()` 호출 시 Product Intelligence 데이터가 `EnrichedKnowledge.productIntelligence`에 포함
+- LLM 시스템 프롬프트에 `buildProductIntelligenceLines()`로 관련 제품 정보 주입
+- ChromaDB 미연결 시 graceful degradation (RAG 기능만 비활성화, 나머지 정상 동작)
+
+---
+
+## 17. 데이터 관리 가이드
+
+### 17.1 장비 추가 절차
 
 새로운 장비/솔루션을 추가할 때 다음 파일들을 수정해야 합니다:
 
@@ -2264,13 +2345,13 @@
 
 6. **이 문서 업데이트**
 
-### 15.2 장비 수정 절차
+### 17.2 장비 수정 절차
 
 1. `infrastructureDB.ts`에서 해당 장비 데이터 수정
 2. 이 문서의 해당 섹션 업데이트
 3. 변경 이력 추가
 
-### 15.3 장비 삭제 절차
+### 17.3 장비 삭제 절차
 
 1. 모든 관련 파일에서 참조 제거
 2. 타입 정의에서 삭제
@@ -2279,7 +2360,7 @@
 5. 이 문서에서 삭제
 6. 변경 이력 추가
 
-### 15.4 검증 체크리스트
+### 17.4 검증 체크리스트
 
 - [ ] TypeScript 빌드 오류 없음
 - [ ] 모든 테스트 통과
@@ -2290,13 +2371,14 @@
 
 ---
 
-## 16. 변경 이력
+## 18. 변경 이력
 
 | 날짜 | 버전 | 작성자 | 변경 내용 |
 |------|------|--------|----------|
 | 2026-02-06 | 1.0.0 | Claude | 초기 문서 작성 |
 | 2026-02-14 | 1.1.0 | Claude | Cloud-Native 6종 추가 (kafka, rabbitmq, api-gateway, prometheus, grafana, elasticsearch), 템플릿 2개 (netflix-streaming, kafka-pipeline), 관계 10개 추가 + 2건 수정 |
 | 2026-02-24 | 1.2.0 | Claude | AI 인프라 14종 추가 — AI Compute 6종 (gpu-server, ai-accelerator, edge-device, mobile-device, ai-cluster, model-registry) + AI Service 8종 (inference-engine, vector-db, ai-gateway, ai-orchestrator, embedding-service, training-platform, prompt-manager, ai-monitor). AI 관계 25개, AI 아키텍처 패턴 9개, AI 소프트웨어 카탈로그 ~39개 제품, 새 에지 플로우 3종 (inference, model-sync, embedding) 추가. Telecom/WAN 카테고리 목록 반영 |
+| 2026-02-25 | 1.3.0 | Claude | Product Intelligence 모듈 문서화 (36개 AI/ML 제품, 6개 카테고리), RAG 모듈 문서화 (ChromaDB + OpenAI 임베딩). PI 품질 규칙 (PI-001~006) 추가 |
 
 ---
 
