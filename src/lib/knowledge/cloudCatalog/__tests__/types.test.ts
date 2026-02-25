@@ -4,7 +4,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { CLOUD_SERVICES, AWS_SERVICES, AZURE_SERVICES, GCP_SERVICES } from '../index';
-import type { CloudService } from '../types';
+import type { CloudService, CloudProvider } from '../types';
+import { svcTrust } from '../types';
 
 // ---------------------------------------------------------------------------
 // Data Integrity
@@ -196,5 +197,68 @@ describe('CloudService optional fields', () => {
         expect(['continuous', 'hourly', 'daily', 'weekly']).toContain(dr.backupFrequency);
       }
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Korean CSP Provider Types
+// ---------------------------------------------------------------------------
+
+describe('Korean CSP Provider Types', () => {
+  it('should accept ncp as valid CloudProvider', () => {
+    const provider: CloudProvider = 'ncp';
+    expect(provider).toBe('ncp');
+  });
+
+  it('should accept kakao as valid CloudProvider', () => {
+    const provider: CloudProvider = 'kakao';
+    expect(provider).toBe('kakao');
+  });
+
+  it('should accept kt as valid CloudProvider', () => {
+    const provider: CloudProvider = 'kt';
+    expect(provider).toBe('kt');
+  });
+
+  it('should accept nhn as valid CloudProvider', () => {
+    const provider: CloudProvider = 'nhn';
+    expect(provider).toBe('nhn');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// svcTrust() for Korean CSPs
+// ---------------------------------------------------------------------------
+
+describe('svcTrust() for Korean CSPs', () => {
+  it('should generate trust metadata for ncp', () => {
+    const trust = svcTrust('ncp');
+    expect(trust.sources[0].url).toBe('https://www.ncloud.com/v2/product');
+    expect(trust.sources[0].title).toContain('NCP');
+    expect(trust.confidence).toBe(0.85);
+  });
+
+  it('should generate trust metadata for kakao', () => {
+    const trust = svcTrust('kakao');
+    expect(trust.sources[0].url).toBe('https://kakaocloud.com/');
+    expect(trust.sources[0].title).toContain('KAKAO');
+  });
+
+  it('should generate trust metadata for kt', () => {
+    const trust = svcTrust('kt');
+    expect(trust.sources[0].url).toBe('https://cloud.kt.com/');
+    expect(trust.sources[0].title).toContain('KT');
+  });
+
+  it('should generate trust metadata for nhn', () => {
+    const trust = svcTrust('nhn');
+    expect(trust.sources[0].url).toBe('https://www.nhncloud.com/kr');
+    expect(trust.sources[0].title).toContain('NHN');
+  });
+
+  it('should preserve existing provider trust URLs', () => {
+    expect(svcTrust('aws').sources[0].url).toBe('https://aws.amazon.com/products/');
+    expect(svcTrust('azure').sources[0].url).toBe('https://azure.microsoft.com/products/');
+    expect(svcTrust('gcp').sources[0].url).toBe('https://cloud.google.com/products');
   });
 });

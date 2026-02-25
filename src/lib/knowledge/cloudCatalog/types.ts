@@ -20,7 +20,7 @@ import type {
 // Enums / Unions
 // ---------------------------------------------------------------------------
 
-export type CloudProvider = 'aws' | 'azure' | 'gcp';
+export type CloudProvider = 'aws' | 'azure' | 'gcp' | 'ncp' | 'kakao' | 'kt' | 'nhn';
 export type ServiceStatus = 'active' | 'deprecated' | 'preview' | 'end-of-life';
 export type PricingTier = 'free' | 'low' | 'medium' | 'high' | 'enterprise';
 export type CloudPricingModel = 'pay-as-you-go' | 'reserved' | 'spot' | 'free-tier' | 'committed-use' | 'subscription';
@@ -184,6 +184,10 @@ export function svcTrust(provider: CloudProvider): TrustMetadata {
     aws: 'https://aws.amazon.com/products/',
     azure: 'https://azure.microsoft.com/products/',
     gcp: 'https://cloud.google.com/products',
+    ncp: 'https://www.ncloud.com/v2/product',
+    kakao: 'https://kakaocloud.com/',
+    kt: 'https://cloud.kt.com/',
+    nhn: 'https://www.nhncloud.com/kr',
   };
   return {
     ...VENDOR_TRUST,
@@ -191,7 +195,7 @@ export function svcTrust(provider: CloudProvider): TrustMetadata {
       type: 'vendor' as const,
       title: `${provider.toUpperCase()} Service Catalog`,
       url: urls[provider],
-      accessedDate: '2026-02-10',
+      accessedDate: '2026-02-26',
     }],
   };
 }
