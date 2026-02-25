@@ -16,12 +16,16 @@ paths:
 Cloud services use a flat `CloudService[]` array — no hierarchy or children.
 Each service is one entry. Provider separation is at the file level (`providers/aws.ts`, etc.).
 
-## CC-002: Three-Provider Parity
+## CC-002: Provider Parity
 
-When adding a service for one provider, flag if the equivalent is missing for the other two.
+When adding a service for one provider, flag if the equivalent is missing for others.
 Use `// PARITY-GAP: {provider} missing` comments for tracking.
 
+Global providers (AWS, Azure, GCP) are checked against each other.
+Korean CSPs (NCP, Kakao, KT, NHN) are checked against each other.
+
 Example: Adding AWS SQS requires checking for Azure Service Bus and GCP Pub/Sub.
+Example: Adding NCP Cloud DB requires checking for Kakao Cloud MySQL, KT Cloud DB, NHN Cloud RDS.
 
 ## CC-003: Architecture Fields Required for "Complete" Services
 
@@ -56,6 +60,10 @@ Format: `CS-{CATEGORY}-{PROVIDER}-{SEQ}`
 | AWS | `AWS` |
 | Azure | `AZ` |
 | GCP | `GCP` |
+| NCP | `NCP` |
+| Kakao Cloud | `KAKAO` |
+| KT Cloud | `KT` |
+| NHN Cloud | `NHN` |
 
 Categories: `FW`, `WAF`, `LB`, `WEB`, `APP`, `DB`, `DNS`, `CDN`, `K8S`, `CONT`, `CACHE`, `OBJ`, `BK`, `VPN`, `IAM`, `SIEM`, `IDS`, `SDWAN`, `MFA`, `VPC`, `SLS`, `MQ`, `MON`, `SRCH`, `STOR`, `APIGW`, `NOSQL`, `DLP`, `NAC`, `SSO`, `LDAP`, `AIML`
 
@@ -70,6 +78,10 @@ Patterns:
 - AWS: `https://docs.aws.amazon.com/{service}/`
 - Azure: `https://learn.microsoft.com/en-us/azure/{service}/`
 - GCP: `https://cloud.google.com/{service}/docs/`
+- NCP: `https://guide.ncloud-docs.com/docs/{service}`
+- Kakao: `https://docs.kakaocloud.com/{service}/`
+- KT: `https://cloud.kt.com/portal/user-guide/{service}`
+- NHN: `https://docs.nhncloud.com/ko/{service}/`
 
 ## CC-007: Completeness Quality Gate
 
@@ -97,6 +109,10 @@ Provider-specific trust URLs:
 - AWS: `https://aws.amazon.com/products/`
 - Azure: `https://azure.microsoft.com/products/`
 - GCP: `https://cloud.google.com/products`
+- NCP: `https://www.ncloud.com/v2/product`
+- Kakao: `https://kakaocloud.com/`
+- KT: `https://cloud.kt.com/`
+- NHN: `https://www.nhncloud.com/kr`
 
 ## CC-010: Stats Sync
 
