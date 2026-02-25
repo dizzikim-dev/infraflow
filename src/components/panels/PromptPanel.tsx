@@ -6,6 +6,8 @@ import type { Operation } from '@/lib/parser/diffApplier';
 import { recommendTemplates } from '@/lib/templates/templateRecommender';
 import type { ParseResultInfo } from '@/hooks/usePromptParser';
 import type { InfraSpec } from '@/types';
+import { ReferenceBox } from './ReferenceBox';
+import type { AnswerEvidence } from '@/lib/rag/sourceAggregator';
 
 interface PromptPanelProps {
   onSubmit: (prompt: string) => void;
@@ -23,6 +25,10 @@ interface PromptPanelProps {
   onAcceptFallback?: (spec: InfraSpec) => void;
   /** Called when user wants to clear the fallback and retry */
   onDismissFallback?: () => void;
+  /** Aggregated evidence from the RAG pipeline */
+  answerEvidence?: AnswerEvidence | null;
+  /** Called when user clicks "자세히 보기" to open the full EvidencePanel */
+  onOpenEvidence?: () => void;
 }
 
 const modifyExamples = [
@@ -46,6 +52,8 @@ export function PromptPanel({
   lastResult = null,
   onAcceptFallback,
   onDismissFallback,
+  answerEvidence,
+  onOpenEvidence,
 }: PromptPanelProps) {
   const [prompt, setPrompt] = useState('');
   const [mode, setMode] = useState<'create' | 'modify'>('create');
@@ -203,9 +211,80 @@ export function PromptPanel({
           )}
         </AnimatePresence>
 
+        {/* Routing Decision Display */}
+        <AnimatePresence>
+          {lastResult?.routingDecision && lastResult.routingDecision !== 'template-direct' && !explanationDismissed && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className={`mb-3 p-3 rounded-xl border ${
+                lastResult.routingDecision === 'router-template'
+                  ? 'bg-emerald-900/20 border-emerald-500/30'
+                  : 'bg-purple-900/20 border-purple-500/30'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <svg
+                    className={`w-4 h-4 ${
+                      lastResult.routingDecision === 'router-template'
+                        ? 'text-emerald-400'
+                        : 'text-purple-400'
+                    }`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                  <span className={`text-xs font-medium ${
+                    lastResult.routingDecision === 'router-template'
+                      ? 'text-emerald-400'
+                      : 'text-purple-400'
+                  }`}>
+                    {lastResult.routingDecision === 'router-llm' || lastResult.routingDecision === 'llm-direct'
+                      ? 'AI 생성'
+                      : 'AI 검증'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setExplanationDismissed(true)}
+                  className="text-zinc-500 hover:text-zinc-300 transition-colors p-0.5 rounded hover:bg-zinc-700/50"
+                  aria-label="닫기"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <p className="text-sm text-zinc-300">
+                {lastResult.routingDecision === 'router-llm'
+                  ? 'AI가 더 적합한 아키텍처를 생성했습니다'
+                  : lastResult.routingDecision === 'llm-direct'
+                    ? 'AI가 맞춤 아키텍처를 생성했습니다'
+                    : 'AI가 템플릿 적합성을 확인했습니다'}
+              </p>
+              {lastResult.routingReason && (
+                <p className="text-xs text-zinc-400 mt-1">{lastResult.routingReason}</p>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Reference Box */}
+        {answerEvidence && (
+          <ReferenceBox evidence={answerEvidence} onOpenEvidence={onOpenEvidence} />
+        )}
+
         {/* Generation Explanation Display */}
         <AnimatePresence>
-          {lastResult?.explanation && !lastReasoning && !explanationDismissed && (
+          {lastResult?.explanation && !lastReasoning && !explanationDismissed && !lastResult?.routingDecision && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
