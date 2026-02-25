@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { CLOUD_SERVICES, AWS_SERVICES, AZURE_SERVICES, GCP_SERVICES } from '../index';
+import { CLOUD_SERVICES, AWS_SERVICES, AZURE_SERVICES, GCP_SERVICES, NCP_SERVICES, KAKAO_SERVICES, KT_SERVICES, NHN_SERVICES } from '../index';
 import type { CloudService, CloudProvider } from '../types';
 import { svcTrust } from '../types';
 
@@ -18,7 +18,8 @@ describe('CLOUD_SERVICES data integrity', () => {
 
   it('merged array equals sum of provider arrays', () => {
     expect(CLOUD_SERVICES.length).toBe(
-      AWS_SERVICES.length + AZURE_SERVICES.length + GCP_SERVICES.length,
+      AWS_SERVICES.length + AZURE_SERVICES.length + GCP_SERVICES.length +
+      NCP_SERVICES.length + KAKAO_SERVICES.length + KT_SERVICES.length + NHN_SERVICES.length,
     );
   });
 
@@ -30,7 +31,7 @@ describe('CLOUD_SERVICES data integrity', () => {
   it('every entry should have required fields', () => {
     for (const svc of CLOUD_SERVICES) {
       expect(svc.id).toBeTruthy();
-      expect(['aws', 'azure', 'gcp']).toContain(svc.provider);
+      expect(['aws', 'azure', 'gcp', 'ncp', 'kakao', 'kt', 'nhn']).toContain(svc.provider);
       expect(svc.componentType).toBeTruthy();
       expect(svc.serviceName).toBeTruthy();
       expect(svc.serviceNameKo).toBeTruthy();
@@ -44,11 +45,15 @@ describe('CLOUD_SERVICES data integrity', () => {
     }
   });
 
-  it('all three providers should be represented', () => {
+  it('all providers should be represented', () => {
     const providers = new Set(CLOUD_SERVICES.map((s) => s.provider));
     expect(providers.has('aws')).toBe(true);
     expect(providers.has('azure')).toBe(true);
     expect(providers.has('gcp')).toBe(true);
+    expect(providers.has('ncp')).toBe(true);
+    expect(providers.has('kakao')).toBe(true);
+    expect(providers.has('kt')).toBe(true);
+    expect(providers.has('nhn')).toBe(true);
   });
 
   it('deprecated services should have successor info', () => {

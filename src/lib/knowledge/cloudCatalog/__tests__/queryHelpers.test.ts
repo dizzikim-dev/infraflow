@@ -233,22 +233,27 @@ describe('getServiceCategories', () => {
 // ---------------------------------------------------------------------------
 
 describe('getProviderCoverageStats', () => {
-  it('should return stats for all three providers', () => {
+  it('should return stats for all providers', () => {
     const stats = getProviderCoverageStats();
     expect(stats.aws).toBeDefined();
     expect(stats.azure).toBeDefined();
     expect(stats.gcp).toBeDefined();
+    expect(stats.ncp).toBeDefined();
+    expect(stats.kakao).toBeDefined();
+    expect(stats.kt).toBeDefined();
+    expect(stats.nhn).toBeDefined();
   });
 
   it('should have correct total counts', () => {
     const stats = getProviderCoverageStats();
-    const total = stats.aws.totalServices + stats.azure.totalServices + stats.gcp.totalServices;
+    const total = stats.aws.totalServices + stats.azure.totalServices + stats.gcp.totalServices +
+      stats.ncp.totalServices + stats.kakao.totalServices + stats.kt.totalServices + stats.nhn.totalServices;
     expect(total).toBe(CLOUD_SERVICES.length);
   });
 
   it('should count active and deprecated services correctly', () => {
     const stats = getProviderCoverageStats();
-    for (const provider of ['aws', 'azure', 'gcp'] as const) {
+    for (const provider of ['aws', 'azure', 'gcp', 'ncp', 'kakao', 'kt', 'nhn'] as const) {
       expect(stats[provider].activeServices + stats[provider].deprecatedServices)
         .toBeLessThanOrEqual(stats[provider].totalServices);
     }

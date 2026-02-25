@@ -18,12 +18,20 @@ import type {
 import { AWS_SERVICES } from './providers/aws';
 import { AZURE_SERVICES } from './providers/azure';
 import { GCP_SERVICES } from './providers/gcp';
+import { NCP_SERVICES } from './providers/ncp';
+import { KAKAO_SERVICES } from './providers/kakao';
+import { KT_SERVICES } from './providers/kt';
+import { NHN_SERVICES } from './providers/nhn';
 
 /** Internal merged reference — avoids circular import with index.ts */
 const ALL_SERVICES: CloudService[] = [
   ...AWS_SERVICES,
   ...AZURE_SERVICES,
   ...GCP_SERVICES,
+  ...NCP_SERVICES,
+  ...KAKAO_SERVICES,
+  ...KT_SERVICES,
+  ...NHN_SERVICES,
 ];
 
 // ---------------------------------------------------------------------------
@@ -148,7 +156,7 @@ export function getServiceCategories(): ServiceCategorySummary[] {
 
 /** Get coverage statistics per provider */
 export function getProviderCoverageStats(): Record<CloudProvider, ProviderCoverageStats> {
-  const providers: CloudProvider[] = ['aws', 'azure', 'gcp'];
+  const providers: CloudProvider[] = ['aws', 'azure', 'gcp', 'ncp', 'kakao', 'kt', 'nhn'];
   const result = {} as Record<CloudProvider, ProviderCoverageStats>;
 
   for (const p of providers) {

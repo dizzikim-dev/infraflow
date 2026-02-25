@@ -10,6 +10,10 @@ import {
   AWS_SERVICES,
   AZURE_SERVICES,
   GCP_SERVICES,
+  NCP_SERVICES,
+  KAKAO_SERVICES,
+  KT_SERVICES,
+  NHN_SERVICES,
 } from '../index';
 
 describe('getAllCloudServicesAsync', () => {
@@ -31,7 +35,8 @@ describe('getAllCloudServicesAsync', () => {
   it('should equal the sum of provider arrays', async () => {
     const services = await getAllCloudServicesAsync();
     expect(services.length).toBe(
-      AWS_SERVICES.length + AZURE_SERVICES.length + GCP_SERVICES.length,
+      AWS_SERVICES.length + AZURE_SERVICES.length + GCP_SERVICES.length +
+      NCP_SERVICES.length + KAKAO_SERVICES.length + KT_SERVICES.length + NHN_SERVICES.length,
     );
   });
 
@@ -46,7 +51,7 @@ describe('getAllCloudServicesAsync', () => {
     const services = await getAllCloudServicesAsync();
     for (const svc of services) {
       expect(svc.id).toBeTruthy();
-      expect(['aws', 'azure', 'gcp']).toContain(svc.provider);
+      expect(['aws', 'azure', 'gcp', 'ncp', 'kakao', 'kt', 'nhn']).toContain(svc.provider);
       expect(svc.serviceName).toBeTruthy();
       expect(svc.serviceNameKo).toBeTruthy();
       expect(svc.componentType).toBeTruthy();
@@ -77,12 +82,16 @@ describe('getAllCloudServicesAsync', () => {
     expect(result1.length).toBe(CLOUD_SERVICES.length);
   });
 
-  it('should include all three providers', async () => {
+  it('should include all providers', async () => {
     const services = await getAllCloudServicesAsync();
     const providers = new Set(services.map(s => s.provider));
     expect(providers.has('aws')).toBe(true);
     expect(providers.has('azure')).toBe(true);
     expect(providers.has('gcp')).toBe(true);
+    expect(providers.has('ncp')).toBe(true);
+    expect(providers.has('kakao')).toBe(true);
+    expect(providers.has('kt')).toBe(true);
+    expect(providers.has('nhn')).toBe(true);
   });
 
   it('should have at least 100 entries', async () => {

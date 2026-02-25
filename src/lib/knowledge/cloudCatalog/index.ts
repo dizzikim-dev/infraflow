@@ -25,6 +25,10 @@ export { svcTrust } from './types';
 import { AWS_SERVICES } from './providers/aws';
 import { AZURE_SERVICES } from './providers/azure';
 import { GCP_SERVICES } from './providers/gcp';
+import { NCP_SERVICES } from './providers/ncp';
+import { KAKAO_SERVICES } from './providers/kakao';
+import { KT_SERVICES } from './providers/kt';
+import { NHN_SERVICES } from './providers/nhn';
 import type { CloudService } from './types';
 
 /** Merged cloud service catalog across all providers */
@@ -32,12 +36,20 @@ export const CLOUD_SERVICES: CloudService[] = [
   ...AWS_SERVICES,
   ...AZURE_SERVICES,
   ...GCP_SERVICES,
+  ...NCP_SERVICES,
+  ...KAKAO_SERVICES,
+  ...KT_SERVICES,
+  ...NHN_SERVICES,
 ];
 
 // Re-export provider arrays for direct access
 export { AWS_SERVICES } from './providers/aws';
 export { AZURE_SERVICES } from './providers/azure';
 export { GCP_SERVICES } from './providers/gcp';
+export { NCP_SERVICES } from './providers/ncp';
+export { KAKAO_SERVICES } from './providers/kakao';
+export { KT_SERVICES } from './providers/kt';
+export { NHN_SERVICES } from './providers/nhn';
 
 // ---------------------------------------------------------------------------
 // Async loader — lazy alternative for future migration
@@ -64,8 +76,12 @@ export async function getAllCloudServicesAsync(): Promise<CloudService[]> {
     import('./providers/aws').then(m => m.AWS_SERVICES),
     import('./providers/azure').then(m => m.AZURE_SERVICES),
     import('./providers/gcp').then(m => m.GCP_SERVICES),
-  ]).then(([aws, azure, gcp]) => {
-    _cachedCloudServices = [...aws, ...azure, ...gcp];
+    import('./providers/ncp').then(m => m.NCP_SERVICES),
+    import('./providers/kakao').then(m => m.KAKAO_SERVICES),
+    import('./providers/kt').then(m => m.KT_SERVICES),
+    import('./providers/nhn').then(m => m.NHN_SERVICES),
+  ]).then(([aws, azure, gcp, ncp, kakao, kt, nhn]) => {
+    _cachedCloudServices = [...aws, ...azure, ...gcp, ...ncp, ...kakao, ...kt, ...nhn];
     _cloudLoadingPromise = null;
     return _cachedCloudServices;
   });
