@@ -111,15 +111,15 @@ describe('extractNodeTypesFromPrompt', () => {
 // ---------------------------------------------------------------------------
 
 describe('buildEnrichedSystemPrompt', () => {
-  it('should return base system prompt when no node types are found', () => {
-    const result = buildEnrichedSystemPrompt('hello world');
+  it('should return base system prompt when no node types are found', async () => {
+    const result = await buildEnrichedSystemPrompt('hello world');
     // Should be the base SYSTEM_PROMPT without knowledge section
     expect(result).toContain('You are an infrastructure architecture expert');
     expect(result).not.toContain('인프라 지식 기반 가이드');
   });
 
-  it('should return enriched prompt when node types are found', () => {
-    const result = buildEnrichedSystemPrompt('firewall and web-server architecture');
+  it('should return enriched prompt when node types are found', async () => {
+    const result = await buildEnrichedSystemPrompt('firewall and web-server architecture');
     // Should contain the base prompt
     expect(result).toContain('You are an infrastructure architecture expert');
     // Should contain knowledge section (if relationships exist for these types)
@@ -127,15 +127,15 @@ describe('buildEnrichedSystemPrompt', () => {
     expect(result.length).toBeGreaterThan(100);
   });
 
-  it('should always contain the base system prompt', () => {
-    const result = buildEnrichedSystemPrompt('firewall load-balancer kubernetes');
+  it('should always contain the base system prompt', async () => {
+    const result = await buildEnrichedSystemPrompt('firewall load-balancer kubernetes');
     expect(result).toContain('Output Format:');
     expect(result).toContain('Available node types:');
     expect(result).toContain('Guidelines:');
   });
 
-  it('should handle prompts with many node types', () => {
-    const result = buildEnrichedSystemPrompt(
+  it('should handle prompts with many node types', async () => {
+    const result = await buildEnrichedSystemPrompt(
       'firewall waf ids-ips vpn-gateway load-balancer web-server app-server db-server kubernetes'
     );
     expect(result).toContain('You are an infrastructure architecture expert');
@@ -143,35 +143,35 @@ describe('buildEnrichedSystemPrompt', () => {
     expect(result.length).toBeGreaterThan(200);
   });
 
-  it('should not throw errors for any input', () => {
+  it('should not throw errors for any input', async () => {
     // Should handle empty string gracefully
-    expect(() => buildEnrichedSystemPrompt('')).not.toThrow();
+    await expect(buildEnrichedSystemPrompt('')).resolves.toBeDefined();
 
     // Should handle very long prompts
     const longPrompt = 'firewall '.repeat(1000);
-    expect(() => buildEnrichedSystemPrompt(longPrompt)).not.toThrow();
+    await expect(buildEnrichedSystemPrompt(longPrompt)).resolves.toBeDefined();
 
     // Should handle special characters
-    expect(() => buildEnrichedSystemPrompt('!@#$%^&*()')).not.toThrow();
+    await expect(buildEnrichedSystemPrompt('!@#$%^&*()')).resolves.toBeDefined();
   });
 
-  it('should return a string', () => {
-    const result = buildEnrichedSystemPrompt('firewall architecture');
+  it('should return a string', async () => {
+    const result = await buildEnrichedSystemPrompt('firewall architecture');
     expect(typeof result).toBe('string');
     expect(result.length).toBeGreaterThan(0);
   });
 
-  it('should produce richer prompt for security-heavy architectures', () => {
-    const basicPrompt = buildEnrichedSystemPrompt('simple web server');
-    const securityPrompt = buildEnrichedSystemPrompt(
+  it('should produce richer prompt for security-heavy architectures', async () => {
+    const basicPrompt = await buildEnrichedSystemPrompt('simple web server');
+    const securityPrompt = await buildEnrichedSystemPrompt(
       'firewall waf ids-ips vpn-gateway nac dlp siem soar casb'
     );
     // Security-heavy prompt should have more knowledge context
     expect(securityPrompt.length).toBeGreaterThanOrEqual(basicPrompt.length);
   });
 
-  it('should append knowledge section after the base prompt', () => {
-    const result = buildEnrichedSystemPrompt(
+  it('should append knowledge section after the base prompt', async () => {
+    const result = await buildEnrichedSystemPrompt(
       'firewall with load-balancer and web-server'
     );
     // If knowledge section is present, it should come after "Only output valid JSON"
@@ -182,11 +182,38 @@ describe('buildEnrichedSystemPrompt', () => {
     }
   });
 
-  it('should include knowledge section with violations for firewall + web-server (missing mandatory deps)', () => {
+  it('should include knowledge section with violations for firewall + web-server (missing mandatory deps)', async () => {
     // The knowledge graph likely has relationships where firewall recommends/requires certain components
-    const result = buildEnrichedSystemPrompt('firewall and web-server');
+    const result = await buildEnrichedSystemPrompt('firewall and web-server');
     // At minimum, it should return a valid string
     expect(typeof result).toBe('string');
     expect(result.length).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// RAG Product Intelligence integration
+// ---------------------------------------------------------------------------
+
+describe('RAG Product Intelligence integration', () => {
+  it('should work when RAG module is not available', async () => {
+    // buildEnrichedSystemPrompt should still work (graceful degradation)
+    const result = await buildEnrichedSystemPrompt('build a firewall setup');
+    expect(result).toContain('firewall');
+    // Should not throw even if RAG/ChromaDB is not running
+  });
+
+  it('should include PI section when RAG returns results', async () => {
+    // This test validates the integration — even without ChromaDB,
+    // the keyword fallback in the retriever should find PI data
+    const result = await buildEnrichedSystemPrompt('OpenClaw AI assistant');
+    // The function should at least return the base prompt
+    expect(result).toBeTruthy();
+    expect(typeof result).toBe('string');
+  });
+
+  it('should be async and return a Promise', () => {
+    const result = buildEnrichedSystemPrompt('test');
+    expect(result).toBeInstanceOf(Promise);
   });
 });

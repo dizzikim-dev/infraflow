@@ -556,3 +556,122 @@ describe('enrichContext caching', () => {
     expect(getEnrichmentCacheSize()).toBe(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Product Intelligence Integration Tests
+// ---------------------------------------------------------------------------
+
+describe('buildKnowledgePromptSection - Product Intelligence', () => {
+  it('should include PI section when productIntelligence is provided', () => {
+    const enriched: EnrichedKnowledge = {
+      relationships: [],
+      violations: [],
+      suggestions: [],
+      risks: [],
+      tips: [],
+      productIntelligence: [
+        {
+          id: 'test-1',
+          content: 'OpenClaw: desktop AI assistant with Ollama backend',
+          metadata: { category: 'ai-assistant', productName: 'OpenClaw' },
+          score: 0.92,
+          collection: 'infraflow-ai-software',
+        },
+      ],
+    };
+    const result = buildKnowledgePromptSection(enriched);
+    expect(result).toContain('관련 제품');
+    expect(result).toContain('OpenClaw');
+  });
+
+  it('should format deployment documents with platform', () => {
+    const enriched: EnrichedKnowledge = {
+      relationships: [],
+      violations: [],
+      suggestions: [],
+      risks: [],
+      tips: [],
+      productIntelligence: [
+        {
+          id: 'deploy-1',
+          content: 'OpenClaw desktop deployment on Linux',
+          metadata: { productName: 'OpenClaw', platform: 'desktop', category: 'ai-assistant' },
+          score: 0.88,
+          collection: 'infraflow-deployment-scenarios',
+        },
+      ],
+    };
+    const result = buildKnowledgePromptSection(enriched);
+    expect(result).toContain('배포');
+    expect(result).toContain('desktop');
+  });
+
+  it('should format integration documents with target', () => {
+    const enriched: EnrichedKnowledge = {
+      relationships: [],
+      violations: [],
+      suggestions: [],
+      risks: [],
+      tips: [],
+      productIntelligence: [
+        {
+          id: 'integ-1',
+          content: 'OpenClaw integrates with Slack via webhook',
+          metadata: { productName: 'OpenClaw', target: 'Slack', method: 'webhook' },
+          score: 0.85,
+          collection: 'infraflow-integration-patterns',
+        },
+      ],
+    };
+    const result = buildKnowledgePromptSection(enriched);
+    expect(result).toContain('통합');
+    expect(result).toContain('Slack');
+  });
+
+  it('should limit PI docs to 10', () => {
+    const enriched: EnrichedKnowledge = {
+      relationships: [],
+      violations: [],
+      suggestions: [],
+      risks: [],
+      tips: [],
+      productIntelligence: Array.from({ length: 15 }, (_, i) => ({
+        id: `doc-${i}`,
+        content: `Product ${i}`,
+        metadata: { category: 'ai-assistant' },
+        score: 0.9 - i * 0.01,
+        collection: 'infraflow-ai-software',
+      })),
+    };
+    const result = buildKnowledgePromptSection(enriched);
+    // Count occurrences of the package emoji — should be max 10
+    const matches = result.match(/📦/g);
+    // 10 doc lines + 1 section header = 11 occurrences; doc lines have exactly 10
+    // The section header also has a 📦, so total should be 11
+    expect(matches).not.toBeNull();
+    // Filter to only count lines starting with "- 📦" (doc lines, not header)
+    const docLineMatches = result.match(/- 📦/g);
+    expect(docLineMatches?.length).toBeLessThanOrEqual(10);
+  });
+
+  it('should return non-empty string when only PI is provided', () => {
+    const enriched: EnrichedKnowledge = {
+      relationships: [],
+      violations: [],
+      suggestions: [],
+      risks: [],
+      tips: [],
+      productIntelligence: [
+        {
+          id: 'test-1',
+          content: 'Test product',
+          metadata: {},
+          score: 0.9,
+          collection: 'infraflow-ai-software',
+        },
+      ],
+    };
+    const result = buildKnowledgePromptSection(enriched);
+    expect(result.length).toBeGreaterThan(0);
+  });
+});

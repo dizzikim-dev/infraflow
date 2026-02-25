@@ -182,7 +182,7 @@ export function buildKnowledgePromptSection(
   // Filter by minimum confidence
   const filtered = allEntries.filter((entry) => entry.trust.confidence >= minConfidence);
 
-  if (filtered.length === 0 && !hasViolations(enriched) && enriched.risks.length === 0 && !enriched.vulnerabilities?.length && !enriched.complianceGaps?.length) {
+  if (filtered.length === 0 && !hasViolations(enriched) && enriched.risks.length === 0 && !enriched.vulnerabilities?.length && !enriched.complianceGaps?.length && !enriched.productIntelligence?.length) {
     return '';
   }
 
@@ -260,6 +260,16 @@ export function buildKnowledgePromptSection(
   if (gapLines.length > 0) {
     sections.push('### 📋 컴플라이언스 갭');
     for (const line of gapLines) {
+      sections.push(line);
+    }
+    sections.push('');
+  }
+
+  // Product Intelligence section
+  const piLines = buildProductIntelligenceLines(enriched);
+  if (piLines.length > 0) {
+    sections.push('### 📦 관련 제품 & 배포 정보');
+    for (const line of piLines) {
       sections.push(line);
     }
     sections.push('');
@@ -565,6 +575,34 @@ function buildComplianceGapLines(enriched: EnrichedKnowledge): string[] {
     const icon = gap.priority === 'critical' ? '🔴' : gap.priority === 'high' ? '🟠' : '🟡';
     lines.push(`- ${icon} [${gap.frameworkKo}] 누락 컴포넌트: ${gap.missingComponents.join(', ')}`);
     lines.push(`  조치: ${gap.remediationKo}`);
+  }
+  return lines;
+}
+
+/**
+ * Build product intelligence lines for LLM prompt.
+ * Limits to top 10 to avoid prompt bloat.
+ */
+function buildProductIntelligenceLines(enriched: EnrichedKnowledge): string[] {
+  const MAX_PI_DOCS = 10;
+  if (!enriched.productIntelligence?.length) return [];
+  const lines: string[] = [];
+  const topDocs = enriched.productIntelligence.slice(0, MAX_PI_DOCS);
+  for (const doc of topDocs) {
+    const productName = (doc.metadata?.productName as string) || '';
+    const category = (doc.metadata?.category as string) || '';
+    const platform = (doc.metadata?.platform as string) || '';
+    const scorePercent = Math.round(doc.score * 100);
+
+    // Format depends on collection type
+    if (doc.collection.includes('deployment')) {
+      lines.push(`- 🚀 [배포] ${productName} (${platform}): ${doc.content} (관련도: ${scorePercent}%)`);
+    } else if (doc.collection.includes('integration')) {
+      const target = (doc.metadata?.target as string) || '';
+      lines.push(`- 🔗 [통합] ${productName} ↔ ${target}: ${doc.content} (관련도: ${scorePercent}%)`);
+    } else {
+      lines.push(`- 📦 [${category}] ${doc.content} (관련도: ${scorePercent}%)`);
+    }
   }
   return lines;
 }

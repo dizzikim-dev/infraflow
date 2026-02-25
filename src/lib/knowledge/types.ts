@@ -259,6 +259,19 @@ export interface RecommendedCompanion extends CompanionRef {
 }
 
 // ---------------------------------------------------------------------------
+// Lightweight RAG Document (avoids circular import with rag module)
+// ---------------------------------------------------------------------------
+
+/** Lightweight RAG document for product intelligence (avoids circular import with rag module) */
+export interface PIDocument {
+  id: string;
+  content: string;
+  metadata: Record<string, unknown>;
+  score: number;
+  collection: string;
+}
+
+// ---------------------------------------------------------------------------
 // Context Enricher output
 // ---------------------------------------------------------------------------
 
@@ -270,6 +283,8 @@ export interface EnrichedKnowledge {
   tips: QuickTip[];
   vulnerabilities?: VulnerabilityEntry[];
   complianceGaps?: ComplianceGap[];
+  /** Product Intelligence data from RAG search */
+  productIntelligence?: PIDocument[];
 }
 
 // Re-exported from vulnerabilities.ts and industryCompliance.ts (circular-safe forward references)
