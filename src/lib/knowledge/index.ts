@@ -134,3 +134,21 @@ export type {
 export {
   getProductsForNodeType,
 } from './vendorCatalog';
+
+// Product Intelligence
+export {
+  allProductIntelligence,
+  getPIByCategory,
+  searchPI,
+  getPIForProduct,
+  getDeploymentProfiles,
+  getIntegrationsFor,
+  getScaleUpPaths,
+} from './productIntelligence';
+export type {
+  ProductIntelligence,
+  PICategory,
+  DeploymentProfile,
+  IntegrationInfo,
+  ScaleUpPath,
+} from './productIntelligence';
