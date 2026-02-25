@@ -17,7 +17,7 @@ import type {
 } from './types';
 import type { ProductNode } from '@/lib/knowledge/vendorCatalog/types';
 import {
-  allVendorCatalogs,
+  getVendorList,
   getProductsByNodeType,
 } from '@/lib/knowledge/vendorCatalog';
 
@@ -128,11 +128,12 @@ export function estimateProductCost(product: ProductNode): number {
  * Returns VendorCostEstimate with per-product line items, totals,
  * and coverage metrics.
  */
-export function getVendorSummary(
+export async function getVendorSummary(
   vendorId: string,
   spec: InfraSpec,
-): VendorCostEstimate {
-  const vendor = allVendorCatalogs.find((v) => v.vendorId === vendorId);
+): Promise<VendorCostEstimate> {
+  const allCatalogs = await getVendorList();
+  const vendor = allCatalogs.find((v) => v.vendorId === vendorId);
   const vendorName = vendor?.vendorName ?? vendorId;
 
   const products: ProductCostItem[] = [];
@@ -147,7 +148,7 @@ export function getVendorSummary(
 
   for (const [nodeType, quantity] of uniqueNodeTypes) {
     // Find matching products from this vendor
-    const vendorMatches = getProductsByNodeType(nodeType).filter(
+    const vendorMatches = (await getProductsByNodeType(nodeType)).filter(
       (vp) => vp.vendorId === vendorId,
     );
 
@@ -213,20 +214,21 @@ export function getVendorSummary(
  * - recommendedVendor (best composite score: 60% coverage + 40% inverse cost)
  * - savingsPercentage (between cheapest and most expensive)
  */
-export function compareVendorCosts(
+export async function compareVendorCosts(
   spec: InfraSpec,
   options?: CostComparisonOptions,
-): CostComparisonResult {
+): Promise<CostComparisonResult> {
   const requirements = options?.requirements ?? null;
 
   // Determine which vendors to evaluate
+  const allCatalogs = await getVendorList();
   const vendorIds = options?.vendorIds
     ? options.vendorIds
-    : allVendorCatalogs.map((v) => v.vendorId);
+    : allCatalogs.map((v) => v.vendorId);
 
   // Build estimates for each vendor
-  const vendorEstimates: VendorCostEstimate[] = vendorIds.map((vid) =>
-    getVendorSummary(vid, spec),
+  const vendorEstimates: VendorCostEstimate[] = await Promise.all(
+    vendorIds.map((vid) => getVendorSummary(vid, spec)),
   );
 
   // If there are no nodes or no estimates, return empty result

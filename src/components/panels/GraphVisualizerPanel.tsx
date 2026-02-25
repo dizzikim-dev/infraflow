@@ -15,7 +15,7 @@
  * Sub-components are extracted into `./graph-visualizer/`.
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Network } from 'lucide-react';
 import type { InfraNodeType } from '@/types/infra';
 import {
@@ -52,19 +52,30 @@ export function GraphVisualizerPanel({ onClose }: GraphVisualizerPanelProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Build graph data (memoized, pure function — no API call needed)
-  const graph = useMemo<KnowledgeGraph>(() => {
+  // Build graph data (async — vendor catalog is lazy-loaded)
+  const [graph, setGraph] = useState<KnowledgeGraph>({ nodes: [], edges: [], stats: { totalNodes: 0, totalEdges: 0, byCategory: {}, byRelationshipType: {}, byTier: {} } });
+
+  useEffect(() => {
+    let cancelled = false;
     const options: GraphFilterOptions = {
       includeIsolated: true,
       ...(selectedCategories.length > 0 ? { categories: selectedCategories } : {}),
     };
-    return buildKnowledgeGraph(options);
+    buildKnowledgeGraph(options).then((result) => {
+      if (!cancelled) setGraph(result);
+    });
+    return () => { cancelled = true; };
   }, [selectedCategories]);
 
   // Available categories derived from the full graph
-  const allCategories = useMemo(() => {
-    const fullGraph = buildKnowledgeGraph({ includeIsolated: true });
-    return Object.keys(fullGraph.stats.byCategory).sort();
+  const [allCategories, setAllCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    buildKnowledgeGraph({ includeIsolated: true }).then((fullGraph) => {
+      if (!cancelled) setAllCategories(Object.keys(fullGraph.stats.byCategory).sort());
+    });
+    return () => { cancelled = true; };
   }, []);
 
   // Filter nodes by search query

@@ -14,17 +14,13 @@
 import { useState, useMemo } from 'react';
 import { Scale, BarChart3, Grid3X3, CheckCircle2 } from 'lucide-react';
 import type { InfraNodeType, NodeCategory } from '@/types/infra';
-import {
-  getProductsByNodeType,
-  allVendorCatalogs,
-  getCatalogStats,
-} from '@/lib/knowledge/vendorCatalog';
 import { getAllNodes } from '@/lib/knowledge/vendorCatalog/queryHelpers';
 import type { ProductNode } from '@/lib/knowledge/vendorCatalog';
-import { getCategoryForType, getLabelForType, infrastructureDB } from '@/lib/data/infrastructureDB';
+import { getCategoryForType, getLabelForType } from '@/lib/data/infrastructureDB';
 import { PanelContainer } from './PanelContainer';
 import { PanelHeader } from './PanelHeader';
 import { PanelTabs } from './PanelTabs';
+import { useVendorCatalogs, useProductsByNodeType, useCatalogStats } from '@/hooks/useVendorData';
 
 // ============================================================
 // Types
@@ -141,7 +137,16 @@ function getSecurityCapabilities(products: ProductNode[]): string[] {
 
 /** Compare Tab: Side-by-side product comparison */
 function CompareTab({ selectedType }: { selectedType: InfraNodeType }) {
-  const vendorData = useMemo(() => getProductsByNodeType(selectedType), [selectedType]);
+  const { vendorResults: vendorData, loading } = useProductsByNodeType(selectedType);
+
+  if (loading) {
+    return (
+      <div className="text-center text-zinc-500 py-12">
+        <Scale className="w-10 h-10 mx-auto mb-3 opacity-50 animate-pulse" />
+        <p className="text-sm">벤더 데이터 로딩 중...</p>
+      </div>
+    );
+  }
 
   if (vendorData.length === 0) {
     return (
@@ -252,7 +257,7 @@ function CompareTab({ selectedType }: { selectedType: InfraNodeType }) {
 
 /** Coverage Tab: Matrix showing vendor coverage by node type */
 function CoverageTab() {
-  const vendors = allVendorCatalogs;
+  const { catalogs: vendors, loading } = useVendorCatalogs();
 
   const coverageData = useMemo(() => {
     const data: Record<string, Record<string, number>> = {};
@@ -272,6 +277,15 @@ function CoverageTab() {
     }
     return data;
   }, [vendors]);
+
+  if (loading) {
+    return (
+      <div className="text-center text-zinc-500 py-12">
+        <Grid3X3 className="w-10 h-10 mx-auto mb-3 opacity-50 animate-pulse" />
+        <p className="text-sm">데이터 로딩 중...</p>
+      </div>
+    );
+  }
 
   if (vendors.length === 0) {
     return (
@@ -345,8 +359,8 @@ function CoverageTab() {
 
 /** Stats Tab: Aggregate vendor statistics */
 function StatsTab() {
-  const stats = useMemo(() => getCatalogStats(), []);
-  const vendors = allVendorCatalogs;
+  const { catalogs: vendors, loading: vendorsLoading } = useVendorCatalogs();
+  const { stats, loading: statsLoading } = useCatalogStats();
 
   // Category coverage per vendor
   const categoryCoverage = useMemo(() => {
@@ -373,7 +387,6 @@ function StatsTab() {
   // Average products per node type per vendor
   const avgPerNodeType = useMemo(() => {
     const result: Record<string, number> = {};
-    const totalNodeTypes = NODE_TYPE_GROUPS.reduce((sum, g) => sum + g.types.length, 0);
 
     for (const vendor of vendors) {
       const allNodes = getAllNodes(vendor.products);
@@ -389,6 +402,15 @@ function StatsTab() {
     }
     return result;
   }, [vendors]);
+
+  if (vendorsLoading || statsLoading || !stats) {
+    return (
+      <div className="text-center text-zinc-500 py-12">
+        <BarChart3 className="w-10 h-10 mx-auto mb-3 opacity-50 animate-pulse" />
+        <p className="text-sm">데이터 로딩 중...</p>
+      </div>
+    );
+  }
 
   if (vendors.length === 0) {
     return (
@@ -497,8 +519,11 @@ export function VendorComparisonPanel({ nodeType, onClose }: VendorComparisonPan
   const [activeTab, setActiveTab] = useState<TabKey>('compare');
   const [selectedType, setSelectedType] = useState<InfraNodeType>(nodeType ?? 'firewall');
 
-  const vendorCount = allVendorCatalogs.length;
-  const stats = useMemo(() => getCatalogStats(), []);
+  const { catalogs, loading: catalogsLoading } = useVendorCatalogs();
+  const { stats, loading: statsLoading } = useCatalogStats();
+
+  const vendorCount = catalogsLoading ? 0 : catalogs.length;
+  const totalProducts = statsLoading || !stats ? 0 : stats.totalProducts;
 
   const tabs: { key: TabKey; label: string; icon?: React.ComponentType<{ className?: string }> }[] = [
     { key: 'compare', label: '비교', icon: Scale },
@@ -554,7 +579,7 @@ export function VendorComparisonPanel({ nodeType, onClose }: VendorComparisonPan
 
       {/* Footer */}
       <div className="border-t border-white/10 px-4 py-3 text-xs text-zinc-400 flex items-center justify-between">
-        <span>{vendorCount}개 벤더 / {stats.totalProducts}개 제품 등록됨</span>
+        <span>{vendorCount}개 벤더 / {totalProducts}개 제품 등록됨</span>
         <CheckCircle2 className="w-3.5 h-3.5 text-zinc-500" />
       </div>
     </PanelContainer>

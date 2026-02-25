@@ -9,7 +9,8 @@
 
 import { ChromaClient } from 'chromadb';
 import { createLogger } from '@/lib/utils/logger';
-import type { RAGConfig } from './types';
+import { getEnv } from '@/lib/config/env';
+import type { RAGConfig, FetchCacheConfig } from './types';
 
 const logger = createLogger('ChromaClient');
 
@@ -23,15 +24,30 @@ export const COLLECTIONS = {
   CLOUD_SERVICES: 'infraflow-cloud-services',
   DEPLOYMENT_SCENARIOS: 'infraflow-deployment-scenarios',
   INTEGRATION_PATTERNS: 'infraflow-integration-patterns',
+  EXTERNAL_CONTENT: 'infraflow-external-content',
 } as const;
 
-/** Default RAG configuration */
-export const RAG_CONFIG: RAGConfig = {
-  persistDirectory: '.chroma',
-  embeddingModel: 'text-embedding-ada-002',
-  defaultTopK: 10,
-  similarityThreshold: 0.7,
-};
+/** Configuration for external content fetch caching — reads from env with sensible defaults */
+export const FETCH_CACHE_CONFIG: FetchCacheConfig = (() => {
+  const env = getEnv();
+  return {
+    maxBytes: 50 * 1024, // 50KB
+    ttlSeconds: env.RAG_CACHE_TTL_HOURS * 60 * 60,
+    confidenceThreshold: env.RAG_MIN_SCORE,
+    timeoutMs: 2500, // 2.5s hard timeout for live augment
+  };
+})();
+
+/** Default RAG configuration — reads from env with sensible defaults */
+export const RAG_CONFIG: RAGConfig = (() => {
+  const env = getEnv();
+  return {
+    persistDirectory: '.chroma',
+    embeddingModel: 'text-embedding-ada-002',
+    defaultTopK: env.RAG_TOP_K,
+    similarityThreshold: 0.7,
+  };
+})();
 
 // ---------------------------------------------------------------------------
 // Singleton client

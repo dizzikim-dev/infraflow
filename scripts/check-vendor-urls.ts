@@ -10,7 +10,7 @@
  * HTTP checking is separated so the core logic can be tested without network.
  */
 
-import { allVendorCatalogs } from '../src/lib/knowledge/vendorCatalog';
+import { getVendorList } from '../src/lib/knowledge/vendorCatalog';
 import { getAllNodes } from '../src/lib/knowledge/vendorCatalog/queryHelpers';
 
 // ---------------------------------------------------------------------------
@@ -43,14 +43,15 @@ export interface UrlCollectionResult {
 // ---------------------------------------------------------------------------
 
 /** Collect all URLs from vendor catalogs for health checking. */
-export function collectVendorUrls(): UrlCollectionResult {
+export async function collectVendorUrls(): Promise<UrlCollectionResult> {
   const urls: UrlEntry[] = [];
   const productsWithoutSourceUrl: string[] = [];
   const productsWithoutDatasheetUrl: string[] = [];
   let missingSourceUrlCount = 0;
   let missingDatasheetUrlCount = 0;
 
-  for (const catalog of allVendorCatalogs) {
+  const catalogs = await getVendorList();
+  for (const catalog of catalogs) {
     const allNodes = getAllNodes(catalog.products);
     for (const node of allNodes) {
       if (node.sourceUrl) {
@@ -96,8 +97,8 @@ export function collectVendorUrls(): UrlCollectionResult {
 // Main execution
 // ---------------------------------------------------------------------------
 
-function main(): void {
-  const result = collectVendorUrls();
+async function main(): Promise<void> {
+  const result = await collectVendorUrls();
 
   console.log('\n--- Vendor URL Health Check ---');
   console.log(`Total URLs found: ${result.urls.length}`);

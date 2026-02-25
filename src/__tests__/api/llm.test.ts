@@ -2,6 +2,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { POST, GET } from '@/app/api/llm/route';
 
+// Mock rateLimiter — must be before route import
+vi.mock('@/lib/middleware/rateLimiter', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({
+    allowed: true,
+    info: { limit: 10, remaining: 9, dailyUsage: 1, dailyLimit: 100 },
+    response: undefined,
+  }),
+  LLM_RATE_LIMIT: { maxRequests: 10, windowMs: 60000, dailyLimit: 100 },
+  DEFAULT_RATE_LIMIT: { maxRequests: 30, windowMs: 60000, dailyLimit: 300 },
+}));
+
 // Mock environment variables
 const originalEnv = process.env;
 
@@ -22,11 +33,14 @@ describe('/api/llm', () => {
   });
 
   describe('GET /api/llm', () => {
+    const createGetRequest = () =>
+      new NextRequest('http://localhost/api/llm', { method: 'GET' });
+
     it('should return configured status when no API keys are configured', async () => {
       delete process.env.ANTHROPIC_API_KEY;
       delete process.env.OPENAI_API_KEY;
 
-      const response = await GET();
+      const response = await GET(createGetRequest());
       const data = await response.json();
 
       expect(data.configured).toBe(false);
@@ -38,7 +52,7 @@ describe('/api/llm', () => {
       process.env.ANTHROPIC_API_KEY = 'test-claude-key';
       delete process.env.OPENAI_API_KEY;
 
-      const response = await GET();
+      const response = await GET(createGetRequest());
       const data = await response.json();
 
       expect(data.configured).toBe(true);
@@ -50,7 +64,7 @@ describe('/api/llm', () => {
       delete process.env.ANTHROPIC_API_KEY;
       process.env.OPENAI_API_KEY = 'test-openai-key';
 
-      const response = await GET();
+      const response = await GET(createGetRequest());
       const data = await response.json();
 
       expect(data.configured).toBe(true);
@@ -62,7 +76,7 @@ describe('/api/llm', () => {
       process.env.ANTHROPIC_API_KEY = 'test-claude-key';
       process.env.OPENAI_API_KEY = 'test-openai-key';
 
-      const response = await GET();
+      const response = await GET(createGetRequest());
       const data = await response.json();
 
       expect(data.configured).toBe(true);

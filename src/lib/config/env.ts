@@ -59,6 +59,15 @@ const envSchema = z.object({
   ANALYZE_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60000),
   ANALYZE_RATE_LIMIT_DAILY: z.coerce.number().int().positive().default(500),
 
+  // ---- LLM Advanced Configuration ----
+  LLM_MAX_RETRIES: z.coerce.number().int().nonnegative().default(2),
+
+  // ---- RAG Configuration ----
+  RAG_CACHE_TTL_HOURS: z.coerce.number().positive().default(24),
+  RAG_FETCH_TIMEOUT_MS: z.coerce.number().int().positive().default(10000),
+  RAG_TOP_K: z.coerce.number().int().positive().default(10),
+  RAG_MIN_SCORE: z.coerce.number().min(0).max(1).default(0.5),
+
   // ---- Logging ----
   LOG_LEVEL: z.string().optional(),
   NEXT_PUBLIC_LOG_LEVEL: z.string().optional(),
@@ -70,6 +79,7 @@ const envSchema = z.object({
 
   // ---- Demo Mode ----
   NEXT_PUBLIC_DEMO_MODE: z.string().optional(),
+  DEMO_ADMIN_ENABLED: z.string().optional(),
 
   // ---- Environment ----
   NODE_ENV: z

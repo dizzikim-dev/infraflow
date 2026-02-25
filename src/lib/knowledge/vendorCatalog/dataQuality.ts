@@ -6,7 +6,7 @@
  * for tracking catalog enrichment progress.
  */
 
-import { allVendorCatalogs } from './index';
+import { getVendorList } from './index';
 import { getAllNodes } from './queryHelpers';
 import type { ProductNode } from './types';
 
@@ -133,13 +133,14 @@ export function assessProduct(product: ProductNode): ProductQualityMetrics {
 // ---------------------------------------------------------------------------
 
 /** Generate a quality report across all registered vendor catalogs. */
-export function generateQualityReport(): CatalogQualityReport {
+export async function generateQualityReport(): Promise<CatalogQualityReport> {
+  const allCatalogs = await getVendorList();
   const vendors: VendorQualityReport[] = [];
   let totalProducts = 0;
   let totalAssessable = 0;
   let totalComplete = 0;
 
-  for (const catalog of allVendorCatalogs) {
+  for (const catalog of allCatalogs) {
     const allNodes = getAllNodes(catalog.products);
     // Assess products at depth 2+ (series level and deeper per VC-009)
     const assessable = allNodes.filter((n) => n.depth >= 2);

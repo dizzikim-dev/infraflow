@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { InfraNodeType, InfraSpec } from '@/types/infra';
 import type {
   ComponentRelationship,
@@ -96,6 +96,30 @@ export function useEvidence(
   nodeType: InfraNodeType | null,
   spec: InfraSpec | null,
 ): EvidenceData | null {
+  const [recommendations, setRecommendations] = useState<ProductRecommendation[]>([]);
+
+  // Async: load vendor recommendations
+  useEffect(() => {
+    if (!nodeId || !nodeType || !spec) {
+      setRecommendations([]);
+      return;
+    }
+    let cancelled = false;
+    matchVendorProducts(spec)
+      .then((result) => {
+        if (cancelled) return;
+        const nodeRec = result.nodeRecommendations.find(
+          (nr) => nr.nodeId === nodeId || nr.nodeType === nodeType,
+        );
+        setRecommendations(nodeRec?.recommendations ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setRecommendations([]);
+      });
+    return () => { cancelled = true; };
+  }, [nodeId, nodeType, spec]);
+
+  // Sync: compute knowledge-graph evidence
   return useMemo(() => {
     if (!nodeId || !nodeType || !spec) return null;
 
@@ -126,18 +150,6 @@ export function useEvidence(
     );
 
     const complianceGaps = enriched.complianceGaps ?? [];
-
-    // Get recommendations for this node type
-    let recommendations: ProductRecommendation[] = [];
-    try {
-      const result = matchVendorProducts(spec);
-      const nodeRec = result.nodeRecommendations.find(
-        (nr) => nr.nodeId === nodeId || nr.nodeType === nodeType,
-      );
-      recommendations = nodeRec?.recommendations ?? [];
-    } catch {
-      // Recommendation engine may not be available
-    }
 
     // Group recommendations by vendor (best per vendor + alternatives)
     const vendorMap = new Map<string, ProductRecommendation[]>();
@@ -194,5 +206,5 @@ export function useEvidence(
         sources: sources.length,
       },
     };
-  }, [nodeId, nodeType, spec]);
+  }, [nodeId, nodeType, spec, recommendations]);
 }

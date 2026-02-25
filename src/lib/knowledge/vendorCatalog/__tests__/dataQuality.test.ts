@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { ProductNode, VendorCatalog } from '../types';
-import { allVendorCatalogs } from '../index';
+import { _setVendorCatalogCache, _resetVendorCatalogCache } from '../index';
 import {
   assessProduct,
   generateQualityReport,
@@ -242,19 +242,15 @@ describe('assessProduct', () => {
 // ---------------------------------------------------------------------------
 
 describe('generateQualityReport', () => {
-  let savedCatalogs: VendorCatalog[];
-
   beforeEach(() => {
-    savedCatalogs = [...allVendorCatalogs];
-    allVendorCatalogs.length = 0;
+    _setVendorCatalogCache([]);
   });
 
   afterEach(() => {
-    allVendorCatalogs.length = 0;
-    allVendorCatalogs.push(...savedCatalogs);
+    _resetVendorCatalogCache();
   });
 
-  it('should return correct vendor count', () => {
+  it('should return correct vendor count', async () => {
     const category: ProductNode = {
       nodeId: 'cat-1',
       depth: 0,
@@ -268,7 +264,7 @@ describe('generateQualityReport', () => {
       children: [makeEnrichedProduct()],
     };
 
-    allVendorCatalogs.push(
+    _setVendorCatalogCache([
       makeVendor({
         vendorId: 'vendor-a',
         vendorName: 'Vendor A',
@@ -279,14 +275,14 @@ describe('generateQualityReport', () => {
         vendorName: 'Vendor B',
         products: [],
       }),
-    );
+    ]);
 
-    const report = generateQualityReport();
+    const report = await generateQualityReport();
     expect(report.totalVendors).toBe(2);
     expect(report.vendors).toHaveLength(2);
   });
 
-  it('should correctly count total and assessable products', () => {
+  it('should correctly count total and assessable products', async () => {
     // depth 0 (category) + depth 1 (product line) + depth 2 (enriched model)
     const model = makeEnrichedProduct({ depth: 2 });
     const productLine: ProductNode = {
@@ -314,22 +310,22 @@ describe('generateQualityReport', () => {
       children: [productLine],
     };
 
-    allVendorCatalogs.push(
+    _setVendorCatalogCache([
       makeVendor({
         vendorId: 'vendor-a',
         vendorName: 'Vendor A',
         products: [category],
       }),
-    );
+    ]);
 
-    const report = generateQualityReport();
+    const report = await generateQualityReport();
     // total = 3 (cat + pl + model), assessable = 1 (depth >= 2)
     expect(report.totalProducts).toBe(3);
     expect(report.assessableProducts).toBe(1);
     expect(report.completeProducts).toBe(1);
   });
 
-  it('should calculate completeness percent correctly', () => {
+  it('should calculate completeness percent correctly', async () => {
     const enriched = makeEnrichedProduct({ depth: 2 });
     const stub = makeStubProduct({ depth: 2 });
 
@@ -346,15 +342,15 @@ describe('generateQualityReport', () => {
       children: [enriched, stub],
     };
 
-    allVendorCatalogs.push(
+    _setVendorCatalogCache([
       makeVendor({
         vendorId: 'vendor-a',
         vendorName: 'Vendor A',
         products: [category],
       }),
-    );
+    ]);
 
-    const report = generateQualityReport();
+    const report = await generateQualityReport();
     const vendor = report.vendors[0];
     expect(vendor.assessableProducts).toBe(2);
     expect(vendor.completeProducts).toBe(1);
@@ -363,7 +359,7 @@ describe('generateQualityReport', () => {
     expect(report.overallCompletenessPercent).toBe(50);
   });
 
-  it('should calculate avgCompletenessScore correctly', () => {
+  it('should calculate avgCompletenessScore correctly', async () => {
     // enriched = 100, stub = 0 => avg = 50
     const enriched = makeEnrichedProduct({ depth: 2 });
     const stub = makeStubProduct({ depth: 2 });
@@ -381,20 +377,20 @@ describe('generateQualityReport', () => {
       children: [enriched, stub],
     };
 
-    allVendorCatalogs.push(
+    _setVendorCatalogCache([
       makeVendor({
         vendorId: 'vendor-a',
         vendorName: 'Vendor A',
         products: [category],
       }),
-    );
+    ]);
 
-    const report = generateQualityReport();
+    const report = await generateQualityReport();
     const vendor = report.vendors[0];
     expect(vendor.avgCompletenessScore).toBe(50);
   });
 
-  it('should track missing fields correctly', () => {
+  it('should track missing fields correctly', async () => {
     // Two stub products, both missing everything
     const stub1 = makeStubProduct({ nodeId: 'stub-1', depth: 2 });
     const stub2 = makeStubProduct({ nodeId: 'stub-2', depth: 2 });
@@ -412,15 +408,15 @@ describe('generateQualityReport', () => {
       children: [stub1, stub2],
     };
 
-    allVendorCatalogs.push(
+    _setVendorCatalogCache([
       makeVendor({
         vendorId: 'vendor-a',
         vendorName: 'Vendor A',
         products: [category],
       }),
-    );
+    ]);
 
-    const report = generateQualityReport();
+    const report = await generateQualityReport();
     const vendor = report.vendors[0];
     expect(vendor.missingFields.infraNodeTypes).toBe(2);
     expect(vendor.missingFields.lifecycle).toBe(2);
@@ -431,16 +427,16 @@ describe('generateQualityReport', () => {
     expect(vendor.missingFields.datasheetUrl).toBe(2);
   });
 
-  it('should handle empty catalogs gracefully', () => {
-    allVendorCatalogs.push(
+  it('should handle empty catalogs gracefully', async () => {
+    _setVendorCatalogCache([
       makeVendor({
         vendorId: 'empty-vendor',
         vendorName: 'Empty Vendor',
         products: [],
       }),
-    );
+    ]);
 
-    const report = generateQualityReport();
+    const report = await generateQualityReport();
     expect(report.totalVendors).toBe(1);
     expect(report.totalProducts).toBe(0);
     expect(report.assessableProducts).toBe(0);
@@ -452,15 +448,15 @@ describe('generateQualityReport', () => {
     expect(vendor.avgCompletenessScore).toBe(0);
   });
 
-  it('should include a timestamp string', () => {
-    const report = generateQualityReport();
+  it('should include a timestamp string', async () => {
+    const report = await generateQualityReport();
     expect(typeof report.timestamp).toBe('string');
     // Should be a valid ISO date string
     expect(() => new Date(report.timestamp)).not.toThrow();
     expect(new Date(report.timestamp).toISOString()).toBe(report.timestamp);
   });
 
-  it('should not count depth 0 or depth 1 products as assessable', () => {
+  it('should not count depth 0 or depth 1 products as assessable', async () => {
     // Only depth 0 and depth 1 nodes — none assessable
     const productLine: ProductNode = {
       nodeId: 'pl-1',
@@ -487,15 +483,15 @@ describe('generateQualityReport', () => {
       children: [productLine],
     };
 
-    allVendorCatalogs.push(
+    _setVendorCatalogCache([
       makeVendor({
         vendorId: 'vendor-a',
         vendorName: 'Vendor A',
         products: [category],
       }),
-    );
+    ]);
 
-    const report = generateQualityReport();
+    const report = await generateQualityReport();
     expect(report.totalProducts).toBe(2);
     expect(report.assessableProducts).toBe(0);
   });
@@ -506,39 +502,39 @@ describe('generateQualityReport', () => {
 // ---------------------------------------------------------------------------
 
 describe('generateQualityReport (integration)', () => {
-  it('should return report for all 22 registered vendor catalogs', () => {
-    const report = generateQualityReport();
+  it('should return report for all 22 registered vendor catalogs', async () => {
+    const report = await generateQualityReport();
     expect(report.totalVendors).toBe(22);
     expect(report.vendors).toHaveLength(22);
   });
 
-  it('should have totalProducts greater than 0', () => {
-    const report = generateQualityReport();
+  it('should have totalProducts greater than 0', async () => {
+    const report = await generateQualityReport();
     expect(report.totalProducts).toBeGreaterThan(0);
   });
 
-  it('should have assessableProducts less than or equal to totalProducts', () => {
-    const report = generateQualityReport();
+  it('should have assessableProducts less than or equal to totalProducts', async () => {
+    const report = await generateQualityReport();
     expect(report.assessableProducts).toBeLessThanOrEqual(
       report.totalProducts,
     );
   });
 
-  it('should have completeProducts less than or equal to assessableProducts', () => {
-    const report = generateQualityReport();
+  it('should have completeProducts less than or equal to assessableProducts', async () => {
+    const report = await generateQualityReport();
     expect(report.completeProducts).toBeLessThanOrEqual(
       report.assessableProducts,
     );
   });
 
-  it('should have overallCompletenessPercent between 0 and 100', () => {
-    const report = generateQualityReport();
+  it('should have overallCompletenessPercent between 0 and 100', async () => {
+    const report = await generateQualityReport();
     expect(report.overallCompletenessPercent).toBeGreaterThanOrEqual(0);
     expect(report.overallCompletenessPercent).toBeLessThanOrEqual(100);
   });
 
-  it('should include expected vendor IDs', () => {
-    const report = generateQualityReport();
+  it('should include expected vendor IDs', async () => {
+    const report = await generateQualityReport();
     const vendorIds = report.vendors.map((v) => v.vendorId);
     expect(vendorIds).toContain('cisco');
     expect(vendorIds).toContain('fortinet');
@@ -546,8 +542,8 @@ describe('generateQualityReport (integration)', () => {
     expect(vendorIds).toContain('arista');
   });
 
-  it('should have non-negative missing field counts', () => {
-    const report = generateQualityReport();
+  it('should have non-negative missing field counts', async () => {
+    const report = await generateQualityReport();
     for (const vendor of report.vendors) {
       expect(vendor.missingFields.infraNodeTypes).toBeGreaterThanOrEqual(0);
       expect(vendor.missingFields.lifecycle).toBeGreaterThanOrEqual(0);
@@ -565,19 +561,15 @@ describe('generateQualityReport (integration)', () => {
 // ---------------------------------------------------------------------------
 
 describe('collectVendorUrls', () => {
-  let savedCatalogs: VendorCatalog[];
-
   beforeEach(() => {
-    savedCatalogs = [...allVendorCatalogs];
-    allVendorCatalogs.length = 0;
+    _setVendorCatalogCache([]);
   });
 
   afterEach(() => {
-    allVendorCatalogs.length = 0;
-    allVendorCatalogs.push(...savedCatalogs);
+    _resetVendorCatalogCache();
   });
 
-  it('should collect sourceUrl entries', () => {
+  it('should collect sourceUrl entries', async () => {
     const product = makeEnrichedProduct({
       sourceUrl: 'https://vendor.com/product',
     });
@@ -594,22 +586,22 @@ describe('collectVendorUrls', () => {
       children: [product],
     };
 
-    allVendorCatalogs.push(
+    _setVendorCatalogCache([
       makeVendor({
         vendorId: 'v1',
         vendorName: 'V1',
         products: [category],
       }),
-    );
+    ]);
 
-    const result = collectVendorUrls();
+    const result = await collectVendorUrls();
     const sourceUrls = result.urls.filter((u) => u.field === 'sourceUrl');
     expect(sourceUrls.length).toBe(2); // category + product
     expect(sourceUrls[0].url).toBe('https://vendor.com/category');
     expect(sourceUrls[1].url).toBe('https://vendor.com/product');
   });
 
-  it('should collect datasheetUrl entries', () => {
+  it('should collect datasheetUrl entries', async () => {
     const product = makeEnrichedProduct({
       datasheetUrl: 'https://vendor.com/datasheet.pdf',
     });
@@ -626,21 +618,21 @@ describe('collectVendorUrls', () => {
       children: [product],
     };
 
-    allVendorCatalogs.push(
+    _setVendorCatalogCache([
       makeVendor({
         vendorId: 'v1',
         vendorName: 'V1',
         products: [category],
       }),
-    );
+    ]);
 
-    const result = collectVendorUrls();
+    const result = await collectVendorUrls();
     const datasheetUrls = result.urls.filter((u) => u.field === 'datasheetUrl');
     expect(datasheetUrls.length).toBe(1);
     expect(datasheetUrls[0].url).toBe('https://vendor.com/datasheet.pdf');
   });
 
-  it('should track products missing sourceUrl', () => {
+  it('should track products missing sourceUrl', async () => {
     const productWithoutUrl = makeStubProduct({ sourceUrl: '' });
     const category: ProductNode = {
       nodeId: 'cat-1',
@@ -655,20 +647,20 @@ describe('collectVendorUrls', () => {
       children: [productWithoutUrl],
     };
 
-    allVendorCatalogs.push(
+    _setVendorCatalogCache([
       makeVendor({
         vendorId: 'v1',
         vendorName: 'V1',
         products: [category],
       }),
-    );
+    ]);
 
-    const result = collectVendorUrls();
+    const result = await collectVendorUrls();
     expect(result.missingSourceUrlCount).toBe(1);
     expect(result.productsWithoutSourceUrl).toContain('v1/stub-001');
   });
 
-  it('should track products missing datasheetUrl', () => {
+  it('should track products missing datasheetUrl', async () => {
     const product = makeStubProduct({
       sourceUrl: 'https://example.com',
     });
@@ -685,23 +677,23 @@ describe('collectVendorUrls', () => {
       children: [product],
     };
 
-    allVendorCatalogs.push(
+    _setVendorCatalogCache([
       makeVendor({
         vendorId: 'v1',
         vendorName: 'V1',
         products: [category],
       }),
-    );
+    ]);
 
-    const result = collectVendorUrls();
+    const result = await collectVendorUrls();
     // Both category and product lack datasheetUrl
     expect(result.missingDatasheetUrlCount).toBe(2);
     expect(result.productsWithoutDatasheetUrl).toContain('v1/cat-1');
     expect(result.productsWithoutDatasheetUrl).toContain('v1/stub-001');
   });
 
-  it('should return empty results for empty catalogs', () => {
-    const result = collectVendorUrls();
+  it('should return empty results for empty catalogs', async () => {
+    const result = await collectVendorUrls();
     expect(result.urls).toHaveLength(0);
     expect(result.missingSourceUrlCount).toBe(0);
     expect(result.productsWithoutSourceUrl).toHaveLength(0);
@@ -709,7 +701,7 @@ describe('collectVendorUrls', () => {
     expect(result.productsWithoutDatasheetUrl).toHaveLength(0);
   });
 
-  it('should include correct vendorId and productId in URL entries', () => {
+  it('should include correct vendorId and productId in URL entries', async () => {
     const product = makeEnrichedProduct({
       nodeId: 'fw-001',
       sourceUrl: 'https://vendor.com/fw',
@@ -727,15 +719,15 @@ describe('collectVendorUrls', () => {
       children: [product],
     };
 
-    allVendorCatalogs.push(
+    _setVendorCatalogCache([
       makeVendor({
         vendorId: 'acme',
         vendorName: 'ACME',
         products: [category],
       }),
-    );
+    ]);
 
-    const result = collectVendorUrls();
+    const result = await collectVendorUrls();
     const fwEntry = result.urls.find(
       (u) => u.productId === 'fw-001' && u.field === 'sourceUrl',
     );
@@ -750,21 +742,21 @@ describe('collectVendorUrls', () => {
 // ---------------------------------------------------------------------------
 
 describe('collectVendorUrls (integration)', () => {
-  it('should collect URLs from all real vendor catalogs', () => {
-    const result = collectVendorUrls();
+  it('should collect URLs from all real vendor catalogs', async () => {
+    const result = await collectVendorUrls();
     // With 22 vendors and 400+ products, should have many URLs
     expect(result.urls.length).toBeGreaterThan(0);
   });
 
-  it('should have URL entries with valid URL format', () => {
-    const result = collectVendorUrls();
+  it('should have URL entries with valid URL format', async () => {
+    const result = await collectVendorUrls();
     for (const entry of result.urls) {
       expect(entry.url).toMatch(/^https?:\/\//);
     }
   });
 
-  it('should include both sourceUrl and datasheetUrl types', () => {
-    const result = collectVendorUrls();
+  it('should include both sourceUrl and datasheetUrl types', async () => {
+    const result = await collectVendorUrls();
     const sourceUrls = result.urls.filter((u) => u.field === 'sourceUrl');
     expect(sourceUrls.length).toBeGreaterThan(0);
     // datasheetUrl may be sparse, just verify the filter works

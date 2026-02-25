@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { InfraNodeType } from '@/types/infra';
 import type { VendorCatalog, ProductNode, SearchResult } from '../types';
 import {
-  allVendorCatalogs,
+  _setVendorCatalogCache,
+  _resetVendorCatalogCache,
   getVendorList,
   getVendor,
   getProductsByNodeType,
@@ -77,63 +78,55 @@ function makeVendor(overrides: Partial<VendorCatalog> = {}): VendorCatalog {
 
 describe('vendorCatalog unified query API', () => {
   describe('empty catalog (default state)', () => {
-    let savedCatalogs: VendorCatalog[];
-
     beforeEach(() => {
-      // Save and clear the catalog to test empty-state behavior
-      savedCatalogs = [...allVendorCatalogs];
-      allVendorCatalogs.length = 0;
+      // Set an empty catalog to test empty-state behavior
+      _setVendorCatalogCache([]);
     });
 
     afterEach(() => {
-      // Restore the original catalogs
-      allVendorCatalogs.length = 0;
-      allVendorCatalogs.push(...savedCatalogs);
+      // Reset to default lazy-load state
+      _resetVendorCatalogCache();
     });
 
-    it('should export allVendorCatalogs as an array', () => {
-      expect(Array.isArray(allVendorCatalogs)).toBe(true);
-    });
-
-    it('should return an empty array from getVendorList', () => {
-      const list = getVendorList();
+    it('should return an empty array from getVendorList', async () => {
+      const list = await getVendorList();
       expect(Array.isArray(list)).toBe(true);
       expect(list).toHaveLength(0);
     });
 
-    it('should return undefined from getVendor for unknown vendor', () => {
-      expect(getVendor('non-existent')).toBeUndefined();
+    it('should return undefined from getVendor for unknown vendor', async () => {
+      expect(await getVendor('non-existent')).toBeUndefined();
     });
 
-    it('should return empty array from getProductsByNodeType', () => {
-      const results = getProductsByNodeType('firewall' as InfraNodeType);
+    it('should return empty array from getProductsByNodeType', async () => {
+      const results = await getProductsByNodeType('firewall' as InfraNodeType);
       expect(Array.isArray(results)).toBe(true);
       expect(results).toHaveLength(0);
     });
 
-    it('should return empty array from getChildren for unknown vendor', () => {
-      const children = getChildren('unknown-vendor', 'some-node');
+    it('should return empty array from getChildren for unknown vendor', async () => {
+      const children = await getChildren('unknown-vendor', 'some-node');
       expect(children).toEqual([]);
     });
 
-    it('should return empty array from getLeafProducts for unknown vendor', () => {
-      const leaves = getLeafProducts('unknown-vendor');
+    it('should return empty array from getLeafProducts for unknown vendor', async () => {
+      const leaves = await getLeafProducts('unknown-vendor');
       expect(leaves).toEqual([]);
     });
 
-    it('should return empty array from getProductPath for unknown vendor', () => {
-      const path = getProductPath('unknown-vendor', 'some-node');
+    it('should return empty array from getProductPath for unknown vendor', async () => {
+      const path = await getProductPath('unknown-vendor', 'some-node');
       expect(path).toEqual([]);
     });
 
-    it('should return empty array from searchProducts for gibberish', () => {
-      const results = searchProducts('xyznonexistent123');
+    it('should return empty array from searchProducts for gibberish', async () => {
+      const results = await searchProducts('xyznonexistent123');
       expect(Array.isArray(results)).toBe(true);
       expect(results).toHaveLength(0);
     });
 
-    it('should return valid shape from getCatalogStats', () => {
-      const stats = getCatalogStats();
+    it('should return valid shape from getCatalogStats', async () => {
+      const stats = await getCatalogStats();
       expect(stats).toEqual({
         vendors: 0,
         totalProducts: 0,
@@ -147,8 +140,8 @@ describe('vendorCatalog unified query API', () => {
   // -------------------------------------------------------------------------
 
   describe('with populated catalog data', () => {
-    // Build a realistic two-vendor catalog and push into allVendorCatalogs
-    // before each test, then clean up after.
+    // Build a realistic two-vendor catalog and set via _setVendorCatalogCache
+    // before each test, then reset after.
 
     const fwLeaf1 = makeLeaf({
       nodeId: 'PN-FW-001',
@@ -245,25 +238,20 @@ describe('vendorCatalog unified query API', () => {
       stats: { totalProducts: 3, maxDepth: 1, categoriesCount: 1 },
     });
 
-    let savedCatalogs: VendorCatalog[];
-
     beforeEach(() => {
-      // Save original, then reset and populate with test data
-      savedCatalogs = [...allVendorCatalogs];
-      allVendorCatalogs.length = 0;
-      allVendorCatalogs.push(vendorA, vendorB);
+      // Populate with test data
+      _setVendorCatalogCache([vendorA, vendorB]);
     });
 
     afterEach(() => {
-      // Restore the original catalogs
-      allVendorCatalogs.length = 0;
-      allVendorCatalogs.push(...savedCatalogs);
+      // Reset to default lazy-load state
+      _resetVendorCatalogCache();
     });
 
     // -- getVendorList -------------------------------------------------------
     describe('getVendorList', () => {
-      it('should return all registered vendors', () => {
-        const list = getVendorList();
+      it('should return all registered vendors', async () => {
+        const list = await getVendorList();
         expect(list).toHaveLength(2);
         expect(list.map((v) => v.vendorId).sort()).toEqual(['cisco', 'fortinet']);
       });
@@ -271,21 +259,21 @@ describe('vendorCatalog unified query API', () => {
 
     // -- getVendor -----------------------------------------------------------
     describe('getVendor', () => {
-      it('should return a vendor by ID', () => {
-        const vendor = getVendor('fortinet');
+      it('should return a vendor by ID', async () => {
+        const vendor = await getVendor('fortinet');
         expect(vendor).toBeDefined();
         expect(vendor!.vendorName).toBe('Fortinet');
       });
 
-      it('should return undefined for unknown vendor', () => {
-        expect(getVendor('unknown')).toBeUndefined();
+      it('should return undefined for unknown vendor', async () => {
+        expect(await getVendor('unknown')).toBeUndefined();
       });
     });
 
     // -- getProductsByNodeType -----------------------------------------------
     describe('getProductsByNodeType', () => {
-      it('should find firewall products across multiple vendors', () => {
-        const results = getProductsByNodeType('firewall' as InfraNodeType);
+      it('should find firewall products across multiple vendors', async () => {
+        const results = await getProductsByNodeType('firewall' as InfraNodeType);
         expect(results.length).toBe(2);
 
         const fortinet = results.find((r) => r.vendorId === 'fortinet');
@@ -302,23 +290,23 @@ describe('vendorCatalog unified query API', () => {
         expect(cisco!.products[0].nodeId).toBe('PN-ASA-001');
       });
 
-      it('should find switch products only in the vendor that has them', () => {
-        const results = getProductsByNodeType('switch-l2' as InfraNodeType);
+      it('should find switch products only in the vendor that has them', async () => {
+        const results = await getProductsByNodeType('switch-l2' as InfraNodeType);
         expect(results).toHaveLength(1);
         expect(results[0].vendorId).toBe('cisco');
         expect(results[0].products).toHaveLength(1);
       });
 
-      it('should return empty for a node type with no products', () => {
-        const results = getProductsByNodeType('waf' as InfraNodeType);
+      it('should return empty for a node type with no products', async () => {
+        const results = await getProductsByNodeType('waf' as InfraNodeType);
         expect(results).toEqual([]);
       });
     });
 
     // -- getProductsForNodeType ---------------------------------------------
     describe('getProductsForNodeType', () => {
-      it('should return a flat array of ProductNodes for firewall', () => {
-        const products = getProductsForNodeType('firewall' as InfraNodeType);
+      it('should return a flat array of ProductNodes for firewall', async () => {
+        const products = await getProductsForNodeType('firewall' as InfraNodeType);
         expect(Array.isArray(products)).toBe(true);
         // Should contain all firewall products from both vendors flattened
         expect(products).toHaveLength(3);
@@ -326,19 +314,19 @@ describe('vendorCatalog unified query API', () => {
         expect(nodeIds).toEqual(['PN-ASA-001', 'PN-FW-001', 'PN-FW-002']);
       });
 
-      it('should return a flat array for switch-l2', () => {
-        const products = getProductsForNodeType('switch-l2' as InfraNodeType);
+      it('should return a flat array for switch-l2', async () => {
+        const products = await getProductsForNodeType('switch-l2' as InfraNodeType);
         expect(products).toHaveLength(1);
         expect(products[0].nodeId).toBe('PN-SW-001');
       });
 
-      it('should return empty array for a type with no products', () => {
-        const products = getProductsForNodeType('waf' as InfraNodeType);
+      it('should return empty array for a type with no products', async () => {
+        const products = await getProductsForNodeType('waf' as InfraNodeType);
         expect(products).toEqual([]);
       });
 
-      it('should return ProductNode objects with correct shape', () => {
-        const products = getProductsForNodeType('firewall' as InfraNodeType);
+      it('should return ProductNode objects with correct shape', async () => {
+        const products = await getProductsForNodeType('firewall' as InfraNodeType);
         for (const product of products) {
           expect(product).toHaveProperty('nodeId');
           expect(product).toHaveProperty('name');
@@ -351,99 +339,99 @@ describe('vendorCatalog unified query API', () => {
 
     // -- getChildren ---------------------------------------------------------
     describe('getChildren', () => {
-      it('should return children of a node in a vendor', () => {
-        const children = getChildren('fortinet', 'PN-FW');
+      it('should return children of a node in a vendor', async () => {
+        const children = await getChildren('fortinet', 'PN-FW');
         expect(children).toHaveLength(2);
         expect(children.map((c) => c.nodeId).sort()).toEqual(['PN-FW-001', 'PN-FW-002']);
       });
 
-      it('should return root products when nodeId matches no node but vendor exists', () => {
-        const children = getChildren('fortinet', 'NONEXISTENT');
+      it('should return root products when nodeId matches no node but vendor exists', async () => {
+        const children = await getChildren('fortinet', 'NONEXISTENT');
         expect(children).toEqual([]);
       });
 
-      it('should return empty for unknown vendor', () => {
-        expect(getChildren('unknown', 'PN-FW')).toEqual([]);
+      it('should return empty for unknown vendor', async () => {
+        expect(await getChildren('unknown', 'PN-FW')).toEqual([]);
       });
     });
 
     // -- getLeafProducts -----------------------------------------------------
     describe('getLeafProducts', () => {
-      it('should return all leaf products for a vendor', () => {
-        const leaves = getLeafProducts('fortinet');
+      it('should return all leaf products for a vendor', async () => {
+        const leaves = await getLeafProducts('fortinet');
         expect(leaves).toHaveLength(2);
         expect(leaves.map((l) => l.nodeId).sort()).toEqual(['PN-FW-001', 'PN-FW-002']);
       });
 
-      it('should return leaf products under a specific category node', () => {
-        const leaves = getLeafProducts('fortinet', 'PN-SEC');
+      it('should return leaf products under a specific category node', async () => {
+        const leaves = await getLeafProducts('fortinet', 'PN-SEC');
         expect(leaves).toHaveLength(2);
       });
 
-      it('should return leaf products under a sub-category node', () => {
-        const leaves = getLeafProducts('fortinet', 'PN-FW');
+      it('should return leaf products under a sub-category node', async () => {
+        const leaves = await getLeafProducts('fortinet', 'PN-FW');
         expect(leaves).toHaveLength(2);
       });
 
-      it('should return empty for unknown vendor', () => {
-        expect(getLeafProducts('unknown')).toEqual([]);
+      it('should return empty for unknown vendor', async () => {
+        expect(await getLeafProducts('unknown')).toEqual([]);
       });
 
-      it('should return empty for unknown category node', () => {
-        expect(getLeafProducts('fortinet', 'NONEXISTENT')).toEqual([]);
+      it('should return empty for unknown category node', async () => {
+        expect(await getLeafProducts('fortinet', 'NONEXISTENT')).toEqual([]);
       });
     });
 
     // -- getProductPath ------------------------------------------------------
     describe('getProductPath', () => {
-      it('should return breadcrumb path from root to a leaf node', () => {
-        const path = getProductPath('fortinet', 'PN-FW-001');
+      it('should return breadcrumb path from root to a leaf node', async () => {
+        const path = await getProductPath('fortinet', 'PN-FW-001');
         expect(path).toHaveLength(3);
         expect(path.map((n) => n.nodeId)).toEqual(['PN-SEC', 'PN-FW', 'PN-FW-001']);
       });
 
-      it('should return single-element path for root node', () => {
-        const path = getProductPath('fortinet', 'PN-SEC');
+      it('should return single-element path for root node', async () => {
+        const path = await getProductPath('fortinet', 'PN-SEC');
         expect(path).toHaveLength(1);
         expect(path[0].nodeId).toBe('PN-SEC');
       });
 
-      it('should return empty for unknown node', () => {
-        expect(getProductPath('fortinet', 'NONEXISTENT')).toEqual([]);
+      it('should return empty for unknown node', async () => {
+        expect(await getProductPath('fortinet', 'NONEXISTENT')).toEqual([]);
       });
 
-      it('should return empty for unknown vendor', () => {
-        expect(getProductPath('unknown', 'PN-FW-001')).toEqual([]);
+      it('should return empty for unknown vendor', async () => {
+        expect(await getProductPath('unknown', 'PN-FW-001')).toEqual([]);
       });
     });
 
     // -- searchProducts ------------------------------------------------------
     describe('searchProducts', () => {
-      it('should search across all vendors by default', () => {
-        const results = searchProducts('firewall');
+      it('should search across all vendors by default', async () => {
+        const results = await searchProducts('firewall');
         expect(results.length).toBeGreaterThanOrEqual(1);
         // Should include results from both vendors
         const vendorIds = [...new Set(results.map((r) => r.vendorId))];
         expect(vendorIds.length).toBeGreaterThanOrEqual(1);
       });
 
-      it('should filter by vendorId when specified', () => {
-        const results = searchProducts('firewall', { vendorId: 'fortinet' });
+      it('should filter by vendorId when specified', async () => {
+        const results = await searchProducts('firewall', { vendorId: 'fortinet' });
         expect(results.length).toBeGreaterThanOrEqual(1);
         expect(results.every((r) => r.vendorId === 'fortinet')).toBe(true);
       });
 
-      it('should filter by nodeType when specified', () => {
-        const results = searchProducts('Catalyst', {
+      it('should filter by nodeType when specified', async () => {
+        const results = await searchProducts('Catalyst', {
           nodeType: 'switch-l2' as InfraNodeType,
         });
         expect(results).toHaveLength(1);
         expect(results[0].node.nodeId).toBe('PN-SW-001');
       });
 
-      it('should filter leafOnly when specified', () => {
-        const resultsAll = searchProducts('Security', { vendorId: 'fortinet' });
-        const resultsLeaf = searchProducts('Security', {
+      it('should filter leafOnly when specified', async () => {
+        const resultsAll = await searchProducts('Security', { vendorId: 'fortinet' });
+        const resultsLeaf = await searchProducts('Security', {
           vendorId: 'fortinet',
           leafOnly: true,
         });
@@ -454,16 +442,16 @@ describe('vendorCatalog unified query API', () => {
         }
       });
 
-      it('should include matchField indicating which field matched', () => {
-        const results = searchProducts('FortiGate 100F');
+      it('should include matchField indicating which field matched', async () => {
+        const results = await searchProducts('FortiGate 100F');
         expect(results.length).toBeGreaterThanOrEqual(1);
         const match = results.find((r) => r.node.nodeId === 'PN-FW-001');
         expect(match).toBeDefined();
         expect(match!.matchField).toBe('name');
       });
 
-      it('should match Korean fields', () => {
-        const results = searchProducts('\uBC29\uD654\uBCBD');
+      it('should match Korean fields', async () => {
+        const results = await searchProducts('\uBC29\uD654\uBCBD');
         expect(results.length).toBeGreaterThanOrEqual(1);
         // Should match description or descriptionKo
         const matchFields = results.map((r) => r.matchField);
@@ -472,34 +460,34 @@ describe('vendorCatalog unified query API', () => {
         ).toBe(true);
       });
 
-      it('should include breadcrumb path in results', () => {
-        const results = searchProducts('FortiGate 100F');
+      it('should include breadcrumb path in results', async () => {
+        const results = await searchProducts('FortiGate 100F');
         const match = results.find((r) => r.node.nodeId === 'PN-FW-001');
         expect(match).toBeDefined();
         expect(match!.path.length).toBeGreaterThanOrEqual(1);
       });
 
-      it('should return empty for empty query', () => {
-        expect(searchProducts('')).toEqual([]);
+      it('should return empty for empty query', async () => {
+        expect(await searchProducts('')).toEqual([]);
       });
 
-      it('should return empty for gibberish', () => {
-        expect(searchProducts('xyznonexistent123garbage')).toEqual([]);
+      it('should return empty for gibberish', async () => {
+        expect(await searchProducts('xyznonexistent123garbage')).toEqual([]);
       });
     });
 
     // -- getCatalogStats -----------------------------------------------------
     describe('getCatalogStats', () => {
-      it('should return aggregate stats across all vendors', () => {
-        const stats = getCatalogStats();
+      it('should return aggregate stats across all vendors', async () => {
+        const stats = await getCatalogStats();
         expect(stats.vendors).toBe(2);
         expect(stats.totalProducts).toBeGreaterThan(0);
         expect(stats.byVendor).toHaveProperty('fortinet');
         expect(stats.byVendor).toHaveProperty('cisco');
       });
 
-      it('should count products per vendor using getAllNodes', () => {
-        const stats = getCatalogStats();
+      it('should count products per vendor using getAllNodes', async () => {
+        const stats = await getCatalogStats();
         // Fortinet: PN-SEC, PN-FW, PN-FW-001, PN-FW-002 = 4 nodes
         expect(stats.byVendor['fortinet']).toBe(4);
         // Cisco: PN-NET, PN-SW-001, PN-ASA-001 = 3 nodes
@@ -537,9 +525,14 @@ describe('vendorCatalog unified query API', () => {
   describe('with real Cisco catalog', () => {
     // These tests run against the actual registered catalogs (no mock override).
 
+    beforeEach(() => {
+      // Ensure clean state for real catalog tests
+      _resetVendorCatalogCache();
+    });
+
     describe('getProductsByNodeType', () => {
-      it('should return Cisco firewall products for "firewall"', () => {
-        const results = getProductsByNodeType('firewall' as InfraNodeType);
+      it('should return Cisco firewall products for "firewall"', async () => {
+        const results = await getProductsByNodeType('firewall' as InfraNodeType);
         const cisco = results.find((r) => r.vendorId === 'cisco');
         expect(cisco).toBeDefined();
         expect(cisco!.vendorName).toBe('Cisco Systems');
@@ -550,8 +543,8 @@ describe('vendorCatalog unified query API', () => {
         }
       });
 
-      it('should return Cisco switch products for "switch-l2"', () => {
-        const results = getProductsByNodeType('switch-l2' as InfraNodeType);
+      it('should return Cisco switch products for "switch-l2"', async () => {
+        const results = await getProductsByNodeType('switch-l2' as InfraNodeType);
         const cisco = results.find((r) => r.vendorId === 'cisco');
         expect(cisco).toBeDefined();
         expect(cisco!.products.length).toBeGreaterThanOrEqual(1);
@@ -560,8 +553,8 @@ describe('vendorCatalog unified query API', () => {
         }
       });
 
-      it('should return Cisco router products for "router"', () => {
-        const results = getProductsByNodeType('router' as InfraNodeType);
+      it('should return Cisco router products for "router"', async () => {
+        const results = await getProductsByNodeType('router' as InfraNodeType);
         const cisco = results.find((r) => r.vendorId === 'cisco');
         expect(cisco).toBeDefined();
         expect(cisco!.products.length).toBeGreaterThanOrEqual(1);
@@ -572,8 +565,8 @@ describe('vendorCatalog unified query API', () => {
     });
 
     describe('getProductsForNodeType', () => {
-      it('should return a flat array of firewall ProductNodes', () => {
-        const products = getProductsForNodeType('firewall' as InfraNodeType);
+      it('should return a flat array of firewall ProductNodes', async () => {
+        const products = await getProductsForNodeType('firewall' as InfraNodeType);
         expect(Array.isArray(products)).toBe(true);
         expect(products.length).toBeGreaterThanOrEqual(1);
         // All products must have infraNodeTypes including 'firewall'
@@ -582,17 +575,17 @@ describe('vendorCatalog unified query API', () => {
         }
       });
 
-      it('should return empty array for a type with no mapped products', () => {
+      it('should return empty array for a type with no mapped products', async () => {
         // Use a type that is unlikely to have vendor catalog entries
-        const products = getProductsForNodeType('nac' as InfraNodeType);
+        const products = await getProductsForNodeType('nac' as InfraNodeType);
         expect(Array.isArray(products)).toBe(true);
         // May or may not be empty depending on catalog, but should not throw
       });
     });
 
     describe('getVendorList', () => {
-      it('should return array with at least Cisco', () => {
-        const list = getVendorList();
+      it('should return array with at least Cisco', async () => {
+        const list = await getVendorList();
         expect(list.length).toBeGreaterThanOrEqual(1);
         const vendorIds = list.map((v) => v.vendorId);
         expect(vendorIds).toContain('cisco');
@@ -600,22 +593,22 @@ describe('vendorCatalog unified query API', () => {
     });
 
     describe('getVendor', () => {
-      it('should return the Cisco catalog', () => {
-        const cisco = getVendor('cisco');
+      it('should return the Cisco catalog', async () => {
+        const cisco = await getVendor('cisco');
         expect(cisco).toBeDefined();
         expect(cisco!.vendorId).toBe('cisco');
         expect(cisco!.vendorName).toBe('Cisco Systems');
         expect(cisco!.products.length).toBeGreaterThan(0);
       });
 
-      it('should return undefined for nonexistent vendor', () => {
-        expect(getVendor('nonexistent')).toBeUndefined();
+      it('should return undefined for nonexistent vendor', async () => {
+        expect(await getVendor('nonexistent')).toBeUndefined();
       });
     });
 
     describe('searchProducts', () => {
-      it('should return results for "Catalyst"', () => {
-        const results = searchProducts('Catalyst');
+      it('should return results for "Catalyst"', async () => {
+        const results = await searchProducts('Catalyst');
         expect(results.length).toBeGreaterThanOrEqual(1);
         // All results should contain 'Catalyst' in some field
         for (const r of results) {
@@ -626,8 +619,8 @@ describe('vendorCatalog unified query API', () => {
         }
       });
 
-      it('should filter by nodeType', () => {
-        const results = searchProducts('Catalyst', {
+      it('should filter by nodeType', async () => {
+        const results = await searchProducts('Catalyst', {
           nodeType: 'switch-l3' as InfraNodeType,
         });
         expect(results.length).toBeGreaterThanOrEqual(1);
@@ -636,8 +629,8 @@ describe('vendorCatalog unified query API', () => {
         }
       });
 
-      it('should filter leafOnly', () => {
-        const results = searchProducts('Cisco', { leafOnly: true });
+      it('should filter leafOnly', async () => {
+        const results = await searchProducts('Cisco', { leafOnly: true });
         for (const r of results) {
           expect(r.node.children).toHaveLength(0);
         }
@@ -645,8 +638,8 @@ describe('vendorCatalog unified query API', () => {
     });
 
     describe('getCatalogStats', () => {
-      it('should return correct aggregate stats', () => {
-        const stats = getCatalogStats();
+      it('should return correct aggregate stats', async () => {
+        const stats = await getCatalogStats();
         expect(stats.vendors).toBeGreaterThanOrEqual(1);
         expect(stats.totalProducts).toBeGreaterThan(0);
         expect(stats.byVendor).toHaveProperty('cisco');
@@ -655,8 +648,8 @@ describe('vendorCatalog unified query API', () => {
     });
 
     describe('getChildren', () => {
-      it('should return children of cisco-networking', () => {
-        const children = getChildren('cisco', 'cisco-networking');
+      it('should return children of cisco-networking', async () => {
+        const children = await getChildren('cisco', 'cisco-networking');
         expect(children.length).toBeGreaterThanOrEqual(1);
         // All children should have depth 1
         for (const child of children) {
@@ -666,8 +659,8 @@ describe('vendorCatalog unified query API', () => {
     });
 
     describe('getLeafProducts', () => {
-      it('should return leaf products for Cisco', () => {
-        const leaves = getLeafProducts('cisco');
+      it('should return leaf products for Cisco', async () => {
+        const leaves = await getLeafProducts('cisco');
         expect(leaves.length).toBeGreaterThanOrEqual(1);
         // Every leaf must have empty children array
         for (const leaf of leaves) {
@@ -677,8 +670,8 @@ describe('vendorCatalog unified query API', () => {
     });
 
     describe('getProductPath', () => {
-      it('should return breadcrumb for cisco-catalyst-9300', () => {
-        const path = getProductPath('cisco', 'cisco-catalyst-9300');
+      it('should return breadcrumb for cisco-catalyst-9300', async () => {
+        const path = await getProductPath('cisco', 'cisco-catalyst-9300');
         expect(path.length).toBeGreaterThanOrEqual(2);
         // Last element should be the target node
         expect(path[path.length - 1].nodeId).toBe('cisco-catalyst-9300');

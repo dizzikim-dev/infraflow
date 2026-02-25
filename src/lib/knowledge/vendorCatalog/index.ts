@@ -2,8 +2,8 @@
  * Vendor Catalog — Unified query API.
  *
  * Provides a single entry point for querying vendor product catalogs.
- * All vendor catalogs are merged into `allVendorCatalogs` and can be
- * queried by vendor, node type, keyword, etc.
+ * All vendor catalogs are loaded lazily via dynamic import() and cached
+ * after first load to minimize memory usage and bundle size.
  */
 
 import type { InfraNodeType } from '@/types/infra';
@@ -23,61 +23,7 @@ import {
 export type { VendorCatalog, ProductNode, CatalogStats, SearchResult } from './types';
 
 // ---------------------------------------------------------------------------
-// Vendor catalog registry
-// ---------------------------------------------------------------------------
-
-// Vendor data files
-import { ciscoCatalog } from './vendors/cisco';
-import { paloaltoCatalog } from './vendors/paloalto';
-import { aristaCatalog } from './vendors/arista';
-import { fortinetCatalog } from './vendors/fortinet';
-import { schneiderCatalog } from './vendors/schneider';
-import { veeamCatalog } from './vendors/veeam';
-import { dellCatalog } from './vendors/dell';
-import { zscalerCatalog } from './vendors/zscaler';
-import { f5Catalog } from './vendors/f5';
-import { cloudflareCatalog } from './vendors/cloudflare';
-import { crowdstrikeCatalog } from './vendors/crowdstrike';
-import { infobloxCatalog } from './vendors/infoblox';
-import { oktaCatalog } from './vendors/okta';
-import { proofpointCatalog } from './vendors/proofpoint';
-import { vmwareCatalog } from './vendors/vmware';
-import { redhatCatalog } from './vendors/redhat';
-import { oracleCatalog } from './vendors/oracle';
-import { datadogCatalog } from './vendors/datadog';
-import { netappCatalog } from './vendors/netapp';
-import { kongCatalog } from './vendors/kong';
-import { confluentCatalog } from './vendors/confluent';
-import { hpeArubaCatalog } from './vendors/hpe-aruba';
-
-/** Merged array of all vendor catalogs (eagerly loaded). */
-export const allVendorCatalogs: VendorCatalog[] = [
-  ciscoCatalog,
-  paloaltoCatalog,
-  aristaCatalog,
-  fortinetCatalog,
-  schneiderCatalog,
-  veeamCatalog,
-  dellCatalog,
-  zscalerCatalog,
-  f5Catalog,
-  cloudflareCatalog,
-  crowdstrikeCatalog,
-  infobloxCatalog,
-  oktaCatalog,
-  proofpointCatalog,
-  vmwareCatalog,
-  redhatCatalog,
-  oracleCatalog,
-  datadogCatalog,
-  netappCatalog,
-  confluentCatalog,
-  kongCatalog,
-  hpeArubaCatalog,
-];
-
-// ---------------------------------------------------------------------------
-// Async loader — lazy alternative for future migration
+// Async loader — lazy vendor data via dynamic import()
 // ---------------------------------------------------------------------------
 
 let _cachedVendorCatalogs: VendorCatalog[] | null = null;
@@ -86,12 +32,8 @@ let _vendorLoadingPromise: Promise<VendorCatalog[]> | null = null;
 /**
  * Load all vendor catalogs asynchronously via dynamic import().
  *
- * Returns a cached result on subsequent calls. This is the lazy-loading
- * alternative to the synchronous `allVendorCatalogs` export. Callers that
- * can await should prefer this function to reduce initial bundle size
- * once the migration from sync to async is complete.
- *
- * @deprecated Prefer this over `allVendorCatalogs` for new code paths.
+ * Returns a cached result on subsequent calls. This is the primary
+ * data source — all public API functions delegate to this.
  */
 export async function getAllVendorCatalogsAsync(): Promise<VendorCatalog[]> {
   if (_cachedVendorCatalogs) return _cachedVendorCatalogs;
@@ -139,54 +81,70 @@ export function _resetVendorCatalogCache(): void {
   _vendorLoadingPromise = null;
 }
 
+/**
+ * Inject vendor catalogs directly into cache.
+ * Intended for testing only — allows tests to set mock data.
+ * @internal
+ */
+export function _setVendorCatalogCache(catalogs: VendorCatalog[]): void {
+  _cachedVendorCatalogs = catalogs;
+  _vendorLoadingPromise = null;
+}
+
 // ---------------------------------------------------------------------------
-// Internal: O(1) vendor lookup by ID
+// Internal: load + O(1) vendor lookup by ID
 // ---------------------------------------------------------------------------
 
-/**
- * Build a Map from vendorId -> VendorCatalog for O(1) lookups.
- * Rebuilt on every call to account for runtime mutations to allVendorCatalogs.
- */
-function buildVendorMap(): Map<string, VendorCatalog> {
+/** Ensure catalogs are loaded, then return them. */
+async function _ensureLoaded(): Promise<VendorCatalog[]> {
+  return getAllVendorCatalogsAsync();
+}
+
+/** Build a Map from vendorId -> VendorCatalog for O(1) lookups. */
+async function buildVendorMap(): Promise<Map<string, VendorCatalog>> {
+  const catalogs = await _ensureLoaded();
   const map = new Map<string, VendorCatalog>();
-  for (const vendor of allVendorCatalogs) {
+  for (const vendor of catalogs) {
     map.set(vendor.vendorId, vendor);
   }
   return map;
 }
 
 // ---------------------------------------------------------------------------
-// Public API
+// Public API (all async)
 // ---------------------------------------------------------------------------
 
 /** Get all vendor catalogs. */
-export function getVendorList(): VendorCatalog[] {
-  return allVendorCatalogs;
+export async function getVendorList(): Promise<VendorCatalog[]> {
+  return _ensureLoaded();
 }
 
 /** Get a single vendor by ID. */
-export function getVendor(vendorId: string): VendorCatalog | undefined {
-  return buildVendorMap().get(vendorId);
+export async function getVendor(vendorId: string): Promise<VendorCatalog | undefined> {
+  const map = await buildVendorMap();
+  return map.get(vendorId);
 }
 
 /**
  * Get a flat array of ProductNodes matching an InfraNodeType across all vendors.
  * Convenience wrapper around getProductsByNodeType that flattens vendor grouping.
  */
-export function getProductsForNodeType(nodeType: InfraNodeType): ProductNode[] {
-  return getProductsByNodeType(nodeType).flatMap(v => v.products);
+export async function getProductsForNodeType(nodeType: InfraNodeType): Promise<ProductNode[]> {
+  const byVendor = await getProductsByNodeType(nodeType);
+  return byVendor.flatMap(v => v.products);
 }
 
 /**
  * Find products mapped to a specific InfraNodeType across all vendors.
  * Returns only vendors that have at least one matching product.
  */
-export function getProductsByNodeType(
+export async function getProductsByNodeType(
   nodeType: InfraNodeType,
-): { vendorId: string; vendorName: string; products: ProductNode[] }[] {
+): Promise<{ vendorId: string; vendorName: string; products: ProductNode[] }[]> {
+  const catalogs = await _ensureLoaded();
   const results: { vendorId: string; vendorName: string; products: ProductNode[] }[] = [];
 
-  for (const vendor of allVendorCatalogs) {
+  for (const vendor of catalogs) {
     const allNodes = getAllNodes(vendor.products);
     const matching = allNodes.filter(
       (node) => node.infraNodeTypes?.includes(nodeType),
@@ -204,8 +162,9 @@ export function getProductsByNodeType(
 }
 
 /** Get children of a node within a vendor's product tree. */
-export function getChildren(vendorId: string, nodeId: string): ProductNode[] {
-  const vendor = buildVendorMap().get(vendorId);
+export async function getChildren(vendorId: string, nodeId: string): Promise<ProductNode[]> {
+  const map = await buildVendorMap();
+  const vendor = map.get(vendorId);
   if (!vendor) return [];
 
   const node = findNodeById(vendor.products, nodeId);
@@ -218,11 +177,12 @@ export function getChildren(vendorId: string, nodeId: string): ProductNode[] {
  * Get all leaf products for a vendor.
  * Optionally scope to a specific category node.
  */
-export function getLeafProducts(
+export async function getLeafProducts(
   vendorId: string,
   categoryNodeId?: string,
-): ProductNode[] {
-  const vendor = buildVendorMap().get(vendorId);
+): Promise<ProductNode[]> {
+  const map = await buildVendorMap();
+  const vendor = map.get(vendorId);
   if (!vendor) return [];
 
   if (categoryNodeId) {
@@ -237,11 +197,12 @@ export function getLeafProducts(
 }
 
 /** Get path from root to a node within a vendor's product tree (breadcrumb). */
-export function getProductPath(
+export async function getProductPath(
   vendorId: string,
   nodeId: string,
-): ProductNode[] {
-  const vendor = buildVendorMap().get(vendorId);
+): Promise<ProductNode[]> {
+  const map = await buildVendorMap();
+  const vendor = map.get(vendorId);
   if (!vendor) return [];
 
   return getNodePath(vendor.products, nodeId);
@@ -278,19 +239,20 @@ function determineMatchField(
  * Search across all vendors (or a specific vendor).
  * Supports filtering by vendorId, nodeType, and leafOnly.
  */
-export function searchProducts(
+export async function searchProducts(
   query: string,
   options?: {
     vendorId?: string;
     nodeType?: InfraNodeType;
     leafOnly?: boolean;
   },
-): SearchResult[] {
+): Promise<SearchResult[]> {
   if (!query) return [];
 
+  const catalogs = await _ensureLoaded();
   const vendors = options?.vendorId
-    ? allVendorCatalogs.filter((v) => v.vendorId === options.vendorId)
-    : allVendorCatalogs;
+    ? catalogs.filter((v) => v.vendorId === options.vendorId)
+    : catalogs;
 
   const results: SearchResult[] = [];
 
@@ -328,22 +290,23 @@ export function searchProducts(
  * Aggregate stats across all vendor catalogs.
  * Uses getAllNodes to count total products per vendor.
  */
-export function getCatalogStats(): {
+export async function getCatalogStats(): Promise<{
   vendors: number;
   totalProducts: number;
   byVendor: Record<string, number>;
-} {
+}> {
+  const catalogs = await _ensureLoaded();
   const byVendor: Record<string, number> = {};
   let totalProducts = 0;
 
-  for (const vendor of allVendorCatalogs) {
+  for (const vendor of catalogs) {
     const count = getAllNodes(vendor.products).length;
     byVendor[vendor.vendorId] = count;
     totalProducts += count;
   }
 
   return {
-    vendors: allVendorCatalogs.length,
+    vendors: catalogs.length,
     totalProducts,
     byVendor,
   };

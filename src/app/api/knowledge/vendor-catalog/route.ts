@@ -23,8 +23,8 @@ export async function GET() {
   try {
     await requireAdmin();
 
-    const vendorCatalogs = getVendorList();
-    const stats = getCatalogStats();
+    const vendorCatalogs = await getVendorList();
+    const stats = await getCatalogStats();
 
     const vendors = vendorCatalogs.map((vendor) => ({
       vendorId: vendor.vendorId,

@@ -9,7 +9,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin, AuthError } from '@/lib/auth/authHelpers';
 import { createLogger } from '@/lib/utils/logger';
-import { allVendorCatalogs } from '@/lib/knowledge/vendorCatalog';
+import { getVendorList } from '@/lib/knowledge/vendorCatalog';
 import { getAllNodes, getNodePath } from '@/lib/knowledge/vendorCatalog/queryHelpers';
 
 const log = createLogger('KnowledgeAPI:VendorCatalogAllProducts');
@@ -58,7 +58,8 @@ export async function GET() {
 
     const flatProducts: FlatProduct[] = [];
 
-    for (const vendor of allVendorCatalogs) {
+    const allCatalogs = await getVendorList();
+    for (const vendor of allCatalogs) {
       const allNodes = getAllNodes(vendor.products);
 
       for (const node of allNodes) {

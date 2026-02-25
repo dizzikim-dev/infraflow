@@ -143,30 +143,30 @@ describe('estimateProductCost', () => {
 // ---------------------------------------------------------------------------
 
 describe('getVendorSummary', () => {
-  it('returns correct structure with vendorId and vendorName', () => {
+  it('returns correct structure with vendorId and vendorName', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
-    const summary = getVendorSummary('fortinet', spec);
+    const summary = await getVendorSummary('fortinet', spec);
     expect(summary.vendorId).toBe('fortinet');
     expect(summary.vendorName).toBe('Fortinet');
   });
 
-  it('includes products for matched node types', () => {
+  it('includes products for matched node types', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
-    const summary = getVendorSummary('fortinet', spec);
+    const summary = await getVendorSummary('fortinet', spec);
     expect(summary.products.length).toBeGreaterThanOrEqual(1);
     expect(summary.coveredNodeTypes).toContain('firewall');
   });
 
-  it('lists uncovered node types for vendor without matching products', () => {
+  it('lists uncovered node types for vendor without matching products', async () => {
     // Use a type that no vendor likely covers
     const spec = makeSpec([{ type: 'user' }]);
-    const summary = getVendorSummary('fortinet', spec);
+    const summary = await getVendorSummary('fortinet', spec);
     expect(summary.uncoveredNodeTypes).toContain('user');
   });
 
-  it('calculates totalMonthlyCost as sum of product costs * quantities', () => {
+  it('calculates totalMonthlyCost as sum of product costs * quantities', async () => {
     const spec = makeSpec([{ type: 'firewall' }, { type: 'firewall' }]);
-    const summary = getVendorSummary('fortinet', spec);
+    const summary = await getVendorSummary('fortinet', spec);
     // Two firewalls → quantity 2
     const fwProduct = summary.products.find((p) => p.nodeType === 'firewall');
     if (fwProduct) {
@@ -175,36 +175,36 @@ describe('getVendorSummary', () => {
     }
   });
 
-  it('calculates totalAnnualCost as 12 * monthly', () => {
+  it('calculates totalAnnualCost as 12 * monthly', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
-    const summary = getVendorSummary('fortinet', spec);
+    const summary = await getVendorSummary('fortinet', spec);
     expect(summary.totalAnnualCost).toBe(summary.totalMonthlyCost * 12);
   });
 
-  it('calculates coverage percentage correctly', () => {
+  it('calculates coverage percentage correctly', async () => {
     // Fortinet covers firewall, probably does not cover 'user'
     const spec = makeSpec([{ type: 'firewall' }, { type: 'user' }]);
-    const summary = getVendorSummary('fortinet', spec);
+    const summary = await getVendorSummary('fortinet', spec);
     expect(summary.coveragePercentage).toBe(50);
   });
 
-  it('returns 0 coverage for empty spec', () => {
+  it('returns 0 coverage for empty spec', async () => {
     const spec = makeSpec([]);
-    const summary = getVendorSummary('fortinet', spec);
+    const summary = await getVendorSummary('fortinet', spec);
     expect(summary.coveragePercentage).toBe(0);
     expect(summary.products).toHaveLength(0);
   });
 
-  it('returns 0 coverage for vendor with no matching products', () => {
+  it('returns 0 coverage for vendor with no matching products', async () => {
     // 'zone' and 'internet' are not mapped to any vendor products
     const spec = makeSpec([{ type: 'zone' }, { type: 'internet' }]);
-    const summary = getVendorSummary('cisco', spec);
+    const summary = await getVendorSummary('cisco', spec);
     expect(summary.coveragePercentage).toBe(0);
   });
 
-  it('handles unknown vendorId gracefully', () => {
+  it('handles unknown vendorId gracefully', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
-    const summary = getVendorSummary('nonexistent-vendor', spec);
+    const summary = await getVendorSummary('nonexistent-vendor', spec);
     expect(summary.vendorId).toBe('nonexistent-vendor');
     expect(summary.products).toHaveLength(0);
     expect(summary.coveragePercentage).toBe(0);
@@ -216,34 +216,34 @@ describe('getVendorSummary', () => {
 // ---------------------------------------------------------------------------
 
 describe('compareVendorCosts', () => {
-  it('returns estimates for all vendors with a firewall spec', () => {
+  it('returns estimates for all vendors with a firewall spec', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
-    const result = compareVendorCosts(spec);
+    const result = await compareVendorCosts(spec);
     // All vendors in the catalog — count should match allVendorCatalogs.length
     expect(result.vendorEstimates).toHaveLength(22);
   });
 
-  it('returns empty estimates for empty spec', () => {
+  it('returns empty estimates for empty spec', async () => {
     const spec = makeSpec([]);
-    const result = compareVendorCosts(spec);
+    const result = await compareVendorCosts(spec);
     expect(result.cheapestVendor).toBeNull();
     expect(result.bestCoverageVendor).toBeNull();
     expect(result.recommendedVendor).toBeNull();
     expect(result.savingsPercentage).toBe(0);
   });
 
-  it('filters by vendorIds correctly', () => {
+  it('filters by vendorIds correctly', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
-    const result = compareVendorCosts(spec, { vendorIds: ['fortinet', 'cisco'] });
+    const result = await compareVendorCosts(spec, { vendorIds: ['fortinet', 'cisco'] });
     expect(result.vendorEstimates).toHaveLength(2);
     expect(result.vendorEstimates.map((v) => v.vendorId)).toEqual(
       expect.arrayContaining(['fortinet', 'cisco']),
     );
   });
 
-  it('sets cheapestVendor to the vendor with lowest total cost', () => {
+  it('sets cheapestVendor to the vendor with lowest total cost', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
-    const result = compareVendorCosts(spec);
+    const result = await compareVendorCosts(spec);
     if (result.cheapestVendor) {
       const cheapest = result.vendorEstimates.find(
         (v) => v.vendorId === result.cheapestVendor,
@@ -257,9 +257,9 @@ describe('compareVendorCosts', () => {
     }
   });
 
-  it('sets bestCoverageVendor to the vendor with highest coverage', () => {
+  it('sets bestCoverageVendor to the vendor with highest coverage', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
-    const result = compareVendorCosts(spec);
+    const result = await compareVendorCosts(spec);
     if (result.bestCoverageVendor) {
       const best = result.vendorEstimates.find(
         (v) => v.vendorId === result.bestCoverageVendor,
@@ -270,16 +270,16 @@ describe('compareVendorCosts', () => {
     }
   });
 
-  it('calculates savingsPercentage correctly (0 if only one vendor with coverage)', () => {
+  it('calculates savingsPercentage correctly (0 if only one vendor with coverage)', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
     // Use a single vendor
-    const result = compareVendorCosts(spec, { vendorIds: ['fortinet'] });
+    const result = await compareVendorCosts(spec, { vendorIds: ['fortinet'] });
     expect(result.savingsPercentage).toBe(0);
   });
 
-  it('calculates savingsPercentage > 0 when vendors have different costs', () => {
+  it('calculates savingsPercentage > 0 when vendors have different costs', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
-    const result = compareVendorCosts(spec);
+    const result = await compareVendorCosts(spec);
     const vendorsWithCoverage = result.vendorEstimates.filter(
       (v) => v.coveragePercentage > 0,
     );
@@ -293,9 +293,9 @@ describe('compareVendorCosts', () => {
     }
   });
 
-  it('sets recommendedVendor based on composite score', () => {
+  it('sets recommendedVendor based on composite score', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
-    const result = compareVendorCosts(spec);
+    const result = await compareVendorCosts(spec);
     // recommendedVendor should be one of the vendors with coverage
     if (result.recommendedVendor) {
       const recommended = result.vendorEstimates.find(
@@ -306,22 +306,22 @@ describe('compareVendorCosts', () => {
     }
   });
 
-  it('populates vendor names correctly in estimates', () => {
+  it('populates vendor names correctly in estimates', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
-    const result = compareVendorCosts(spec);
+    const result = await compareVendorCosts(spec);
     for (const estimate of result.vendorEstimates) {
       expect(estimate.vendorName).toBeTruthy();
       expect(estimate.vendorId).toBeTruthy();
     }
   });
 
-  it('multi-node spec produces multi-product estimates', () => {
+  it('multi-node spec produces multi-product estimates', async () => {
     const spec = makeSpec([
       { type: 'firewall' },
       { type: 'switch-l3' },
       { type: 'router' },
     ]);
-    const result = compareVendorCosts(spec);
+    const result = await compareVendorCosts(spec);
     // At least one vendor should have multiple product line items
     const maxProducts = Math.max(
       ...result.vendorEstimates.map((v) => v.products.length),
@@ -329,10 +329,10 @@ describe('compareVendorCosts', () => {
     expect(maxProducts).toBeGreaterThanOrEqual(2);
   });
 
-  it('handles nodes with no vendor matches gracefully', () => {
+  it('handles nodes with no vendor matches gracefully', async () => {
     // 'zone' and 'internet' are not mapped to any vendor products
     const spec = makeSpec([{ type: 'zone' }, { type: 'internet' }]);
-    const result = compareVendorCosts(spec);
+    const result = await compareVendorCosts(spec);
     // All vendors should have 0 coverage for these external types
     for (const estimate of result.vendorEstimates) {
       expect(estimate.coveragePercentage).toBe(0);
@@ -340,7 +340,7 @@ describe('compareVendorCosts', () => {
     expect(result.cheapestVendor).toBeNull();
   });
 
-  it('includes requirements in the result when provided', () => {
+  it('includes requirements in the result when provided', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
     const requirements = {
       organizationSize: 'medium' as const,
@@ -355,26 +355,26 @@ describe('compareVendorCosts', () => {
       budgetRange: 'medium' as const,
       cloudPreference: 'hybrid' as const,
     };
-    const result = compareVendorCosts(spec, { requirements });
+    const result = await compareVendorCosts(spec, { requirements });
     expect(result.requirements).toBe(requirements);
   });
 
-  it('returns null requirements when none provided', () => {
+  it('returns null requirements when none provided', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
-    const result = compareVendorCosts(spec);
+    const result = await compareVendorCosts(spec);
     expect(result.requirements).toBeNull();
   });
 
-  it('provides bilingual recommended reason', () => {
+  it('provides bilingual recommended reason', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
-    const result = compareVendorCosts(spec);
+    const result = await compareVendorCosts(spec);
     expect(result.recommendedReason).toBeTruthy();
     expect(result.recommendedReasonKo).toBeTruthy();
   });
 
-  it('includes the spec in the result', () => {
+  it('includes the spec in the result', async () => {
     const spec = makeSpec([{ type: 'firewall' }]);
-    const result = compareVendorCosts(spec);
+    const result = await compareVendorCosts(spec);
     expect(result.spec).toBe(spec);
   });
 });

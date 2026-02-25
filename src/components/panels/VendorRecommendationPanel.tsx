@@ -10,7 +10,7 @@
  * Tabs: Recommendations | Summary
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Package, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import type { InfraSpec } from '@/types';
 import { matchVendorProducts } from '@/lib/recommendation';
@@ -56,9 +56,23 @@ const CATEGORY_BADGE: Record<string, string> = {
 export function VendorRecommendationPanel({ spec, onClose }: VendorRecommendationPanelProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('recommendations');
 
-  const result: RecommendationResult | null = useMemo(() => {
-    if (!spec || spec.nodes.length === 0) return null;
-    return matchVendorProducts(spec);
+  const [result, setResult] = useState<RecommendationResult | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!spec || spec.nodes.length === 0) {
+      setResult(null);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    matchVendorProducts(spec).then((data) => {
+      if (!cancelled) {
+        setResult(data);
+        setLoading(false);
+      }
+    });
+    return () => { cancelled = true; };
   }, [spec]);
 
   const tabs: { key: TabKey; label: string; count?: number }[] = [
@@ -81,8 +95,16 @@ export function VendorRecommendationPanel({ spec, onClose }: VendorRecommendatio
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Loading state */}
+        {loading && (
+          <div className="text-center text-zinc-500 py-12 animate-pulse">
+            <Package className="w-10 h-10 mx-auto mb-3 opacity-50" />
+            <p>벤더 제품 추천 분석 중...</p>
+          </div>
+        )}
+
         {/* Empty state: no spec or no nodes */}
-        {(!spec || spec.nodes.length === 0) && (
+        {!loading && (!spec || spec.nodes.length === 0) && (
           <div className="text-center text-zinc-500 py-12">
             <Package className="w-10 h-10 mx-auto mb-3 opacity-50" />
             <p>다이어그램에 노드를 추가하면 벤더 제품을 추천해 드립니다.</p>
@@ -90,12 +112,12 @@ export function VendorRecommendationPanel({ spec, onClose }: VendorRecommendatio
         )}
 
         {/* Recommendations Tab */}
-        {spec && result && activeTab === 'recommendations' && (
+        {!loading && spec && result && activeTab === 'recommendations' && (
           <RecommendationsTab result={result} />
         )}
 
         {/* Summary Tab */}
-        {spec && result && activeTab === 'summary' && (
+        {!loading && spec && result && activeTab === 'summary' && (
           <SummaryTab result={result} />
         )}
       </div>

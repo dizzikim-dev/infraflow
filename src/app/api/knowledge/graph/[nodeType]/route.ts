@@ -40,7 +40,7 @@ export async function GET(
       );
     }
 
-    const detail = getNodeDetail(nodeType as InfraNodeType);
+    const detail = await getNodeDetail(nodeType as InfraNodeType);
 
     return NextResponse.json({
       success: true,

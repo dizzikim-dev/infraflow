@@ -96,12 +96,13 @@ describe('RAG types', () => {
 // ---------------------------------------------------------------------------
 
 describe('COLLECTIONS', () => {
-  it('has all 4 collection names', () => {
-    expect(Object.keys(COLLECTIONS)).toHaveLength(4);
+  it('has all 5 collection names', () => {
+    expect(Object.keys(COLLECTIONS)).toHaveLength(5);
     expect(COLLECTIONS.AI_SOFTWARE).toBe('infraflow-ai-software');
     expect(COLLECTIONS.CLOUD_SERVICES).toBe('infraflow-cloud-services');
     expect(COLLECTIONS.DEPLOYMENT_SCENARIOS).toBe('infraflow-deployment-scenarios');
     expect(COLLECTIONS.INTEGRATION_PATTERNS).toBe('infraflow-integration-patterns');
+    expect(COLLECTIONS.EXTERNAL_CONTENT).toBe('infraflow-external-content');
   });
 });
 

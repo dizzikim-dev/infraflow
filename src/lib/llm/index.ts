@@ -21,3 +21,11 @@ export {
   FALLBACK_TEMPLATES,
   matchFallbackTemplate,
 } from './fallbackTemplates';
+export {
+  createLLMProvider,
+  ClaudeProvider,
+  OpenAIProvider,
+  type LLMProviderAdapter,
+  type LLMCallOptions,
+  type LLMRequestConfig,
+} from './provider';

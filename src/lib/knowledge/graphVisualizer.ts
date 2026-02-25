@@ -118,8 +118,8 @@ function hasProfile(nodeType: InfraNodeType): boolean {
 }
 
 /** Count vendor products mapped to this node type */
-function countVendorProducts(nodeType: InfraNodeType): number {
-  const results = getProductsByNodeType(nodeType);
+async function countVendorProducts(nodeType: InfraNodeType): Promise<number> {
+  const results = await getProductsByNodeType(nodeType);
   return results.reduce((sum, r) => sum + r.products.length, 0);
 }
 
@@ -134,10 +134,10 @@ function countRelationshipsForType(
 }
 
 /** Build a KnowledgeGraphNode from an InfraNodeType */
-function buildNode(
+async function buildNode(
   nodeType: InfraNodeType,
   relationships: readonly ComponentRelationship[],
-): KnowledgeGraphNode {
+): Promise<KnowledgeGraphNode> {
   const info = infrastructureDB[nodeType];
   return {
     id: nodeType,
@@ -149,7 +149,7 @@ function buildNode(
     antipatternCount: countAntipatternsForType(nodeType),
     failureCount: countFailuresForType(nodeType),
     hasPerformanceProfile: hasProfile(nodeType),
-    vendorProductCount: countVendorProducts(nodeType),
+    vendorProductCount: await countVendorProducts(nodeType),
     relationshipCount: countRelationshipsForType(nodeType, relationships),
   };
 }
@@ -179,7 +179,7 @@ function buildEdge(rel: ComponentRelationship): KnowledgeGraphEdge {
  * Set `includeIsolated: true` to also include infrastructure components with
  * no relationships.
  */
-export function buildKnowledgeGraph(options?: GraphFilterOptions): KnowledgeGraph {
+export async function buildKnowledgeGraph(options?: GraphFilterOptions): Promise<KnowledgeGraph> {
   const allRelationships = RELATIONSHIPS as readonly ComponentRelationship[];
 
   // 1. Filter edges by relationship type if requested
@@ -237,8 +237,8 @@ export function buildKnowledgeGraph(options?: GraphFilterOptions): KnowledgeGrap
   }
 
   // 6. Build nodes
-  const nodes: KnowledgeGraphNode[] = [...allNodeTypes].map((nt) =>
-    buildNode(nt as InfraNodeType, filteredEdges),
+  const nodes: KnowledgeGraphNode[] = await Promise.all(
+    [...allNodeTypes].map((nt) => buildNode(nt as InfraNodeType, filteredEdges)),
   );
 
   // 7. Build edges (only those whose source and target are in the node set)
@@ -279,7 +279,7 @@ export function buildKnowledgeGraph(options?: GraphFilterOptions): KnowledgeGrap
  * Aggregates relationships, patterns, antipatterns (by tag match),
  * failure scenarios, performance profile, and vendor product mappings.
  */
-export function getNodeDetail(nodeType: InfraNodeType): {
+export async function getNodeDetail(nodeType: InfraNodeType): Promise<{
   node: KnowledgeGraphNode;
   relationships: KnowledgeGraphEdge[];
   patterns: { id: string; name: string; nameKo: string; complexity: number }[];
@@ -296,11 +296,11 @@ export function getNodeDetail(nodeType: InfraNodeType): {
     vendorName: string;
     products: { nodeId: string; name: string; nameKo: string }[];
   }[];
-} {
+}> {
   const allRelationships = RELATIONSHIPS as readonly ComponentRelationship[];
 
   // Build node
-  const node = buildNode(nodeType, allRelationships);
+  const node = await buildNode(nodeType, allRelationships);
 
   // Relationships for this node
   const relationships = allRelationships
@@ -355,7 +355,7 @@ export function getNodeDetail(nodeType: InfraNodeType): {
     : null;
 
   // Vendor products
-  const vendorResults = getProductsByNodeType(nodeType);
+  const vendorResults = await getProductsByNodeType(nodeType);
   const vendorProducts = vendorResults.map((vr) => ({
     vendorId: vr.vendorId,
     vendorName: vr.vendorName,

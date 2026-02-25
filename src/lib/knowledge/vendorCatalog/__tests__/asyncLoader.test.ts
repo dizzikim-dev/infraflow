@@ -6,9 +6,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   getAllVendorCatalogsAsync,
   _resetVendorCatalogCache,
-  allVendorCatalogs,
+  getVendorList,
 } from '../index';
-import type { VendorCatalog } from '../types';
 
 describe('getAllVendorCatalogsAsync', () => {
   beforeEach(() => {
@@ -21,16 +20,18 @@ describe('getAllVendorCatalogsAsync', () => {
     expect(catalogs.length).toBeGreaterThan(0);
   });
 
-  it('should return the same number of catalogs as the sync export', async () => {
+  it('should return the same catalogs as getVendorList', async () => {
     const catalogs = await getAllVendorCatalogsAsync();
-    expect(catalogs.length).toBe(allVendorCatalogs.length);
+    const vendorList = await getVendorList();
+    expect(catalogs.length).toBe(vendorList.length);
   });
 
-  it('should contain the same vendor IDs as the sync export', async () => {
+  it('should contain the same vendor IDs as getVendorList', async () => {
     const catalogs = await getAllVendorCatalogsAsync();
+    const vendorList = await getVendorList();
     const asyncVendorIds = catalogs.map(c => c.vendorId).sort();
-    const syncVendorIds = allVendorCatalogs.map(c => c.vendorId).sort();
-    expect(asyncVendorIds).toEqual(syncVendorIds);
+    const listVendorIds = vendorList.map(c => c.vendorId).sort();
+    expect(asyncVendorIds).toEqual(listVendorIds);
   });
 
   it('should return valid VendorCatalog shapes', async () => {
@@ -66,7 +67,7 @@ describe('getAllVendorCatalogsAsync', () => {
     ]);
     // Both should resolve to the same reference
     expect(result1).toBe(result2);
-    expect(result1.length).toBe(allVendorCatalogs.length);
+    expect(result1.length).toBe(22);
   });
 
   it('should include cisco vendor', async () => {

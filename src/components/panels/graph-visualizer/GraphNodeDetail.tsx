@@ -5,7 +5,7 @@
  * and vendor products for the selected node.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Info, ChevronDown, ChevronRight } from 'lucide-react';
 import type { InfraNodeType } from '@/types/infra';
 import { getNodeDetail } from '@/lib/knowledge/graphVisualizer';
@@ -43,7 +43,27 @@ export function DetailTab({ selectedNode, onNodeClick, onBack }: DetailTabProps)
     );
   }
 
-  const detail = getNodeDetail(selectedNode);
+  type NodeDetail = Awaited<ReturnType<typeof getNodeDetail>>;
+  const [detail, setDetail] = useState<NodeDetail | null>(null);
+
+  useEffect(() => {
+    if (!selectedNode) return;
+    let cancelled = false;
+    getNodeDetail(selectedNode).then((result) => {
+      if (!cancelled) setDetail(result);
+    });
+    return () => { cancelled = true; };
+  }, [selectedNode]);
+
+  if (!detail) {
+    return (
+      <div className="p-4 text-center py-16">
+        <div className="w-6 h-6 mx-auto animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
+        <p className="text-xs text-zinc-400 mt-3">Loading detail...</p>
+      </div>
+    );
+  }
+
   const colors = getCategoryColor(detail.node.category);
 
   return (

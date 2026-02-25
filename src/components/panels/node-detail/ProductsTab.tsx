@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import type { InfraNodeType } from '@/types';
-import { getProductsByNodeType } from '@/lib/knowledge/vendorCatalog';
+import { useProductsByNodeType } from '@/hooks/useVendorData';
 import { VendorAccordion } from './VendorAccordion';
 
 interface ProductsTabProps {
@@ -15,7 +15,7 @@ export function ProductsTab({ nodeType, onProductSelect }: ProductsTabProps) {
   const [expandedVendors, setExpandedVendors] = useState<Set<string>>(new Set());
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
-  const vendorResults = useMemo(() => getProductsByNodeType(nodeType), [nodeType]);
+  const { vendorResults, loading } = useProductsByNodeType(nodeType);
 
   const toggleVendor = (vendorId: string) => {
     setExpandedVendors((prev) => {
@@ -25,6 +25,14 @@ export function ProductsTab({ nodeType, onProductSelect }: ProductsTabProps) {
       return next;
     });
   };
+
+  if (loading) {
+    return (
+      <div className="text-center py-8 text-zinc-500 animate-pulse">
+        벤더 제품 로딩 중...
+      </div>
+    );
+  }
 
   if (vendorResults.length === 0) {
     return (

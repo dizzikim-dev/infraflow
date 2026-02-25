@@ -8,9 +8,11 @@
  *   - If UPSTASH_REDIS_REST_URL is set: use Redis (persists across cold starts)
  *   - Otherwise: use in-memory Map (resets on restart)
  *
- * Fail-closed: In production (VERCEL=true), if Redis is configured but an
- * operation fails, requests are REJECTED. In development, falls back to
- * in-memory silently.
+ * Store initialization:
+ *   - In production (VERCEL=true), if Redis is unavailable at startup,
+ *     falls back to DegradedInMemoryStore (logs warnings, still serves requests).
+ *   - At runtime, if a Redis operation fails, requests are REJECTED (fail-closed).
+ *   - In development, falls back to in-memory silently.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -261,6 +263,38 @@ export class RejectAllStore implements RateLimitStoreInterface {
 }
 
 // ============================================================
+// Degraded In-Memory Store (production fallback without Redis)
+// ============================================================
+
+/**
+ * Degraded in-memory store for when Redis is unavailable in production.
+ * Provides basic rate limiting (less precise than Redis across instances)
+ * but does NOT reject all requests. Logs warnings for visibility.
+ */
+export class DegradedInMemoryStore extends InMemoryRateLimitStore {
+  private hasLoggedWarning = false;
+
+  async get(key: string): Promise<RateLimitEntry | undefined> {
+    this.logDegradedWarning();
+    return super.get(key);
+  }
+
+  async set(key: string, entry: RateLimitEntry, _ttlMs?: number): Promise<void> {
+    return super.set(key, entry);
+  }
+
+  private logDegradedWarning(): void {
+    if (!this.hasLoggedWarning) {
+      log.warn(
+        'Rate limiter running in DEGRADED mode (in-memory). ' +
+        'Configure UPSTASH_REDIS_REST_URL for production-grade rate limiting.'
+      );
+      this.hasLoggedWarning = true;
+    }
+  }
+}
+
+// ============================================================
 // Store Factory
 // ============================================================
 
@@ -268,7 +302,7 @@ export class RejectAllStore implements RateLimitStoreInterface {
  * Create the appropriate rate limit store based on environment.
  *
  * - UPSTASH_REDIS_REST_URL set: Redis store
- * - VERCEL set but Redis unavailable: RejectAllStore (fail-closed)
+ * - VERCEL set but Redis unavailable: DegradedInMemoryStore (degraded mode)
  * - Otherwise (dev): In-memory store
  */
 function createStore(): RateLimitStoreInterface {
@@ -293,23 +327,23 @@ function createStore(): RateLimitStoreInterface {
         error instanceof Error ? error : new Error(String(error))
       );
       if (env.VERCEL) {
-        log.error(
-          'CRITICAL: Redis initialization failed on VERCEL. ' +
-          'All requests will be rejected (fail-closed).'
+        log.warn(
+          'WARNING: Redis initialization failed on VERCEL. ' +
+          'Running in degraded mode (in-memory rate limiting).'
         );
-        return new RejectAllStore();
+        return new DegradedInMemoryStore();
       }
       return new InMemoryRateLimitStore();
     }
   }
 
   if (env.VERCEL) {
-    log.error(
-      'CRITICAL: No Redis env vars on VERCEL (UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN). ' +
-      'All requests will be rejected (fail-closed). ' +
+    log.warn(
+      'WARNING: No Redis env vars on VERCEL (UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN). ' +
+      'Running in degraded mode (in-memory rate limiting). ' +
       'Configure Redis for production.'
     );
-    return new RejectAllStore();
+    return new DegradedInMemoryStore();
   }
 
   return new InMemoryRateLimitStore();

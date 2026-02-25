@@ -194,10 +194,10 @@ describe('when ChromaDB is available', () => {
     expect(result.documents[1].score).toBeCloseTo(expectedScore2, 4);
   });
 
-  it('queries all 4 collections by default', async () => {
+  it('queries all 5 collections by default', async () => {
     await searchProductIntelligence('AI');
 
-    expect(mockGetOrCreateCollection).toHaveBeenCalledTimes(4);
+    expect(mockGetOrCreateCollection).toHaveBeenCalledTimes(5);
   });
 
   it('queryTimeMs is populated', async () => {

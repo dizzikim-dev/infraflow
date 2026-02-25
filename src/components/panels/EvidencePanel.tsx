@@ -26,6 +26,7 @@ import {
 import type { InfraNodeType, InfraSpec } from '@/types';
 import { useEvidence } from '@/hooks/useEvidence';
 import type { EvidenceData, VendorGroup } from '@/hooks/useEvidence';
+import type { TraceSummary } from '@/lib/rag/types';
 
 // ============================================================
 // Types
@@ -37,9 +38,20 @@ interface EvidencePanelProps {
   nodeLabel: string | null;
   spec: InfraSpec | null;
   onClose: () => void;
+  /** Trace summary from the LLM pipeline (optional) */
+  traceSummary?: TraceSummary | null;
+  /** Trace ID for linking to admin detail page */
+  traceId?: string | null;
+  /** Post-verification result (Phase 2) */
+  verification?: {
+    score: number;
+    missingRequired: number;
+    missingRecommended: number;
+    conflicts: number;
+  } | null;
 }
 
-type TabType = 'relationships' | 'recommendations' | 'validation' | 'sources';
+type TabType = 'relationships' | 'recommendations' | 'validation' | 'sources' | 'trace';
 
 // ============================================================
 // Constants
@@ -75,16 +87,31 @@ export function EvidencePanel({
   nodeLabel,
   spec,
   onClose,
+  traceSummary,
+  traceId,
+  verification,
 }: EvidencePanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('relationships');
   const evidence = useEvidence(nodeId, nodeType, spec);
 
-  const tabs: { key: TabType; label: string; count: number; Icon: typeof Link2 }[] = [
+  const tabs: { key: TabType; label: string; count: number; Icon: typeof Link2; badge?: string }[] = [
     { key: 'relationships', label: '연결 관계', count: evidence?.counts.relationships ?? 0, Icon: Link2 },
     { key: 'recommendations', label: '제품 추천', count: evidence?.counts.recommendations ?? 0, Icon: Package },
     { key: 'validation', label: '검증', count: evidence?.counts.validationIssues ?? 0, Icon: ShieldAlert },
     { key: 'sources', label: '근거', count: evidence?.counts.sources ?? 0, Icon: BookOpen },
   ];
+
+  // Add trace tab when traceSummary is available
+  if (traceSummary) {
+    const hasWarning = verification && (verification.score < 70 || verification.missingRequired > 0 || verification.conflicts > 0);
+    tabs.push({
+      key: 'trace',
+      label: '추론',
+      count: traceSummary.ragDocumentsUsed,
+      Icon: FileCheck2,
+      badge: hasWarning ? '!' : undefined,
+    });
+  }
 
   return (
     <motion.div
@@ -115,7 +142,7 @@ export function EvidencePanel({
 
       {/* Tabs */}
       <div className="flex border-b border-white/10">
-        {tabs.map(({ key, label, count, Icon }) => (
+        {tabs.map(({ key, label, count, Icon, badge }) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
@@ -128,7 +155,12 @@ export function EvidencePanel({
             <div className="flex items-center justify-center gap-1.5">
               <Icon className="w-4 h-4" />
               <span>{label}</span>
-              {count > 0 && (
+              {badge && (
+                <span className="text-[10px] px-1 py-0.5 rounded-full bg-red-500 text-white font-bold leading-none">
+                  {badge}
+                </span>
+              )}
+              {count > 0 && !badge && (
                 <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                   activeTab === key ? 'bg-emerald-500/20 text-emerald-300' : 'bg-white/10 text-zinc-400'
                 }`}>
@@ -164,6 +196,10 @@ export function EvidencePanel({
 
         {evidence && activeTab === 'sources' && (
           <SourcesTab evidence={evidence} />
+        )}
+
+        {activeTab === 'trace' && traceSummary && (
+          <TraceTab traceSummary={traceSummary} traceId={traceId} verification={verification} />
         )}
       </div>
 
@@ -530,6 +566,99 @@ function ValidationTab({ evidence }: { evidence: EvidenceData }) {
           </div>
         </div>
       ))}
+    </>
+  );
+}
+
+// ============================================================
+// Tab: Trace (Reasoning Summary)
+// ============================================================
+
+function TraceTab({
+  traceSummary,
+  traceId,
+  verification,
+}: {
+  traceSummary: TraceSummary;
+  traceId?: string | null;
+  verification?: { score: number; missingRequired: number; missingRecommended: number; conflicts: number } | null;
+}) {
+  const items = [
+    { label: 'RAG 문서', labelEn: 'RAG Documents', value: traceSummary.ragDocumentsUsed },
+    { label: '최고 점수', labelEn: 'Max Score', value: traceSummary.maxScore.toFixed(2) },
+    { label: '관계 매칭', labelEn: 'Relationships', value: traceSummary.relationshipsMatched },
+    { label: '갭 탐지', labelEn: 'Gaps', value: traceSummary.gapsDetected },
+  ];
+
+  return (
+    <>
+      {/* Summary stats */}
+      <div className="grid grid-cols-2 gap-2">
+        {items.map((item) => (
+          <div key={item.labelEn} className="bg-zinc-800/50 rounded-lg p-3 border border-white/5 text-center">
+            <p className="text-lg font-bold text-white">{item.value}</p>
+            <p className="text-[10px] text-zinc-500">{item.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Status pills */}
+      <div className="flex flex-wrap gap-2 mt-3">
+        <span className={`text-xs px-2 py-1 rounded-full ${
+          traceSummary.liveAugmentTriggered
+            ? 'bg-orange-500/20 text-orange-300'
+            : 'bg-zinc-800 text-zinc-500'
+        }`}>
+          Live Augment: {traceSummary.liveAugmentTriggered ? 'Yes' : 'No'}
+        </span>
+        <span className={`text-xs px-2 py-1 rounded-full ${
+          traceSummary.enrichmentCacheHit
+            ? 'bg-green-500/20 text-green-300'
+            : 'bg-zinc-800 text-zinc-500'
+        }`}>
+          Cache: {traceSummary.enrichmentCacheHit ? 'Hit' : 'Miss'}
+        </span>
+      </div>
+
+      {/* Verification warnings (Phase 2) */}
+      {verification && (
+        <div className="mt-3 space-y-2">
+          {verification.score < 70 && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+              <p className="text-xs text-amber-300">
+                검증 점수 낮음: {verification.score}/100
+              </p>
+            </div>
+          )}
+          {verification.missingRequired > 0 && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+              <p className="text-xs text-red-300">
+                필수 컴포넌트 누락 감지: {verification.missingRequired}건
+              </p>
+            </div>
+          )}
+          {verification.conflicts > 0 && (
+            <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+              <p className="text-xs text-orange-300">
+                충돌 감지: {verification.conflicts}건
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Link to admin trace detail */}
+      {traceId && (
+        <div className="mt-3">
+          <a
+            href={`/admin/rag?trace=${traceId}`}
+            className="text-xs text-emerald-400/70 hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
+          >
+            <ExternalLink className="w-3 h-3" />
+            관리자 트레이스 상세 보기
+          </a>
+        </div>
+      )}
     </>
   );
 }

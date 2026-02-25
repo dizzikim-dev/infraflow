@@ -576,6 +576,26 @@ model KnowledgeIndustryPreset {
   @@map("knowledge_industry_presets")
 }
 
+/// RAG 추론 트레이스 (파이프라인 관측성)
+model ReasoningTrace {
+  id        String   @id @default(cuid())
+  traceId   String   @unique
+  query     String   @db.Text
+  traceData Json
+  durationMs Int
+  maxScore  Float
+  provider  String
+  success   Boolean
+  nodeTypes String[]
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([maxScore])
+  @@index([success])
+  @@map("reasoning_traces")
+}
+
 /// 미인식 쿼리 (fallback 로깅)
 model UnrecognizedQuery {
   id         String   @id @default(cuid())

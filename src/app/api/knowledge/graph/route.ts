@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       options.includeIsolated = true;
     }
 
-    const graph = buildKnowledgeGraph(options);
+    const graph = await buildKnowledgeGraph(options);
 
     return NextResponse.json({
       success: true,

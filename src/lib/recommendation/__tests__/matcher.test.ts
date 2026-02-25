@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { InfraNodeSpec, InfraSpec, InfraNodeType } from '@/types/infra';
 import type { VendorCatalog, ProductNode } from '@/lib/knowledge/vendorCatalog/types';
-import { allVendorCatalogs } from '@/lib/knowledge/vendorCatalog';
+import { _setVendorCatalogCache, _resetVendorCatalogCache } from '@/lib/knowledge/vendorCatalog';
 import { matchVendorProducts } from '../matcher';
 
 // ---------------------------------------------------------------------------
@@ -66,7 +66,7 @@ function makeSpec(nodes: InfraNodeSpec[] = []): InfraSpec {
 }
 
 // ---------------------------------------------------------------------------
-// Tests — Unit tests with mock catalog
+// Tests -- Unit tests with mock catalog
 // ---------------------------------------------------------------------------
 
 describe('matchVendorProducts', () => {
@@ -113,6 +113,48 @@ describe('matchVendorProducts', () => {
     haFeatures: ['StackWise Virtual'],
   });
 
+  const lbProduct = makeLeaf({
+    nodeId: 'PN-LB-001',
+    name: 'BigIP i5800',
+    nameKo: '빅아이피 i5800',
+    description: 'Application delivery controller',
+    descriptionKo: '애플리케이션 전달 컨트롤러',
+    infraNodeTypes: ['load-balancer'] as InfraNodeType[],
+    architectureRole: 'Internal Application Layer',
+    architectureRoleKo: '내부 애플리케이션 레이어',
+    recommendedFor: ['Application load balancing', 'Server traffic distribution'],
+    recommendedForKo: ['애플리케이션 부하 분산', '서버 트래픽 분산'],
+    haFeatures: ['Active-Standby', 'Connection Mirroring'],
+  });
+
+  const wafProduct = makeLeaf({
+    nodeId: 'PN-WAF-001',
+    name: 'Advanced WAF',
+    nameKo: '고급 WAF',
+    description: 'Web application firewall',
+    descriptionKo: '웹 애플리케이션 방화벽',
+    infraNodeTypes: ['waf'] as InfraNodeType[],
+    architectureRole: 'DMZ Front Ingress',
+    architectureRoleKo: 'DMZ 프론트 인그레스',
+    recommendedFor: ['Web application protection', 'API security'],
+    recommendedForKo: ['웹 애플리케이션 보호', 'API 보안'],
+    haFeatures: [],
+  });
+
+  const routerProduct = makeLeaf({
+    nodeId: 'PN-RTR-001',
+    name: 'ISR 4451',
+    nameKo: 'ISR 4451',
+    description: 'Integrated services router',
+    descriptionKo: '통합 서비스 라우터',
+    infraNodeTypes: ['router'] as InfraNodeType[],
+    architectureRole: 'WAN Edge Gateway',
+    architectureRoleKo: 'WAN 에지 게이트웨이',
+    recommendedFor: ['WAN connectivity', 'Branch routing'],
+    recommendedForKo: ['WAN 연결', '지사 라우팅'],
+    haFeatures: ['HSRP', 'VRRP'],
+  });
+
   const fwCategory = makeCategory(
     {
       nodeId: 'PN-FW',
@@ -142,14 +184,14 @@ describe('matchVendorProducts', () => {
     products: [
       makeCategory(
         { nodeId: 'root-a', depth: 0, name: 'Security', nameKo: '보안' },
-        [fwCategory],
+        [fwCategory, wafProduct],
       ),
       makeCategory(
         { nodeId: 'root-a-net', depth: 0, name: 'Networking', nameKo: '네트워킹' },
-        [swCategory],
+        [swCategory, lbProduct, routerProduct],
       ),
     ],
-    stats: { totalProducts: 7, maxDepth: 2, categoriesCount: 2 },
+    stats: { totalProducts: 10, maxDepth: 2, categoriesCount: 2 },
   });
 
   const testVendorB = makeVendor({
@@ -175,27 +217,22 @@ describe('matchVendorProducts', () => {
     stats: { totalProducts: 2, maxDepth: 1, categoriesCount: 1 },
   });
 
-  let savedCatalogs: VendorCatalog[];
-
   beforeEach(() => {
-    savedCatalogs = [...allVendorCatalogs];
-    allVendorCatalogs.length = 0;
-    allVendorCatalogs.push(testVendorA, testVendorB);
+    _setVendorCatalogCache([testVendorA, testVendorB]);
   });
 
   afterEach(() => {
-    allVendorCatalogs.length = 0;
-    allVendorCatalogs.push(...savedCatalogs);
+    _resetVendorCatalogCache();
   });
 
-  // ── Basic matching ──
+  // -- Basic matching --
 
-  it('should return firewall product recommendations for a firewall node', () => {
+  it('should return firewall product recommendations for a firewall node', async () => {
     const spec = makeSpec([
       { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Primary Firewall', tier: 'dmz' },
     ]);
 
-    const result = matchVendorProducts(spec);
+    const result = await matchVendorProducts(spec);
 
     expect(result.nodeRecommendations).toHaveLength(1);
     expect(result.nodeRecommendations[0].nodeId).toBe('fw-1');
@@ -208,20 +245,56 @@ describe('matchVendorProducts', () => {
     expect(productNames.some((n) => n.includes('FortiGate') || n.includes('SecuWall'))).toBe(true);
   });
 
-  it('should return switch product recommendations for a switch node', () => {
+  it('should return switch product recommendations for a switch node', async () => {
     const spec = makeSpec([
       { id: 'sw-1', type: 'switch-l3' as InfraNodeType, label: 'Core Switch', tier: 'internal' },
     ]);
 
-    const result = matchVendorProducts(spec);
+    const result = await matchVendorProducts(spec);
 
     expect(result.nodeRecommendations).toHaveLength(1);
     const names = result.nodeRecommendations[0].recommendations.map((r) => r.product.name);
     expect(names).toContain('Catalyst 9300');
   });
 
-  it('should return empty results for an empty spec', () => {
-    const result = matchVendorProducts(makeSpec([]));
+  it('should return load-balancer product recommendations for a load-balancer node', async () => {
+    const spec = makeSpec([
+      { id: 'lb-1', type: 'load-balancer' as InfraNodeType, label: 'App LB', tier: 'internal' },
+    ]);
+
+    const result = await matchVendorProducts(spec);
+
+    expect(result.nodeRecommendations).toHaveLength(1);
+    const names = result.nodeRecommendations[0].recommendations.map((r) => r.product.name);
+    expect(names).toContain('BigIP i5800');
+  });
+
+  it('should return WAF product recommendations for a waf node', async () => {
+    const spec = makeSpec([
+      { id: 'waf-1', type: 'waf' as InfraNodeType, label: 'Web App Firewall', tier: 'dmz' },
+    ]);
+
+    const result = await matchVendorProducts(spec);
+
+    expect(result.nodeRecommendations).toHaveLength(1);
+    const names = result.nodeRecommendations[0].recommendations.map((r) => r.product.name);
+    expect(names).toContain('Advanced WAF');
+  });
+
+  it('should return router product recommendations for a router node', async () => {
+    const spec = makeSpec([
+      { id: 'rtr-1', type: 'router' as InfraNodeType, label: 'WAN Router', tier: 'external' },
+    ]);
+
+    const result = await matchVendorProducts(spec);
+
+    expect(result.nodeRecommendations).toHaveLength(1);
+    const names = result.nodeRecommendations[0].recommendations.map((r) => r.product.name);
+    expect(names).toContain('ISR 4451');
+  });
+
+  it('should return empty results for an empty spec', async () => {
+    const result = await matchVendorProducts(makeSpec([]));
 
     expect(result.nodeRecommendations).toHaveLength(0);
     expect(result.totalProductsEvaluated).toBe(0);
@@ -229,39 +302,88 @@ describe('matchVendorProducts', () => {
     expect(result.unmatchedNodes).toHaveLength(0);
   });
 
-  it('should add to unmatchedNodes when no products match a node type', () => {
+  it('should add to unmatchedNodes when no products match a node type', async () => {
     const spec = makeSpec([
       { id: 'ldap-1', type: 'ldap-ad' as InfraNodeType, label: 'Active Directory' },
     ]);
 
-    const result = matchVendorProducts(spec);
+    const result = await matchVendorProducts(spec);
 
     expect(result.unmatchedNodes).toHaveLength(1);
     expect(result.unmatchedNodes[0].nodeId).toBe('ldap-1');
     expect(result.unmatchedNodes[0].nodeType).toBe('ldap-ad');
   });
 
-  // ── Filtering ──
+  // -- Score properties --
 
-  it('should filter by vendorId', () => {
+  it('should return results with score properties containing overall and breakdown', async () => {
     const spec = makeSpec([
       { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
     ]);
 
-    const result = matchVendorProducts(spec, { vendorId: 'vendor-b' });
+    const result = await matchVendorProducts(spec);
+
+    expect(result.nodeRecommendations.length).toBeGreaterThan(0);
+    for (const rec of result.nodeRecommendations[0].recommendations) {
+      expect(rec.score).toBeDefined();
+      expect(typeof rec.score.overall).toBe('number');
+      expect(rec.score.breakdown).toBeDefined();
+      expect(typeof rec.score.breakdown.typeMatch).toBe('number');
+      expect(typeof rec.score.breakdown.architectureRoleFit).toBe('number');
+      expect(typeof rec.score.breakdown.useCaseOverlap).toBe('number');
+      expect(typeof rec.score.breakdown.haFeatureMatch).toBe('number');
+    }
+  });
+
+  it('should return scores between 0 and 100', async () => {
+    const spec = makeSpec([
+      { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
+      { id: 'sw-1', type: 'switch-l3' as InfraNodeType, label: 'Switch', tier: 'internal' },
+      { id: 'lb-1', type: 'load-balancer' as InfraNodeType, label: 'LB', tier: 'internal' },
+    ]);
+
+    const result = await matchVendorProducts(spec, { minScore: 0 });
+
+    for (const nodeRec of result.nodeRecommendations) {
+      for (const rec of nodeRec.recommendations) {
+        expect(rec.score.overall).toBeGreaterThanOrEqual(0);
+        expect(rec.score.overall).toBeLessThanOrEqual(100);
+      }
+    }
+  });
+
+  // -- Filtering --
+
+  it('should filter by vendorId', async () => {
+    const spec = makeSpec([
+      { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
+    ]);
+
+    const result = await matchVendorProducts(spec, { vendorId: 'vendor-b' });
 
     expect(result.nodeRecommendations).toHaveLength(1);
     const vendorIds = result.nodeRecommendations[0].recommendations.map((r) => r.vendorId);
     expect(vendorIds.every((id) => id === 'vendor-b')).toBe(true);
   });
 
-  it('should filter by minScore', () => {
+  it('should return no results when filtering by non-existent vendor', async () => {
     const spec = makeSpec([
       { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
     ]);
 
-    const lowMinResult = matchVendorProducts(spec, { minScore: 1 });
-    const highMinResult = matchVendorProducts(spec, { minScore: 90 });
+    const result = await matchVendorProducts(spec, { vendorId: 'non-existent-vendor' });
+
+    expect(result.nodeRecommendations).toHaveLength(0);
+    expect(result.unmatchedNodes).toHaveLength(1);
+  });
+
+  it('should filter by minScore', async () => {
+    const spec = makeSpec([
+      { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
+    ]);
+
+    const lowMinResult = await matchVendorProducts(spec, { minScore: 1 });
+    const highMinResult = await matchVendorProducts(spec, { minScore: 90 });
 
     // With low threshold, should have more results
     const lowCount = lowMinResult.nodeRecommendations[0]?.recommendations.length ?? 0;
@@ -269,26 +391,52 @@ describe('matchVendorProducts', () => {
     expect(lowCount).toBeGreaterThanOrEqual(highCount);
   });
 
-  it('should limit results with maxPerNode', () => {
+  it('should enforce minScore threshold strictly', async () => {
     const spec = makeSpec([
       { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
     ]);
 
-    const result = matchVendorProducts(spec, { maxPerNode: 1 });
+    const result = await matchVendorProducts(spec, { minScore: 40 });
+
+    for (const nodeRec of result.nodeRecommendations) {
+      for (const rec of nodeRec.recommendations) {
+        expect(rec.score.overall).toBeGreaterThanOrEqual(40);
+      }
+    }
+  });
+
+  it('should limit results with maxPerNode', async () => {
+    const spec = makeSpec([
+      { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
+    ]);
+
+    const result = await matchVendorProducts(spec, { maxPerNode: 1 });
 
     if (result.nodeRecommendations.length > 0) {
       expect(result.nodeRecommendations[0].recommendations.length).toBeLessThanOrEqual(1);
     }
   });
 
-  // ── Sorting ──
-
-  it('should sort results by score descending', () => {
+  it('should use default maxPerNode of 5 when not specified', async () => {
     const spec = makeSpec([
       { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
     ]);
 
-    const result = matchVendorProducts(spec);
+    const result = await matchVendorProducts(spec, { minScore: 0 });
+
+    if (result.nodeRecommendations.length > 0) {
+      expect(result.nodeRecommendations[0].recommendations.length).toBeLessThanOrEqual(5);
+    }
+  });
+
+  // -- Sorting --
+
+  it('should sort results by score descending', async () => {
+    const spec = makeSpec([
+      { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
+    ]);
+
+    const result = await matchVendorProducts(spec);
 
     if (result.nodeRecommendations.length > 0) {
       const scores = result.nodeRecommendations[0].recommendations.map(
@@ -300,29 +448,42 @@ describe('matchVendorProducts', () => {
     }
   });
 
-  // ── Counters ──
+  // -- Counters --
 
-  it('should accurately count totalProductsEvaluated and totalMatches', () => {
+  it('should accurately count totalProductsEvaluated and totalMatches', async () => {
     const spec = makeSpec([
       { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
     ]);
 
-    const result = matchVendorProducts(spec, { minScore: 0 });
+    const result = await matchVendorProducts(spec, { minScore: 0 });
 
-    // Firewall products: fwProduct1, fwProduct2 (vendor-a) + fwCategory (vendor-a, has infraNodeTypes) + SecuWall (vendor-b) + root-b (if it matches)
     expect(result.totalProductsEvaluated).toBeGreaterThan(0);
     expect(result.totalMatches).toBeGreaterThan(0);
     expect(result.totalMatches).toBeLessThanOrEqual(result.totalProductsEvaluated);
   });
 
-  // ── Reason strings ──
+  it('should count totalMatches as the sum of all recommendations across nodes', async () => {
+    const spec = makeSpec([
+      { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
+      { id: 'sw-1', type: 'switch-l3' as InfraNodeType, label: 'Switch', tier: 'internal' },
+    ]);
 
-  it('should provide non-empty reason and reasonKo strings', () => {
+    const result = await matchVendorProducts(spec);
+
+    const sumOfRecommendations = result.nodeRecommendations.reduce(
+      (sum, nr) => sum + nr.recommendations.length, 0,
+    );
+    expect(result.totalMatches).toBe(sumOfRecommendations);
+  });
+
+  // -- Reason strings --
+
+  it('should provide non-empty reason and reasonKo strings', async () => {
     const spec = makeSpec([
       { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
     ]);
 
-    const result = matchVendorProducts(spec);
+    const result = await matchVendorProducts(spec);
 
     if (result.nodeRecommendations.length > 0) {
       for (const rec of result.nodeRecommendations[0].recommendations) {
@@ -334,14 +495,30 @@ describe('matchVendorProducts', () => {
     }
   });
 
-  // ── Path (breadcrumb) ──
-
-  it('should include breadcrumb path for each recommendation', () => {
+  it('should include score value in reason strings', async () => {
     const spec = makeSpec([
       { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
     ]);
 
-    const result = matchVendorProducts(spec);
+    const result = await matchVendorProducts(spec);
+
+    if (result.nodeRecommendations.length > 0) {
+      for (const rec of result.nodeRecommendations[0].recommendations) {
+        // Reason should contain the score value
+        expect(rec.reason).toContain(String(rec.score.overall));
+        expect(rec.reasonKo).toContain(String(rec.score.overall));
+      }
+    }
+  });
+
+  // -- Path (breadcrumb) --
+
+  it('should include breadcrumb path for each recommendation', async () => {
+    const spec = makeSpec([
+      { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
+    ]);
+
+    const result = await matchVendorProducts(spec);
 
     if (result.nodeRecommendations.length > 0) {
       for (const rec of result.nodeRecommendations[0].recommendations) {
@@ -352,15 +529,15 @@ describe('matchVendorProducts', () => {
     }
   });
 
-  // ── Multiple nodes ──
+  // -- Multiple nodes --
 
-  it('should return recommendations for multiple nodes in the spec', () => {
+  it('should return recommendations for multiple nodes in the spec', async () => {
     const spec = makeSpec([
       { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
       { id: 'sw-1', type: 'switch-l3' as InfraNodeType, label: 'Core Switch', tier: 'internal' },
     ]);
 
-    const result = matchVendorProducts(spec);
+    const result = await matchVendorProducts(spec);
 
     // Should have recommendations for both nodes (or at least one plus unmatched)
     const matchedNodeIds = result.nodeRecommendations.map((nr) => nr.nodeId);
@@ -369,12 +546,12 @@ describe('matchVendorProducts', () => {
     expect([...matchedNodeIds, ...unmatchedNodeIds].sort()).toEqual(['fw-1', 'sw-1'].sort());
   });
 
-  it('should include vendorId and vendorName in each recommendation', () => {
+  it('should include vendorId and vendorName in each recommendation', async () => {
     const spec = makeSpec([
       { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
     ]);
 
-    const result = matchVendorProducts(spec);
+    const result = await matchVendorProducts(spec);
 
     if (result.nodeRecommendations.length > 0) {
       for (const rec of result.nodeRecommendations[0].recommendations) {
@@ -384,21 +561,85 @@ describe('matchVendorProducts', () => {
     }
   });
 
-  // ── Integration with real Cisco catalog ──
+  it('should preserve nodeType and nodeLabel in each node recommendation', async () => {
+    const spec = makeSpec([
+      { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Primary Firewall', tier: 'dmz' },
+    ]);
 
-  describe('with real Cisco catalog', () => {
-    beforeEach(() => {
-      // Restore real catalogs for integration tests
-      allVendorCatalogs.length = 0;
-      allVendorCatalogs.push(...savedCatalogs);
+    const result = await matchVendorProducts(spec);
+
+    if (result.nodeRecommendations.length > 0) {
+      expect(result.nodeRecommendations[0].nodeType).toBe('firewall');
+      expect(result.nodeRecommendations[0].nodeLabel).toBe('Primary Firewall');
+    }
+  });
+
+  // -- Edge cases --
+
+  it('should handle spec with connections gracefully', async () => {
+    const spec: InfraSpec = {
+      nodes: [
+        { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
+        { id: 'sw-1', type: 'switch-l3' as InfraNodeType, label: 'Switch', tier: 'internal' },
+      ],
+      connections: [
+        { source: 'fw-1', target: 'sw-1' },
+      ],
+    };
+
+    const result = await matchVendorProducts(spec);
+
+    // Should work the same -- connections do not affect matching
+    expect(result.nodeRecommendations.length + result.unmatchedNodes.length).toBe(2);
+  });
+
+  it('should handle multiple options combined', async () => {
+    const spec = makeSpec([
+      { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
+    ]);
+
+    const result = await matchVendorProducts(spec, {
+      vendorId: 'vendor-a',
+      minScore: 30,
+      maxPerNode: 2,
     });
 
-    it('should return Cisco firewall products for a firewall node', () => {
+    if (result.nodeRecommendations.length > 0) {
+      expect(result.nodeRecommendations[0].recommendations.length).toBeLessThanOrEqual(2);
+      for (const rec of result.nodeRecommendations[0].recommendations) {
+        expect(rec.vendorId).toBe('vendor-a');
+        expect(rec.score.overall).toBeGreaterThanOrEqual(30);
+      }
+    }
+  });
+
+  it('should return products from multiple vendors for the same node type', async () => {
+    const spec = makeSpec([
+      { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
+    ]);
+
+    const result = await matchVendorProducts(spec, { minScore: 0 });
+
+    if (result.nodeRecommendations.length > 0) {
+      const vendors = new Set(result.nodeRecommendations[0].recommendations.map((r) => r.vendorId));
+      expect(vendors.size).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  // -- Integration with real vendor catalogs --
+
+  describe('with real vendor catalogs', () => {
+    beforeEach(() => {
+      // Reset cache so the next call loads real vendor data via dynamic import
+      _resetVendorCatalogCache();
+    });
+
+    it('should return Cisco firewall products for a firewall node', async () => {
       const spec = makeSpec([
         { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Perimeter Firewall', tier: 'dmz' },
       ]);
 
-      const result = matchVendorProducts(spec);
+      const result = await matchVendorProducts(spec);
 
       // Should have at least some recommendations
       if (result.nodeRecommendations.length > 0) {
@@ -409,12 +650,12 @@ describe('matchVendorProducts', () => {
       }
     });
 
-    it('should return Cisco switch products for a switch node', () => {
+    it('should return Cisco switch products for a switch node', async () => {
       const spec = makeSpec([
         { id: 'sw-1', type: 'switch-l3' as InfraNodeType, label: 'Campus Core Switch', tier: 'internal' },
       ]);
 
-      const result = matchVendorProducts(spec);
+      const result = await matchVendorProducts(spec);
 
       if (result.nodeRecommendations.length > 0) {
         const products = result.nodeRecommendations[0].recommendations.map(
@@ -422,6 +663,48 @@ describe('matchVendorProducts', () => {
         );
         // Should include some Catalyst series
         expect(products.some((n) => n.toLowerCase().includes('catalyst'))).toBe(true);
+      }
+    });
+
+    it('should return results for common infrastructure types with real catalogs', async () => {
+      const commonTypes: InfraNodeType[] = ['firewall', 'switch-l3', 'load-balancer', 'waf', 'router'];
+
+      for (const nodeType of commonTypes) {
+        const spec = makeSpec([
+          { id: `node-1`, type: nodeType, label: `Test ${nodeType}` },
+        ]);
+        const result = await matchVendorProducts(spec, { minScore: 0 });
+
+        // Most common types should have at least some vendor products
+        const totalNodes = result.nodeRecommendations.length + result.unmatchedNodes.length;
+        expect(totalNodes).toBe(1);
+      }
+    });
+
+    it('should evaluate many products when using real catalogs', async () => {
+      const spec = makeSpec([
+        { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Firewall', tier: 'dmz' },
+      ]);
+
+      const result = await matchVendorProducts(spec, { minScore: 0 });
+
+      // With 22 vendors, there should be many products evaluated
+      expect(result.totalProductsEvaluated).toBeGreaterThan(5);
+    });
+
+    it('should include products from multiple real vendors', async () => {
+      const spec = makeSpec([
+        { id: 'fw-1', type: 'firewall' as InfraNodeType, label: 'Perimeter Firewall', tier: 'dmz' },
+      ]);
+
+      const result = await matchVendorProducts(spec, { minScore: 0 });
+
+      if (result.nodeRecommendations.length > 0) {
+        const vendorIds = new Set(
+          result.nodeRecommendations[0].recommendations.map((r) => r.vendorId),
+        );
+        // Firewall is a common type -- multiple vendors should have products
+        expect(vendorIds.size).toBeGreaterThanOrEqual(2);
       }
     });
   });

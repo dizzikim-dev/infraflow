@@ -65,6 +65,18 @@ const navItems: NavItem[] = [
   },
 ];
 
+const ragSection: NavSection = {
+  label: 'RAG',
+  icon: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+    </svg>
+  ),
+  items: [
+    { href: '/admin/rag', label: 'RAG 관리' },
+  ],
+};
+
 const knowledgeSection: NavSection = {
   label: 'Knowledge DB',
   icon: (
@@ -96,6 +108,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [knowledgeOpen, setKnowledgeOpen] = useState(
     pathname.startsWith('/admin/knowledge'),
   );
+  const [ragOpen, setRagOpen] = useState(
+    pathname.startsWith('/admin/rag'),
+  );
 
   const isActive = (href: string) => {
     if (href === '/admin') {
@@ -108,6 +123,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   const isKnowledgeActive = pathname.startsWith('/admin/knowledge');
+  const isRagActive = pathname.startsWith('/admin/rag');
 
   return (
     <div className="h-screen bg-gray-100 flex overflow-hidden">
@@ -193,6 +209,58 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             {sidebarOpen && knowledgeOpen && (
               <ul className="mt-1 space-y-0.5 pl-4">
                 {knowledgeSection.items.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition ${
+                        isActive(item.href)
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50" />
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* RAG 섹션 */}
+          <div className="mt-4 px-2">
+            {sidebarOpen && (
+              <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                RAG
+              </div>
+            )}
+            <button
+              onClick={() => setRagOpen(!ragOpen)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                isRagActive
+                  ? 'bg-blue-600/20 text-blue-300'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              {ragSection.icon}
+              {sidebarOpen && (
+                <>
+                  <span className="flex-1 text-left">{ragSection.label}</span>
+                  <svg
+                    className={`w-4 h-4 transition-transform ${ragOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </>
+              )}
+            </button>
+
+            {sidebarOpen && ragOpen && (
+              <ul className="mt-1 space-y-0.5 pl-4">
+                {ragSection.items.map((item) => (
                   <li key={item.href}>
                     <Link
                       href={item.href}

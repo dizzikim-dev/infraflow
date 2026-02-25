@@ -15,6 +15,7 @@ import {
   ComponentPicker,
 } from '@/components/contextMenu';
 import { EditorPanels } from './EditorPanels';
+import { EvidencePanel } from '@/components/panels/EvidencePanel';
 import { LoginPromptModal } from '@/components/auth/LoginPromptModal';
 import { useInfraState, useModalManager, useContextMenu, useComparisonMode, useHistory, type ComponentData } from '@/hooks';
 import { useDiagramPersistence } from '@/hooks/useDiagramPersistence';
@@ -527,6 +528,20 @@ export function InfraEditor({
         setSelectedNodePolicy={setSelectedNodePolicy}
         onNodeVendorUpdate={updateNodeVendor}
       />
+
+      {/* Evidence Panel — shown when trace data exists and a node is selected */}
+      {lastResult?.traceSummary && selectedNodeDetail && (
+        <EvidencePanel
+          nodeId={selectedNodeDetail.id}
+          nodeType={selectedNodeDetail.nodeType as import('@/types').InfraNodeType}
+          nodeLabel={selectedNodeDetail.name}
+          spec={currentSpec}
+          onClose={() => setSelectedNodeDetail(null)}
+          traceSummary={lastResult.traceSummary}
+          traceId={lastResult.traceId}
+          verification={lastResult.verification}
+        />
+      )}
 
       {/* Prompt Panel */}
       <PromptPanel

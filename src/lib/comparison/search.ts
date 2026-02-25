@@ -5,7 +5,7 @@
  * then provides filtered search across the unified catalog.
  */
 
-import { allVendorCatalogs } from '@/lib/knowledge/vendorCatalog';
+import { getVendorList } from '@/lib/knowledge/vendorCatalog';
 import { getAllNodes } from '@/lib/knowledge/vendorCatalog/queryHelpers';
 import { CLOUD_SERVICES } from '@/lib/knowledge/cloudCatalog';
 import { vendorProductToComparisonItem, cloudServiceToComparisonItem } from './adapters';
@@ -28,13 +28,14 @@ let cachedItems: ComparisonItem[] | null = null;
  * - Only includes vendor ProductNodes that have `infraNodeTypes` with length > 0
  * - Only includes cloud services with `status === 'active'`
  */
-export function getAllComparisonItems(): ComparisonItem[] {
+export async function getAllComparisonItems(): Promise<ComparisonItem[]> {
   if (cachedItems) return cachedItems;
 
   const items: ComparisonItem[] = [];
 
   // Vendor products
-  for (const catalog of allVendorCatalogs) {
+  const catalogs = await getVendorList();
+  for (const catalog of catalogs) {
     const allNodes = getAllNodes(catalog.products);
     for (const node of allNodes) {
       if (node.infraNodeTypes && node.infraNodeTypes.length > 0) {
@@ -77,15 +78,15 @@ const MAX_RESULTS = 20;
  * - Applies all non-empty filter arrays (AND logic between filter types)
  * - Returns max 20 results
  */
-export function searchComparisonItems(
+export async function searchComparisonItems(
   query: string,
   filters: ComparisonFilters,
-): ComparisonItem[] {
+): Promise<ComparisonItem[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
 
   const lower = trimmed.toLowerCase();
-  const all = getAllComparisonItems();
+  const all = await getAllComparisonItems();
 
   const filtered = all.filter((item) => {
     // Text match: name or nameKo

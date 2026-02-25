@@ -10,7 +10,7 @@ import type { InfraSpec, InfraNodeType } from '@/types/infra';
 // ─── Feedback Collection (PR C-1) ─────────────────────────────────────────
 
 /** Source of diagram generation */
-export type DiagramSource = 'local-parser' | 'llm-modify' | 'template';
+export type DiagramSource = 'local-parser' | 'llm-generate' | 'llm-modify' | 'template';
 
 /** A user's placement correction (tier/position change) */
 export interface PlacementChange {

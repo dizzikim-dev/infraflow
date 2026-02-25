@@ -8,10 +8,10 @@
  * Summary (key metrics). Amber/yellow theme.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { DollarSign, ChevronDown, ChevronRight } from 'lucide-react';
 import type { InfraSpec } from '@/types';
-import type { VendorCostEstimate } from '@/lib/consulting/types';
+import type { CostComparisonResult, VendorCostEstimate } from '@/lib/consulting/types';
 import { compareVendorCosts } from '@/lib/consulting/costComparator';
 import { PanelContainer } from './PanelContainer';
 import { PanelHeader } from './PanelHeader';
@@ -350,8 +350,24 @@ function SummaryTab({
 
 export function CostComparisonPanel({ show, onClose, spec }: CostComparisonPanelProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('compare');
+  const [result, setResult] = useState<CostComparisonResult | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const result = useMemo(() => compareVendorCosts(spec), [spec]);
+  useEffect(() => {
+    if (!spec || spec.nodes.length === 0) {
+      setResult(null);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    compareVendorCosts(spec).then((data) => {
+      if (!cancelled) {
+        setResult(data);
+        setLoading(false);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [spec]);
 
   if (!show) return null;
 
@@ -373,7 +389,12 @@ export function CostComparisonPanel({ show, onClose, spec }: CostComparisonPanel
       />
 
       <div className="flex-1 overflow-y-auto p-4">
-        {spec.nodes.length === 0 ? (
+        {loading ? (
+          <div className="text-center text-zinc-500 py-12 animate-pulse">
+            <DollarSign className="w-10 h-10 mx-auto mb-3 opacity-50" />
+            <p>비용 비교 분석 중...</p>
+          </div>
+        ) : spec.nodes.length === 0 || !result ? (
           <div className="text-center text-zinc-500 py-12">
             <DollarSign className="w-10 h-10 mx-auto mb-3 opacity-50" />
             <p>Create a diagram first to compare vendor costs.</p>

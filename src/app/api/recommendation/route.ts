@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
   try {
     // Cast spec to InfraSpec — Zod has validated the shape
-    const result = matchVendorProducts(
+    const result = await matchVendorProducts(
       spec as Parameters<typeof matchVendorProducts>[0],
       { vendorId, minScore, maxPerNode },
     );

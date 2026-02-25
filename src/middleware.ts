@@ -2,6 +2,10 @@ import NextAuth from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { authConfig } from '@/lib/auth/auth.config';
 import { generateNonce, buildCspHeader } from '@/lib/security/cspNonce';
+import { validateProductionEnv } from '@/lib/config/env';
+
+// Validate critical env vars in production (fail-fast)
+validateProductionEnv();
 
 const authHandler = NextAuth(authConfig).auth;
 
@@ -23,13 +27,17 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
 
+  // Generate unique request ID for audit trail
+  const requestId = crypto.randomUUID();
+
   // Generate CSP nonce for this request
   const nonce = generateNonce();
   const cspHeader = buildCspHeader(nonce);
 
-  // Clone request headers and add the nonce for downstream consumption
+  // Clone request headers and add the nonce + request ID for downstream consumption
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set('x-request-id', requestId);
 
   // For auth-protected paths, delegate to NextAuth then attach CSP to its response
   // In demo mode, skip auth checks entirely (DB-free test deployment)
@@ -39,9 +47,10 @@ export default async function middleware(request: NextRequest) {
     const authResponse = await (authHandler as any)(request);
 
     if (authResponse) {
-      // Auth middleware returned a response (redirect or error) — attach CSP
+      // Auth middleware returned a response (redirect or error) — attach CSP + request ID
       authResponse.headers.set('Content-Security-Policy', cspHeader);
       authResponse.headers.set('x-nonce', nonce);
+      authResponse.headers.set('x-request-id', requestId);
       return authResponse;
     }
   }
@@ -52,6 +61,7 @@ export default async function middleware(request: NextRequest) {
   });
 
   response.headers.set('Content-Security-Policy', cspHeader);
+  response.headers.set('x-request-id', requestId);
 
   return response;
 }

@@ -17,8 +17,8 @@
 
 import { createLogger } from '@/lib/utils/logger';
 import type { ChromaClient } from 'chromadb';
-import type { RAGDocument, RAGSearchResult, RAGSearchOptions } from './types';
-import { getChromaClient, COLLECTIONS, RAG_CONFIG } from './chromaClient';
+import type { RAGDocument, RAGSearchResult, RAGSearchOptions, LiveAugmentResult, ExpandedTypeResult } from './types';
+import { getChromaClient, COLLECTIONS, RAG_CONFIG, FETCH_CACHE_CONFIG } from './chromaClient';
 import { generateEmbedding } from './embeddings';
 import { searchPI } from '@/lib/knowledge/productIntelligence';
 
@@ -55,7 +55,7 @@ const ALL_COLLECTION_NAMES = Object.values(COLLECTIONS);
 export async function searchProductIntelligence(
   query: string,
   options?: RAGSearchOptions,
-): Promise<RAGSearchResult> {
+): Promise<RAGSearchResult & { liveAugment?: LiveAugmentResult }> {
   const startTime = Date.now();
   const topK = options?.topK ?? RAG_CONFIG.defaultTopK;
   const threshold = options?.similarityThreshold ?? RAG_CONFIG.similarityThreshold;
@@ -69,11 +69,46 @@ export async function searchProductIntelligence(
     };
   }
 
+  // Graph-guided query expansion (Phase 3)
+  let expandedQuery = query;
+  let graphExpansion: ExpandedTypeResult | undefined;
+  if (options?.enableGraphGuidance) {
+    try {
+      const { extractNodeTypesFromPrompt } = await import('@/app/api/llm/route');
+      const { getExpandedTypes } = await import('@/lib/knowledge/graphTraverser');
+      const seedTypes = extractNodeTypesFromPrompt(query);
+
+      if (seedTypes.length > 0) {
+        const expansionStart = Date.now();
+        graphExpansion = getExpandedTypes(seedTypes);
+        const expansionMs = Date.now() - expansionStart;
+
+        // Add expanded type names to the query for better vector search
+        const newTypes = graphExpansion.types.filter(
+          (t) => !seedTypes.includes(t as typeof seedTypes[number]),
+        );
+        if (newTypes.length > 0) {
+          expandedQuery = `${query} ${newTypes.join(' ')}`;
+          log.debug('Graph-guided query expansion', {
+            seedTypes,
+            expandedTypes: newTypes,
+            expansionMs,
+          });
+        }
+      }
+    } catch (error) {
+      log.debug('Graph guidance unavailable', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
   // Try ChromaDB vector search first
+  let result: RAGSearchResult | null = null;
   try {
     const client = await getChromaClient();
     if (client) {
-      return await vectorSearch(client, query, topK, threshold, options?.collections, startTime);
+      result = await vectorSearch(client, expandedQuery, topK, threshold, options?.collections, startTime);
     }
   } catch (error) {
     log.warn('ChromaDB search failed, falling back to keyword search', {
@@ -82,7 +117,51 @@ export async function searchProductIntelligence(
   }
 
   // Fallback: keyword search
-  return keywordFallback(query, topK, startTime);
+  if (!result) {
+    result = keywordFallback(expandedQuery, topK, startTime);
+  }
+
+  // Live augmentation: when enabled and max score is below threshold
+  if (options?.enableLiveAugment) {
+    const maxScore = result.documents.length > 0
+      ? Math.max(...result.documents.map((d) => d.score))
+      : 0;
+
+    if (maxScore < FETCH_CACHE_CONFIG.confidenceThreshold) {
+      try {
+        const { liveAugment } = await import('./fetcher/liveAugmenter');
+        const augmentResult = await liveAugment(query);
+
+        if (augmentResult.success && augmentResult.documentsIndexed > 0) {
+          log.debug('Live augment succeeded, re-searching', {
+            query,
+            documentsIndexed: augmentResult.documentsIndexed,
+          });
+
+          // Re-search to include newly indexed content
+          try {
+            const client = await getChromaClient();
+            if (client) {
+              const refreshed = await vectorSearch(
+                client, query, topK, threshold, options?.collections, startTime,
+              );
+              return { ...refreshed, liveAugment: augmentResult };
+            }
+          } catch {
+            // If re-search fails, return original results with augment info
+          }
+        }
+
+        return { ...result, liveAugment: augmentResult };
+      } catch (error) {
+        log.debug('Live augment failed', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  }
+
+  return result;
 }
 
 // ---------------------------------------------------------------------------

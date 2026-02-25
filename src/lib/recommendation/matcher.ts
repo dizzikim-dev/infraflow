@@ -12,9 +12,8 @@ import type {
   NodeRecommendation,
   ProductRecommendation,
 } from './types';
-import { getProductsByNodeType } from '@/lib/knowledge/vendorCatalog';
+import { getProductsByNodeType, getVendorList } from '@/lib/knowledge/vendorCatalog';
 import { getNodePath } from '@/lib/knowledge/vendorCatalog/queryHelpers';
-import { allVendorCatalogs } from '@/lib/knowledge/vendorCatalog';
 import { scoreProduct } from './scorer';
 
 // ---------------------------------------------------------------------------
@@ -109,7 +108,7 @@ function buildReasonKo(
  * @param spec - The infrastructure specification to match against
  * @param options - Optional filters
  */
-export function matchVendorProducts(
+export async function matchVendorProducts(
   spec: InfraSpec,
   options?: {
     /** Only include products from this vendor */
@@ -119,7 +118,7 @@ export function matchVendorProducts(
     /** Maximum recommendations per node */
     maxPerNode?: number;
   },
-): RecommendationResult {
+): Promise<RecommendationResult> {
   const minScore = options?.minScore ?? DEFAULT_MIN_SCORE;
   const maxPerNode = options?.maxPerNode ?? DEFAULT_MAX_PER_NODE;
   const vendorFilter = options?.vendorId;
@@ -129,9 +128,12 @@ export function matchVendorProducts(
   let totalProductsEvaluated = 0;
   let totalMatches = 0;
 
+  // Pre-load all vendor catalogs for path lookup
+  const allCatalogs = await getVendorList();
+
   for (const node of spec.nodes) {
     // Get products matching this node type across all vendors
-    let vendorProducts = getProductsByNodeType(node.type);
+    let vendorProducts = await getProductsByNodeType(node.type);
 
     // Apply vendor filter if specified
     if (vendorFilter) {
@@ -142,7 +144,7 @@ export function matchVendorProducts(
 
     for (const { vendorId, vendorName, products } of vendorProducts) {
       // Get the vendor catalog for path lookup
-      const vendorCatalog = allVendorCatalogs.find((v) => v.vendorId === vendorId);
+      const vendorCatalog = allCatalogs.find((v) => v.vendorId === vendorId);
 
       for (const product of products) {
         totalProductsEvaluated++;

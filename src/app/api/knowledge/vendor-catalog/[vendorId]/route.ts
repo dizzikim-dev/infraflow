@@ -27,7 +27,7 @@ export async function GET(
     await requireAdmin();
 
     const { vendorId } = await params;
-    const vendor = getVendor(vendorId);
+    const vendor = await getVendor(vendorId);
 
     if (!vendor) {
       return NextResponse.json(

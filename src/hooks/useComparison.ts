@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { ComparisonItem, ComparisonFilters } from '@/lib/comparison/types';
 import { MAX_COMPARISON_ITEMS, DEFAULT_FILTERS } from '@/lib/comparison/types';
 import { searchComparisonItems } from '@/lib/comparison/search';
@@ -39,10 +39,15 @@ export function useComparison(): UseComparisonReturn {
 
   const canCompare = items.length >= 2;
 
-  const searchResults = useMemo(
-    () => searchComparisonItems(searchQuery, filters),
-    [searchQuery, filters],
-  );
+  const [searchResults, setSearchResults] = useState<ComparisonItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    searchComparisonItems(searchQuery, filters).then((results) => {
+      if (!cancelled) setSearchResults(results);
+    });
+    return () => { cancelled = true; };
+  }, [searchQuery, filters]);
 
   const addItem = useCallback((item: ComparisonItem) => {
     setItems((prev) => {
