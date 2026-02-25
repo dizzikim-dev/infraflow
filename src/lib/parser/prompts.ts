@@ -17,6 +17,8 @@ export const AVAILABLE_COMPONENTS: Record<string, InfraNodeType[]> = {
   wan: ['pe-router', 'p-router', 'mpls-network', 'dedicated-line', 'metro-ethernet',
        'corporate-internet', 'vpn-service', 'sd-wan-service', 'private-5g',
        'core-network', 'upf', 'ring-network'],
+  'ai-compute': ['gpu-server', 'ai-accelerator', 'edge-device', 'mobile-device', 'ai-cluster', 'model-registry'],
+  'ai-service': ['inference-engine', 'vector-db', 'ai-gateway', 'ai-orchestrator', 'embedding-service', 'training-platform', 'prompt-manager', 'ai-monitor'],
 };
 
 // Format available components for prompt

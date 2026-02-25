@@ -47,6 +47,7 @@ import {
 import { AVAILABLE_COMPONENTS } from '@/lib/parser/prompts';
 import type { DiagramContext } from '@/lib/parser/prompts';
 import { redactSensitiveData } from '@/lib/security/llmSecurityControls';
+import type { PIDocument } from '@/lib/knowledge/types';
 
 const log = createLogger('LLM');
 
@@ -112,6 +113,8 @@ Available node types:
 - Storage: san-nas, object-storage, backup, cache, storage
 - Auth: ldap-ad, sso, mfa, iam
 - External: user, internet
+- AI Compute: gpu-server, ai-accelerator, edge-device, mobile-device, ai-cluster, model-registry
+- AI Service: inference-engine, vector-db, ai-gateway, ai-orchestrator, embedding-service, training-platform, prompt-manager, ai-monitor
 
 Guidelines:
 1. Always start with a "user" node for client-facing architectures
@@ -159,6 +162,18 @@ const KEYWORD_ALIASES: Record<string, InfraNodeType> = {
   casb: 'casb',
   sase: 'sase-gateway',
   ztna: 'ztna-broker',
+  ollama: 'inference-engine',
+  vllm: 'inference-engine',
+  'llama.cpp': 'inference-engine',
+  gpu: 'gpu-server',
+  chromadb: 'vector-db',
+  pinecone: 'vector-db',
+  langchain: 'ai-orchestrator',
+  llamaindex: 'ai-orchestrator',
+  mlflow: 'ai-monitor',
+  slack: 'api-gateway',
+  discord: 'api-gateway',
+  termux: 'mobile-device',
 };
 
 /** All known InfraNodeType values, derived from AVAILABLE_COMPONENTS */
@@ -198,9 +213,14 @@ export function extractNodeTypesFromPrompt(prompt: string): InfraNodeType[] {
 /**
  * Build an enriched system prompt by appending knowledge graph context.
  *
- * Extracts potential node types from the user's prompt, builds a minimal
- * DiagramContext, runs enrichContext() + buildKnowledgePromptSection(),
- * and appends the result to the base SYSTEM_PROMPT.
+ * Extracts potential node types from the user's prompt, performs a RAG search
+ * for Product Intelligence data, builds a minimal DiagramContext, runs
+ * enrichContext() + buildKnowledgePromptSection(), and appends the result
+ * to the base SYSTEM_PROMPT.
+ *
+ * The RAG search runs regardless of keyword extraction results — users may
+ * mention product names (e.g., "OpenClaw") that aren't in the keyword aliases
+ * but ARE present in the PI data.
  *
  * Falls back to the static SYSTEM_PROMPT if enrichment fails or produces
  * no additional knowledge.
@@ -208,16 +228,36 @@ export function extractNodeTypesFromPrompt(prompt: string): InfraNodeType[] {
  * @param prompt - The user's natural language prompt
  * @returns The enriched system prompt string
  */
-export function buildEnrichedSystemPrompt(prompt: string): string {
+export async function buildEnrichedSystemPrompt(prompt: string): Promise<string> {
   try {
     const nodeTypes = extractNodeTypesFromPrompt(prompt);
 
-    if (nodeTypes.length === 0) {
-      log.debug('No node types extracted from prompt, using base system prompt');
+    // RAG search for Product Intelligence (runs regardless of keyword extraction)
+    let piDocuments: PIDocument[] = [];
+    try {
+      const { searchProductIntelligence } = await import('@/lib/rag');
+      const ragResult = await searchProductIntelligence(prompt, { topK: 10 });
+      piDocuments = ragResult.documents.map(doc => ({
+        id: doc.id,
+        content: doc.content,
+        metadata: doc.metadata,
+        score: doc.score,
+        collection: doc.collection,
+      }));
+      if (piDocuments.length > 0) {
+        log.debug('RAG search returned PI documents', { count: piDocuments.length });
+      }
+    } catch {
+      // RAG unavailable — continue without PI data
+    }
+
+    if (nodeTypes.length === 0 && piDocuments.length === 0) {
+      log.debug('No node types or PI data found, using base system prompt');
       return SYSTEM_PROMPT;
     }
 
     // Build a minimal DiagramContext from extracted node types
+    // (even if nodeTypes is empty, enrichContext handles it gracefully)
     const context: DiagramContext = {
       nodes: nodeTypes.map((type, index) => ({
         id: `extracted-${index}`,
@@ -238,6 +278,11 @@ export function buildEnrichedSystemPrompt(prompt: string): string {
       failureScenarios: [...FAILURES],
     });
 
+    // Inject PI documents into enriched context
+    if (piDocuments.length > 0) {
+      enriched.productIntelligence = piDocuments;
+    }
+
     const knowledgeSection = buildKnowledgePromptSection(enriched);
 
     if (!knowledgeSection) {
@@ -247,6 +292,7 @@ export function buildEnrichedSystemPrompt(prompt: string): string {
 
     log.debug('Knowledge section injected into system prompt', {
       nodeTypes: nodeTypes.length,
+      piDocuments: piDocuments.length,
       sectionLength: knowledgeSection.length,
     });
 
@@ -483,7 +529,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
     const { prompt, provider, model, useFallback } = parsed.data;
 
     // Build enriched system prompt ONCE per request (not per retry)
-    const enrichedPrompt = buildEnrichedSystemPrompt(prompt);
+    const enrichedPrompt = await buildEnrichedSystemPrompt(prompt);
 
     // Get API key from server-side environment variables (not NEXT_PUBLIC_)
     // NOTE: Reading process.env directly (not via getEnv()) because tests
