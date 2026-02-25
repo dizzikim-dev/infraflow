@@ -28,13 +28,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { InfraSpec, InfraNodeType } from '@/types';
 import { withRetry, isRetryableError } from '@/lib/utils/retry';
-import { checkRateLimit, LLM_RATE_LIMIT } from '@/lib/middleware/rateLimiter';
+import { checkRateLimit, LLM_RATE_LIMIT, DEFAULT_RATE_LIMIT } from '@/lib/middleware/rateLimiter';
 import { createLogger } from '@/lib/utils/logger';
 import { addRateLimitHeaders } from '@/lib/llm/rateLimitHeaders';
 import { getProviderStatus } from '@/lib/llm/providers';
-import { parseJSONFromLLMResponse } from '@/lib/llm/jsonParser';
+import { parseJSONFromLLMResponse, parseEnhancedLLMResponse } from '@/lib/llm/jsonParser';
+import type { StructuredResponseMeta } from '@/types/structuredResponse';
 import { matchFallbackTemplate } from '@/lib/llm/fallbackTemplates';
 import { LLM_MODELS } from '@/lib/llm/models';
+import { createLLMProvider } from '@/lib/llm/provider';
 import { LLMRequestSchema } from '@/lib/validations/api';
 import { checkRequestSize } from '@/lib/api/analyzeRouteUtils';
 import {
@@ -46,8 +48,9 @@ import {
 } from '@/lib/knowledge';
 import { AVAILABLE_COMPONENTS } from '@/lib/parser/prompts';
 import type { DiagramContext } from '@/lib/parser/prompts';
-import { redactSensitiveData } from '@/lib/security/llmSecurityControls';
+import { redactSensitiveData, sanitizeUserInput, validateOutputSafety } from '@/lib/security/llmSecurityControls';
 import type { PIDocument } from '@/lib/knowledge/types';
+import { getEnv } from '@/lib/config/env';
 
 const log = createLogger('LLM');
 
@@ -68,6 +71,7 @@ export interface LLMRequestBody {
 export interface LLMResponse {
   success: boolean;
   spec?: InfraSpec;
+  meta?: StructuredResponseMeta | null;
   error?: string;
   rawResponse?: string;
   /** Indicates response came from fallback */
@@ -83,12 +87,15 @@ export interface LLMResponse {
   };
 }
 
-// LLM configuration
-const LLM_CONFIG = {
-  maxRetries: 3,
-  timeoutMs: 30000,
-  initialDelayMs: 1000,
-};
+// LLM configuration — reads from env with sensible defaults
+const LLM_CONFIG = (() => {
+  const env = getEnv();
+  return {
+    maxRetries: env.LLM_MAX_RETRIES,
+    timeoutMs: env.LLM_TIMEOUT_MS,
+    initialDelayMs: 1000,
+  };
+})();
 
 const SYSTEM_PROMPT = `You are an infrastructure architecture expert. Parse the user's natural language description and convert it into a structured JSON specification.
 
@@ -123,7 +130,28 @@ Guidelines:
 4. Use descriptive labels in Korean when the input is in Korean
 5. Create realistic connection flows based on the architecture type
 
-Only output valid JSON. No explanations.`;
+Output a JSON object. Two supported formats:
+
+Format A (enhanced — preferred):
+{
+  "spec": { "nodes": [...], "connections": [...], "zones": [...] },
+  "meta": {
+    "summary": "3-5 line conclusion in the user's language",
+    "assumptions": ["assumption 1", "assumption 2"],
+    "options": [
+      { "name": "Option A", "pros": ["..."], "cons": ["..."], "estimatedCostRange": "$X-$Y/mo" },
+      { "name": "Option B", "pros": ["..."], "cons": ["..."] }
+    ],
+    "tradeoffs": ["tradeoff description"],
+    "artifacts": ["terraform", "kubernetes", "checklist"]
+  }
+}
+
+Format B (legacy — acceptable):
+{ "nodes": [...], "connections": [...], "zones": [...] }
+
+Always include at least 2 options in meta.options. The spec is REQUIRED. Meta is RECOMMENDED but optional.
+Only output valid JSON. No additional text.`;
 
 /**
  * Keyword aliases mapping common terms to InfraNodeType values.
@@ -306,32 +334,28 @@ export async function buildEnrichedSystemPrompt(prompt: string): Promise<string>
 }
 
 /**
- * Makes a single API call to Claude for infrastructure generation.
+ * Makes a single API call to any LLM provider using the provider abstraction.
  */
-async function callClaudeOnce(
+async function callProviderOnce(
   prompt: string,
   apiKey: string,
-  model: string = LLM_MODELS.ANTHROPIC_DEFAULT,
+  providerType: 'claude' | 'openai',
+  model?: string,
   systemPrompt: string = SYSTEM_PROMPT
 ): Promise<LLMResponse> {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const provider = createLLMProvider(providerType);
+  const req = provider.buildRequest({
+    apiKey,
+    prompt,
+    systemPrompt,
+    model: model || provider.defaultModel,
+    maxTokens: 2048,
+  });
+
+  const response = await fetch(req.url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 2048,
-      system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: `Convert this infrastructure description to JSON:\n\n${prompt}`,
-        },
-      ],
-    }),
+    headers: req.headers,
+    body: req.body,
   });
 
   if (!response.ok) {
@@ -340,15 +364,15 @@ async function callClaudeOnce(
   }
 
   const data = await response.json();
-  const content = data.content?.[0]?.text;
+  const content = provider.extractContent(data);
 
   if (!content) {
     throw new Error('No response from API');
   }
 
-  const spec = parseJSONFromLLMResponse(content);
+  const enhanced = parseEnhancedLLMResponse(content);
 
-  if (!spec) {
+  if (!enhanced.spec) {
     return {
       success: false,
       error: 'Failed to parse JSON response or invalid spec format',
@@ -358,22 +382,26 @@ async function callClaudeOnce(
 
   return {
     success: true,
-    spec,
+    spec: enhanced.spec,
+    meta: enhanced.meta,
     rawResponse: content,
   };
 }
 
 /**
- * Calls Claude API with automatic retry logic.
+ * Calls any LLM provider with automatic retry logic.
  */
-async function callClaude(
+async function callProvider(
   prompt: string,
   apiKey: string,
-  model: string = LLM_MODELS.ANTHROPIC_DEFAULT,
+  providerType: 'claude' | 'openai',
+  model?: string,
   systemPrompt: string = SYSTEM_PROMPT
 ): Promise<LLMResponse> {
+  const providerLabel = providerType === 'claude' ? 'Claude' : 'OpenAI';
+
   const result = await withRetry(
-    () => callClaudeOnce(prompt, apiKey, model, systemPrompt),
+    () => callProviderOnce(prompt, apiKey, providerType, model, systemPrompt),
     {
       maxAttempts: LLM_CONFIG.maxRetries,
       timeoutMs: LLM_CONFIG.timeoutMs,
@@ -385,103 +413,7 @@ async function callClaude(
         return isRetryableError(error);
       },
       onRetry: (attempt, error) => {
-        log.warn(`Claude retry attempt ${attempt}`, { error: String(error) });
-      },
-    }
-  );
-
-  if (result.success && result.data) {
-    return { ...result.data, attempts: result.attempts };
-  }
-
-  return {
-    success: false,
-    error: result.error?.message || 'Unknown error after retries',
-    attempts: result.attempts,
-  };
-}
-
-/**
- * Makes a single API call to OpenAI for infrastructure generation.
- */
-async function callOpenAIOnce(
-  prompt: string,
-  apiKey: string,
-  model: string = LLM_MODELS.OPENAI_DEFAULT,
-  systemPrompt: string = SYSTEM_PROMPT
-): Promise<LLMResponse> {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        {
-          role: 'user',
-          content: `Convert this infrastructure description to JSON:\n\n${prompt}`,
-        },
-      ],
-      temperature: 0.3,
-      max_tokens: 2048,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`API Error: ${response.status} - ${error}`);
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
-
-  if (!content) {
-    throw new Error('No response from API');
-  }
-
-  const spec = parseJSONFromLLMResponse(content);
-
-  if (!spec) {
-    return {
-      success: false,
-      error: 'Failed to parse JSON response or invalid spec format',
-      rawResponse: content,
-    };
-  }
-
-  return {
-    success: true,
-    spec,
-    rawResponse: content,
-  };
-}
-
-/**
- * Calls OpenAI API with automatic retry logic.
- */
-async function callOpenAI(
-  prompt: string,
-  apiKey: string,
-  model: string = LLM_MODELS.OPENAI_DEFAULT,
-  systemPrompt: string = SYSTEM_PROMPT
-): Promise<LLMResponse> {
-  const result = await withRetry(
-    () => callOpenAIOnce(prompt, apiKey, model, systemPrompt),
-    {
-      maxAttempts: LLM_CONFIG.maxRetries,
-      timeoutMs: LLM_CONFIG.timeoutMs,
-      initialDelayMs: LLM_CONFIG.initialDelayMs,
-      isRetryable: (error) => {
-        if (error instanceof Error && error.message.includes('parse')) {
-          return true;
-        }
-        return isRetryableError(error);
-      },
-      onRetry: (attempt, error) => {
-        log.warn(`OpenAI retry attempt ${attempt}`, { error: String(error) });
+        log.warn(`${providerLabel} retry attempt ${attempt}`, { error: String(error) });
       },
     }
   );
@@ -515,6 +447,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
     return rateLimitResponse as NextResponse<LLMResponse>;
   }
 
+  // Extract request ID from middleware for audit trail
+  const requestId = request.headers.get('x-request-id') || 'unknown';
+
   try {
     const rawBody = await request.json();
     const parsed = LLMRequestSchema.safeParse(rawBody);
@@ -527,58 +462,46 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
     }
 
     const { prompt, provider, model, useFallback } = parsed.data;
+    const modelId = model || (provider === 'claude' ? LLM_MODELS.ANTHROPIC_DEFAULT : LLM_MODELS.OPENAI_DEFAULT);
+    log.info('LLM request received', { requestId, provider, model: modelId });
+
+    // Sanitize user prompt before LLM processing
+    const sanitizedPrompt = sanitizeUserInput(prompt);
+
+    // Detect API keys in user input
+    const inputSafetyCheck = validateOutputSafety(sanitizedPrompt);
+    if (!inputSafetyCheck.safe) {
+      return NextResponse.json({
+        success: false,
+        error: '프롬프트에 민감한 정보(API 키 등)가 포함되어 있습니다. 제거 후 다시 시도하세요. / Sensitive information (API keys) detected in prompt. Please remove and try again.',
+      }, { status: 400 });
+    }
 
     // Build enriched system prompt ONCE per request (not per retry)
-    const enrichedPrompt = await buildEnrichedSystemPrompt(prompt);
+    const enrichedPrompt = await buildEnrichedSystemPrompt(sanitizedPrompt);
 
-    // Get API key from server-side environment variables (not NEXT_PUBLIC_)
-    // NOTE: Reading process.env directly (not via getEnv()) because tests
+    // Get API key from server-side environment variables via provider abstraction
+    // NOTE: Provider reads process.env directly (not via getEnv()) because tests
     // dynamically manipulate API keys between calls and getEnv() caches.
-    let apiKey: string | undefined;
-    let result: LLMResponse;
+    const llmProvider = createLLMProvider(provider as 'claude' | 'openai');
+    const apiKey = llmProvider.getApiKey();
 
-    if (provider === 'claude') {
-      // eslint-disable-next-line no-restricted-syntax
-      apiKey = process.env.ANTHROPIC_API_KEY;
-      if (!apiKey) {
-        if (useFallback) {
-          log.info('No Claude API key, using fallback template');
-          return NextResponse.json({
-            success: true,
-            spec: matchFallbackTemplate(prompt),
-            fromFallback: true,
-          });
-        }
-        return NextResponse.json(
-          { success: false, error: 'Claude API key not configured' },
-          { status: 500 }
-        );
+    if (!apiKey) {
+      if (useFallback) {
+        log.info(`No ${provider} API key, using fallback template`);
+        return NextResponse.json({
+          success: true,
+          spec: matchFallbackTemplate(sanitizedPrompt),
+          fromFallback: true,
+        });
       }
-      result = await callClaude(prompt, apiKey, model, enrichedPrompt);
-    } else if (provider === 'openai') {
-      // eslint-disable-next-line no-restricted-syntax
-      apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) {
-        if (useFallback) {
-          log.info('No OpenAI API key, using fallback template');
-          return NextResponse.json({
-            success: true,
-            spec: matchFallbackTemplate(prompt),
-            fromFallback: true,
-          });
-        }
-        return NextResponse.json(
-          { success: false, error: 'OpenAI API key not configured' },
-          { status: 500 }
-        );
-      }
-      result = await callOpenAI(prompt, apiKey, model, enrichedPrompt);
-    } else {
       return NextResponse.json(
-        { success: false, error: `Unknown provider: ${provider}` },
-        { status: 400 }
+        { success: false, error: `${provider === 'claude' ? 'Claude' : 'OpenAI'} API key not configured` },
+        { status: 500 }
       );
     }
+
+    const result = await callProvider(sanitizedPrompt, apiKey, provider as 'claude' | 'openai', model, enrichedPrompt);
 
     // Pick only client-relevant rate limit fields
     const { limit, remaining, dailyUsage, dailyLimit } = info;
@@ -589,7 +512,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
       log.warn('LLM call failed, using fallback template', { error: result.error });
       const response = NextResponse.json({
         success: true,
-        spec: matchFallbackTemplate(prompt),
+        spec: matchFallbackTemplate(sanitizedPrompt),
         fromFallback: true,
         error: result.error,
         attempts: result.attempts,
@@ -605,9 +528,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
       rateLimit: rateLimitInfo,
     };
 
+    log.info('LLM request completed', { requestId, provider, success: result.success, attempts: result.attempts });
+
     const response = NextResponse.json(sanitizedResult);
     return addRateLimitHeaders(response, info);
   } catch (error) {
+    log.error('LLM request failed', error instanceof Error ? error : undefined, { requestId });
     const response = NextResponse.json(
       {
         success: false,
@@ -622,7 +548,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<LLMRespon
 /**
  * GET /api/llm - Check LLM Configuration Status
  */
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const { allowed, response: rateLimitResponse } = await checkRateLimit(request, DEFAULT_RATE_LIMIT);
+  if (!allowed && rateLimitResponse) return rateLimitResponse;
+
   const providers = getProviderStatus();
 
   return NextResponse.json({
