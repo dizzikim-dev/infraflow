@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Node, Edge } from '@xyflow/react';
 import { ConversationContext } from '@/lib/parser';
 import { InfraSpec, InfraNodeData } from '@/types';
@@ -10,6 +10,8 @@ import { useParserContext } from './useParserContext';
 import { useLocalParser } from './useLocalParser';
 import { useLLMModifier } from './useLLMModifier';
 import type { Template } from '@/lib/templates';
+import type { TraceSummary } from '@/lib/rag/types';
+import type { AnswerEvidence } from '@/lib/rag/sourceAggregator';
 
 export interface ParseResultInfo {
   templateUsed?: string;
@@ -30,6 +32,23 @@ export interface ParseResultInfo {
   fallbackSpec?: InfraSpec;
   /** Human-readable explanation of why this infrastructure was generated */
   explanation?: string;
+  /** LLM generation trace summary (only when routed to LLM) */
+  traceSummary?: TraceSummary | null;
+  /** Trace ID for admin detail page */
+  traceId?: string | null;
+  /** Post-verification result */
+  verification?: {
+    score: number;
+    missingRequired: number;
+    missingRecommended: number;
+    conflicts: number;
+  } | null;
+  /** How the prompt was routed */
+  routingDecision?: 'template-direct' | 'router-template' | 'router-llm' | 'llm-direct';
+  /** Router reasoning (from Haiku) */
+  routingReason?: string;
+  /** Answer-level evidence for ReferenceBox (sources, badge, patterns) */
+  answerEvidence?: AnswerEvidence | null;
 }
 
 export interface UsePromptParserReturn {
@@ -57,7 +76,7 @@ interface UsePromptParserConfig {
   onAnimationReset?: () => void;
   onPolicyReset?: () => void;
   /** Called when a diagram is generated/modified (for feedback collection) */
-  onDiagramGenerated?: (spec: InfraSpec, source: 'local-parser' | 'llm-modify' | 'template', prompt?: string) => void;
+  onDiagramGenerated?: (spec: InfraSpec, source: 'local-parser' | 'llm-generate' | 'llm-modify' | 'template', prompt?: string) => void;
 }
 
 /**
@@ -94,7 +113,16 @@ export function usePromptParser(config: UsePromptParserConfig): UsePromptParserR
   // Conversation context
   const { context, updateConversationContext } = useParserContext();
 
-  // Local parser (prompt parsing + template selection)
+  // Check LLM availability for smart routing (separate from modify)
+  const [llmGenerateAvailable, setLlmGenerateAvailable] = useState(false);
+  useEffect(() => {
+    fetch('/api/llm')
+      .then((res) => res.json())
+      .then((data) => setLlmGenerateAvailable(data.configured === true))
+      .catch(() => setLlmGenerateAvailable(false));
+  }, []);
+
+  // Local parser (prompt parsing + template selection + smart routing)
   const { handlePromptSubmit, handleTemplateSelect } = useLocalParser({
     currentSpec,
     context,
@@ -109,6 +137,7 @@ export function usePromptParser(config: UsePromptParserConfig): UsePromptParserR
     requestIdRef,
     abortControllerRef,
     onDiagramGenerated,
+    llmAvailable: llmGenerateAvailable,
   });
 
   // LLM modifier (diagram modification via API)

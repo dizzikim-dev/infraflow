@@ -9,9 +9,20 @@ import { InfraSpec, InfraNodeData } from '@/types';
 import { LOADING_DELAY_MS } from '@/lib/constants';
 import { createLogger } from '@/lib/utils/logger';
 import { trackActivity } from '@/lib/activity/trackActivity';
+import { parseWithLLM, type LLMParseResult } from '@/lib/llm/llmParser';
 import type { ParseResultInfo } from './usePromptParser';
+import type { RoutePromptResponse } from '@/app/api/route-prompt/route';
 
 const log = createLogger('useLocalParser');
+
+// ---------------------------------------------------------------------------
+// Routing thresholds
+// ---------------------------------------------------------------------------
+
+/** Confidence >= this value → use template directly (no router needed) */
+const HIGH_CONFIDENCE_THRESHOLD = 0.9;
+/** Confidence < this value → go directly to LLM (skip router) */
+const LOW_CONFIDENCE_THRESHOLD = 0.5;
 
 interface UseLocalParserConfig {
   currentSpec: InfraSpec | null;
@@ -27,7 +38,9 @@ interface UseLocalParserConfig {
   requestIdRef: React.MutableRefObject<number>;
   abortControllerRef: React.MutableRefObject<AbortController | null>;
   /** Called when a diagram is successfully generated (for feedback collection) */
-  onDiagramGenerated?: (spec: InfraSpec, source: 'local-parser' | 'template', prompt?: string) => void;
+  onDiagramGenerated?: (spec: InfraSpec, source: 'local-parser' | 'llm-generate' | 'template', prompt?: string) => void;
+  /** Whether the LLM API is available (API key configured) */
+  llmAvailable?: boolean;
 }
 
 /**
@@ -38,11 +51,81 @@ export interface UseLocalParserReturn {
   handleTemplateSelect: (template: Template) => void;
 }
 
+// ---------------------------------------------------------------------------
+// Helper: Call the router API
+// ---------------------------------------------------------------------------
+
+async function callRouterAPI(
+  prompt: string,
+  templateId: string,
+  nodeTypes: string[],
+  confidence: number,
+  signal: AbortSignal,
+): Promise<RoutePromptResponse> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+  // Chain abort signals: if the parent signal aborts, abort the router too
+  const onAbort = () => controller.abort();
+  signal.addEventListener('abort', onAbort, { once: true });
+
+  try {
+    const res = await fetch('/api/route-prompt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt,
+        templateMatch: { templateId, nodeTypes, confidence },
+      }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      throw new Error(`Router API error: ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (error) {
+    // Timeout or network error → fallback to template
+    log.warn('Router API call failed, defaulting to template', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return {
+      decision: 'use_template',
+      reason: '라우터 호출 실패로 템플릿을 사용합니다.',
+    };
+  } finally {
+    clearTimeout(timeoutId);
+    signal.removeEventListener('abort', onAbort);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Helper: Call LLM for full generation
+// ---------------------------------------------------------------------------
+
+async function callLLMGenerate(prompt: string): Promise<LLMParseResult> {
+  // Detect provider: check /api/llm for available providers
+  let provider: 'claude' | 'openai' = 'claude';
+  try {
+    const statusRes = await fetch('/api/llm');
+    const status = await statusRes.json();
+    if (status.providers?.openai) {
+      provider = 'openai';
+    }
+  } catch {
+    // Default to claude
+  }
+
+  return parseWithLLM(prompt, { provider });
+}
+
 /**
  * Hook for local (non-LLM) prompt parsing and template selection.
  *
  * Handles:
  * - smartParse-based prompt parsing
+ * - Smart routing: confidence-based 3-tier routing to template/router/LLM
  * - Template selection and application
  * - Race condition prevention via shared request ID
  * - Loading delay support
@@ -62,7 +145,35 @@ export function useLocalParser(config: UseLocalParserConfig): UseLocalParserRetu
     requestIdRef,
     abortControllerRef,
     onDiagramGenerated,
+    llmAvailable = false,
   } = config;
+
+  /**
+   * Apply a successful spec result to the canvas.
+   * Shared between template-path and LLM-path.
+   */
+  const applySpec = useCallback(
+    (
+      spec: InfraSpec,
+      resultInfo: ParseResultInfo,
+      prompt: string,
+      source: 'local-parser' | 'llm-generate' | 'template',
+      parseResult?: SmartParseResult,
+    ) => {
+      const { nodes: newNodes, edges: newEdges } = specToFlow(spec);
+      onNodesUpdate(newNodes);
+      onEdgesUpdate(newEdges);
+      onSpecUpdate(spec);
+      onResultUpdate(resultInfo);
+
+      if (parseResult) {
+        onContextUpdate(prompt, parseResult);
+      }
+
+      onDiagramGenerated?.(spec, source, prompt);
+    },
+    [onNodesUpdate, onEdgesUpdate, onSpecUpdate, onResultUpdate, onContextUpdate, onDiagramGenerated],
+  );
 
   /**
    * Handle prompt submission and parsing
@@ -123,14 +234,61 @@ export function useLocalParser(config: UseLocalParserConfig): UseLocalParserRetu
           return;
         }
 
+        // ── Smart Routing Decision ──
+        // When LLM is available, route based on confidence:
+        // - ≥0.9: Direct template use (high confidence, no need for router)
+        // - 0.5~0.89: Ask Haiku router if template is semantically appropriate
+        // - <0.5: Direct LLM generation (too low confidence for template)
+        //
+        // When LLM is NOT available: use original local-parser logic (no routing)
+
         if (result.isFallback) {
-          // Fallback: show warning UI, do NOT generate diagram
+          // ── Fallback Path (confidence very low, typically ≤ 0.3) ──
+          if (llmAvailable) {
+            // LLM available → try full LLM generation instead of showing fallback
+            log.info('Fallback triggered with LLM available, routing to LLM', {
+              confidence: result.confidence,
+            });
+            const llmResult = await callLLMGenerate(trimmedPrompt);
+
+            if (currentRequestId !== requestIdRef.current) return;
+
+            if (llmResult.success && llmResult.spec) {
+              if (!llmResult.spec.nodes || !Array.isArray(llmResult.spec.nodes)) {
+                throw new Error('Invalid spec from LLM: nodes array is missing');
+              }
+
+              applySpec(
+                llmResult.spec,
+                {
+                  confidence: 1,
+                  commandType: 'create',
+                  routingDecision: 'llm-direct',
+                  traceSummary: llmResult.traceSummary,
+                  traceId: llmResult.traceId,
+                  verification: llmResult.verification,
+                  answerEvidence: llmResult.answerEvidence,
+                },
+                trimmedPrompt,
+                'llm-generate',
+              );
+
+              trackActivity('prompt_submit', {
+                prompt: trimmedPrompt,
+                detail: {
+                  confidence: 1,
+                  nodeCount: llmResult.spec.nodes?.length ?? 0,
+                  routingDecision: 'llm-direct',
+                },
+              });
+              return;
+            }
+            // LLM failed → show fallback warning as usual
+          }
+
           log.warn('Fallback triggered', { confidence: result.confidence, prompt: trimmedPrompt });
 
-          // Race condition check
-          if (currentRequestId !== requestIdRef.current) {
-            return;
-          }
+          if (currentRequestId !== requestIdRef.current) return;
 
           onResultUpdate({
             confidence: result.confidence,
@@ -154,44 +312,205 @@ export function useLocalParser(config: UseLocalParserConfig): UseLocalParserRetu
             // Ignore — logging is best-effort
           }
         } else if (result.success && result.spec) {
-          // Validate spec before using
+          // ── Success Path: Route based on confidence ──
           if (!result.spec.nodes || !Array.isArray(result.spec.nodes)) {
             throw new Error('Invalid spec: nodes array is missing');
           }
 
-          const { nodes: newNodes, edges: newEdges } = specToFlow(result.spec);
+          if (currentRequestId !== requestIdRef.current) return;
 
-          // Final race condition check before updating state
-          if (currentRequestId !== requestIdRef.current) {
-            return;
+          const confidence = result.confidence;
+
+          // Tier 1: High confidence (≥0.9) → Direct template use
+          if (confidence >= HIGH_CONFIDENCE_THRESHOLD || !llmAvailable) {
+            applySpec(
+              result.spec,
+              {
+                templateUsed: result.templateUsed,
+                confidence: result.confidence,
+                commandType: result.commandType,
+                warnings: result.warnings,
+                suggestions: result.suggestions,
+                explanation: result.explanation,
+                routingDecision: 'template-direct',
+              },
+              trimmedPrompt,
+              'local-parser',
+              result,
+            );
+
+            trackActivity('prompt_submit', {
+              prompt: trimmedPrompt,
+              detail: {
+                confidence: result.confidence,
+                nodeCount: result.spec.nodes?.length ?? 0,
+                templateUsed: result.templateUsed ?? null,
+                routingDecision: 'template-direct',
+              },
+            });
           }
+          // Tier 3: Low confidence (<0.5) → Direct LLM
+          else if (confidence < LOW_CONFIDENCE_THRESHOLD) {
+            log.info('Low confidence, routing to LLM', { confidence });
+            const llmResult = await callLLMGenerate(trimmedPrompt);
 
-          onNodesUpdate(newNodes);
-          onEdgesUpdate(newEdges);
-          onSpecUpdate(result.spec);
-          onResultUpdate({
-            templateUsed: result.templateUsed,
-            confidence: result.confidence,
-            commandType: result.commandType,
-            warnings: result.warnings,
-            suggestions: result.suggestions,
-            explanation: result.explanation,
-          });
+            if (currentRequestId !== requestIdRef.current) return;
 
-          // Update conversation context
-          onContextUpdate(trimmedPrompt, result);
+            if (llmResult.success && llmResult.spec) {
+              if (!llmResult.spec.nodes || !Array.isArray(llmResult.spec.nodes)) {
+                throw new Error('Invalid spec from LLM: nodes array is missing');
+              }
 
-          // Notify feedback system
-          onDiagramGenerated?.(result.spec, 'local-parser', trimmedPrompt);
+              applySpec(
+                llmResult.spec,
+                {
+                  confidence: 1,
+                  commandType: 'create',
+                  routingDecision: 'llm-direct',
+                  traceSummary: llmResult.traceSummary,
+                  traceId: llmResult.traceId,
+                  verification: llmResult.verification,
+                  answerEvidence: llmResult.answerEvidence,
+                },
+                trimmedPrompt,
+                'llm-generate',
+              );
 
-          trackActivity('prompt_submit', {
-            prompt: trimmedPrompt,
-            detail: {
-              confidence: result.confidence,
-              nodeCount: result.spec.nodes?.length ?? 0,
-              templateUsed: result.templateUsed ?? null,
-            },
-          });
+              trackActivity('prompt_submit', {
+                prompt: trimmedPrompt,
+                detail: {
+                  confidence: 1,
+                  nodeCount: llmResult.spec.nodes?.length ?? 0,
+                  routingDecision: 'llm-direct',
+                },
+              });
+            } else {
+              // LLM failed → fallback to local parse result
+              log.warn('LLM generation failed, using local parse result', {
+                error: llmResult.error,
+              });
+              applySpec(
+                result.spec,
+                {
+                  templateUsed: result.templateUsed,
+                  confidence: result.confidence,
+                  commandType: result.commandType,
+                  warnings: result.warnings,
+                  suggestions: result.suggestions,
+                  explanation: result.explanation,
+                  routingDecision: 'template-direct',
+                },
+                trimmedPrompt,
+                'local-parser',
+                result,
+              );
+            }
+          }
+          // Tier 2: Medium confidence (0.5–0.89) → Ask Haiku router
+          else {
+            log.info('Medium confidence, asking router', {
+              confidence,
+              templateUsed: result.templateUsed,
+            });
+
+            const nodeTypes = result.spec.nodes.map((n) => n.type);
+            const routerResponse = await callRouterAPI(
+              trimmedPrompt,
+              result.templateUsed || 'unknown',
+              nodeTypes,
+              confidence,
+              abortController.signal,
+            );
+
+            if (currentRequestId !== requestIdRef.current) return;
+
+            if (routerResponse.decision === 'use_template') {
+              // Router says template is appropriate
+              applySpec(
+                result.spec,
+                {
+                  templateUsed: result.templateUsed,
+                  confidence: result.confidence,
+                  commandType: result.commandType,
+                  warnings: result.warnings,
+                  suggestions: result.suggestions,
+                  explanation: result.explanation,
+                  routingDecision: 'router-template',
+                  routingReason: routerResponse.reason,
+                },
+                trimmedPrompt,
+                'local-parser',
+                result,
+              );
+
+              trackActivity('prompt_submit', {
+                prompt: trimmedPrompt,
+                detail: {
+                  confidence: result.confidence,
+                  nodeCount: result.spec.nodes?.length ?? 0,
+                  templateUsed: result.templateUsed ?? null,
+                  routingDecision: 'router-template',
+                },
+              });
+            } else {
+              // Router says use LLM
+              log.info('Router decided to use LLM', { reason: routerResponse.reason });
+              const llmResult = await callLLMGenerate(trimmedPrompt);
+
+              if (currentRequestId !== requestIdRef.current) return;
+
+              if (llmResult.success && llmResult.spec) {
+                if (!llmResult.spec.nodes || !Array.isArray(llmResult.spec.nodes)) {
+                  throw new Error('Invalid spec from LLM: nodes array is missing');
+                }
+
+                applySpec(
+                  llmResult.spec,
+                  {
+                    confidence: 1,
+                    commandType: 'create',
+                    routingDecision: 'router-llm',
+                    routingReason: routerResponse.reason,
+                    traceSummary: llmResult.traceSummary,
+                    traceId: llmResult.traceId,
+                    verification: llmResult.verification,
+                  },
+                  trimmedPrompt,
+                  'llm-generate',
+                );
+
+                trackActivity('prompt_submit', {
+                  prompt: trimmedPrompt,
+                  detail: {
+                    confidence: 1,
+                    nodeCount: llmResult.spec.nodes?.length ?? 0,
+                    routingDecision: 'router-llm',
+                  },
+                });
+              } else {
+                // LLM failed → fallback to local parse result
+                log.warn('LLM generation failed after router, using local result', {
+                  error: llmResult.error,
+                });
+                applySpec(
+                  result.spec!,
+                  {
+                    templateUsed: result.templateUsed,
+                    confidence: result.confidence,
+                    commandType: result.commandType,
+                    warnings: result.warnings,
+                    suggestions: result.suggestions,
+                    explanation: result.explanation,
+                    routingDecision: 'router-template',
+                    routingReason: `LLM 실패로 템플릿 사용: ${llmResult.error}`,
+                  },
+                  trimmedPrompt,
+                  'local-parser',
+                  result,
+                );
+              }
+            }
+          }
         } else {
           // Handle parse failure
           const errorMessage = result.error || '프롬프트를 해석할 수 없습니다.';
@@ -229,7 +548,7 @@ export function useLocalParser(config: UseLocalParserConfig): UseLocalParserRetu
         }
       }
     },
-    [context, currentSpec, onNodesUpdate, onEdgesUpdate, onSpecUpdate, onPolicyReset, onResultUpdate, onContextUpdate, onLoadingChange, requestIdRef, abortControllerRef, onDiagramGenerated]
+    [context, currentSpec, onNodesUpdate, onEdgesUpdate, onSpecUpdate, onPolicyReset, onResultUpdate, onContextUpdate, onLoadingChange, requestIdRef, abortControllerRef, onDiagramGenerated, llmAvailable, applySpec]
   );
 
   /**
@@ -252,6 +571,7 @@ export function useLocalParser(config: UseLocalParserConfig): UseLocalParserRetu
           templateUsed: template.id,
           confidence: 1,
           commandType: 'template',
+          routingDecision: 'template-direct',
         });
 
         // Notify feedback system

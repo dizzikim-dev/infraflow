@@ -1,6 +1,8 @@
 import { InfraSpec } from '@/types';
 import { isInfraSpec } from '@/types/guards';
 import { createLogger } from '@/lib/utils/logger';
+import type { TraceSummary } from '@/lib/rag/types';
+import type { AnswerEvidence } from '@/lib/rag/sourceAggregator';
 
 const logger = createLogger('LLMParser');
 
@@ -14,6 +16,19 @@ export interface LLMParseResult {
   spec?: InfraSpec;
   error?: string;
   rawResponse?: string;
+  /** Reasoning trace ID for detailed inspection */
+  traceId?: string;
+  /** Lightweight trace summary */
+  traceSummary?: TraceSummary;
+  /** Post-verification result */
+  verification?: {
+    score: number;
+    missingRequired: number;
+    missingRecommended: number;
+    conflicts: number;
+  };
+  /** Answer-level evidence for ReferenceBox */
+  answerEvidence?: AnswerEvidence | null;
 }
 
 /**
@@ -58,7 +73,16 @@ export async function parseWithLLM(
       }
     }
 
-    return result;
+    return {
+      success: result.success,
+      spec: result.spec,
+      error: result.error,
+      rawResponse: result.rawResponse,
+      traceId: result.traceId,
+      traceSummary: result.traceSummary,
+      verification: result.verification,
+      answerEvidence: result.answerEvidence ?? null,
+    };
   } catch (error) {
     logger.error('LLM parse request failed', error instanceof Error ? error : undefined);
     return {
