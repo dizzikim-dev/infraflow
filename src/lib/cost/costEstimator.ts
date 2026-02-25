@@ -73,7 +73,7 @@ function getCategory(nodeType: InfraNodeType): string {
  */
 export function getCloudServiceCost(
   nodeType: InfraNodeType,
-  provider: 'aws' | 'azure' | 'gcp',
+  provider: CloudProvider,
 ): { service: string; cost: number; tier: string } | undefined {
   // Find the best matching active service from the catalog
   const matches = CLOUD_SERVICES.filter(
@@ -119,6 +119,10 @@ export function estimateCost(
     aws: 0,
     azure: 0,
     gcp: 0,
+    ncp: 0,
+    kakao: 0,
+    kt: 0,
+    nhn: 0,
     onprem: 0,
   };
 
@@ -132,9 +136,9 @@ export function estimateCost(
 
     // Prefer cloud catalog cost over hardcoded BASE_COSTS
     const catalogCost = provider !== 'onprem'
-      ? getCloudServiceCost(nodeType, provider as 'aws' | 'azure' | 'gcp')
+      ? getCloudServiceCost(nodeType, provider as CloudProvider)
       : undefined;
-    const providerCost = catalogCost || costData[provider] || costData.aws;
+    const providerCost = catalogCost || (costData as Record<string, { service: string; cost: number; tier: string }>)[provider] || costData.aws;
 
     if (providerCost.cost === 0 && providerCost.tier === 'N/A') continue;
 
@@ -199,7 +203,7 @@ export function formatCost(amount: number, currency: string = 'USD'): string {
  * Generate cost comparison between providers
  */
 export function compareCosts(spec: InfraSpec): Record<CostProvider, CostBreakdown> {
-  const providers: CostProvider[] = ['aws', 'azure', 'gcp', 'onprem'];
+  const providers: CostProvider[] = ['aws', 'azure', 'gcp', 'ncp', 'kakao', 'kt', 'nhn', 'onprem'];
 
   return providers.reduce((acc, provider) => {
     acc[provider] = estimateCost(spec, { provider });

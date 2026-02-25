@@ -54,6 +54,10 @@ export function CostEstimatorPanel({ spec, onClose }: CostEstimatorPanelProps) {
     aws: <Cloud className="w-4 h-4" />,
     azure: <Cloud className="w-4 h-4" />,
     gcp: <Cloud className="w-4 h-4" />,
+    ncp: <Cloud className="w-4 h-4" />,
+    kakao: <Cloud className="w-4 h-4" />,
+    kt: <Cloud className="w-4 h-4" />,
+    nhn: <Cloud className="w-4 h-4" />,
     onprem: <Server className="w-4 h-4" />,
   };
 
@@ -61,6 +65,10 @@ export function CostEstimatorPanel({ spec, onClose }: CostEstimatorPanelProps) {
     aws: 'AWS',
     azure: 'Azure',
     gcp: 'GCP',
+    ncp: 'NCP',
+    kakao: 'Kakao',
+    kt: 'KT',
+    nhn: 'NHN',
     onprem: 'On-Prem',
   };
 
