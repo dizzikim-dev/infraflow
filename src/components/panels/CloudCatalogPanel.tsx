@@ -132,7 +132,7 @@ export function CloudCatalogPanel({ spec, onClose }: CloudCatalogPanelProps) {
           <>
             {/* Provider filter */}
             <div className="flex gap-1.5 mb-3">
-              {(['all', 'aws', 'azure', 'gcp'] as const).map((p) => (
+              {(['all', 'aws', 'azure', 'gcp', 'ncp', 'kakao', 'kt', 'nhn'] as const).map((p) => (
                 <button
                   key={p}
                   onClick={() => setSelectedProvider(p)}

@@ -36,10 +36,14 @@ const SOURCE_CHIPS: { value: 'vendor' | 'cloud'; label: string }[] = [
 
 const VENDOR_CHIPS = ['Cisco', 'Fortinet', 'Palo Alto', 'Arista'] as const;
 
-const CLOUD_CHIPS: { value: 'aws' | 'azure' | 'gcp'; label: string }[] = [
+const CLOUD_CHIPS: { value: 'aws' | 'azure' | 'gcp' | 'ncp' | 'kakao' | 'kt' | 'nhn'; label: string }[] = [
   { value: 'aws', label: 'AWS' },
   { value: 'azure', label: 'Azure' },
   { value: 'gcp', label: 'GCP' },
+  { value: 'ncp', label: 'NCP' },
+  { value: 'kakao', label: 'Kakao' },
+  { value: 'kt', label: 'KT' },
+  { value: 'nhn', label: 'NHN' },
 ];
 
 // ============================================================

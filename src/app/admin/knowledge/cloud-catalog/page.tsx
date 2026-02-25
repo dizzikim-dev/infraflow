@@ -27,7 +27,7 @@ interface ProviderDetail {
 
 interface CatalogStats {
   total: number;
-  byProvider: { aws: number; azure: number; gcp: number };
+  byProvider: { aws: number; azure: number; gcp: number; ncp: number; kakao: number; kt: number; nhn: number };
   byCategory: Record<string, number>;
   activeCount: number;
   deprecatedCount: number;
@@ -36,6 +36,10 @@ interface CatalogStats {
     aws: ProviderDetail;
     azure: ProviderDetail;
     gcp: ProviderDetail;
+    ncp: ProviderDetail;
+    kakao: ProviderDetail;
+    kt: ProviderDetail;
+    nhn: ProviderDetail;
   };
 }
 
@@ -52,7 +56,7 @@ interface ApiResponse {
 // ---------------------------------------------------------------------------
 
 interface ProviderConfig {
-  key: 'aws' | 'azure' | 'gcp';
+  key: 'aws' | 'azure' | 'gcp' | 'ncp' | 'kakao' | 'kt' | 'nhn';
   name: string;
   nameKo: string;
   accent: string;
@@ -64,6 +68,10 @@ const PROVIDERS: ProviderConfig[] = [
   { key: 'aws', name: 'Amazon Web Services', nameKo: 'AWS', accent: 'border-orange-300', accentBg: 'bg-orange-50', accentText: 'text-orange-700' },
   { key: 'azure', name: 'Microsoft Azure', nameKo: 'Azure', accent: 'border-blue-300', accentBg: 'bg-blue-50', accentText: 'text-blue-700' },
   { key: 'gcp', name: 'Google Cloud Platform', nameKo: 'GCP', accent: 'border-green-300', accentBg: 'bg-green-50', accentText: 'text-green-700' },
+  { key: 'ncp', name: 'Naver Cloud Platform', nameKo: 'NCP', accent: 'border-emerald-300', accentBg: 'bg-emerald-50', accentText: 'text-emerald-700' },
+  { key: 'kakao', name: 'Kakao Cloud', nameKo: '카카오 클라우드', accent: 'border-yellow-300', accentBg: 'bg-yellow-50', accentText: 'text-yellow-700' },
+  { key: 'kt', name: 'KT Cloud', nameKo: 'KT 클라우드', accent: 'border-rose-300', accentBg: 'bg-rose-50', accentText: 'text-rose-700' },
+  { key: 'nhn', name: 'NHN Cloud', nameKo: 'NHN 클라우드', accent: 'border-violet-300', accentBg: 'bg-violet-50', accentText: 'text-violet-700' },
 ];
 
 // ---------------------------------------------------------------------------
